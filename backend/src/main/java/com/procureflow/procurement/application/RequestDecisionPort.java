@@ -1,0 +1,20 @@
+package com.procureflow.procurement.application;
+
+import java.util.UUID;
+
+/**
+ * Cross-module port: approval decisions lock a submitted request row and flip
+ * its status in the same transaction. Primitives and DTOs only; the purchase
+ * request entity never crosses module boundaries.
+ */
+public interface RequestDecisionPort {
+
+    /** Locks the request row (FOR UPDATE); 404 when absent or foreign to the tenant. */
+    LockedRequest lock(String tenantSlug, UUID requestId);
+
+    /** Applies APPROVED/REJECTED plus decidedAt; call while holding the lock in the same transaction. */
+    void applyDecision(String tenantSlug, UUID requestId, boolean approved);
+
+    record LockedRequest(UUID requestId, String status) {
+    }
+}

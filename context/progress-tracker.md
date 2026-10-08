@@ -52,16 +52,25 @@ Next: Phase 4 — Money governance** (branches: `feature/approval-workflow`,
 
 ## In progress
 
-- Nothing. Awaiting user go-ahead for Phase 3.
+- **Phase 4 — approval-workflow slice 1 (on `feature/approval-workflow`, rebased on `main`)**
+  - V5 migration: `approval_decisions` (one immutable row per request) +
+    `approval_delegations` (bounded grant, revocable). Proven on real PG16.
+  - `POST/GET /api/v1/approvals/decisions`, `POST/GET/DELETE
+    /api/v1/approvals/delegations`; `RequestDecisionPort` (procurement-owned)
+    locks the request `FOR UPDATE` and flips status in the same transaction.
+  - Tests: 11× ApprovalIT (matrix approver/delegate/stranger, expiry,
+    revocation, two-thread decide race → one verdict, cross-tenant 404s).
+    Full gate 39/39 + ArchUnit green.
+  - Next slice: workflows/steps (assignment, escalation) + budget reservation.
 
-## Next up (Phase 3)
+## Next up (Phase 4)
 
-1. `feature/supplier-management`: suppliers, contacts, categories (+ repo
-   tests with cross-tenant negatives).
-2. `feature/procurement`: purchase requests + items, lifecycle,
-   idempotent submit with concurrency test.
-3. OpenAPI frontend type generation lands with the first real endpoints.
-4. `feature/frontend-auth`: login UI, interceptor, guard (can parallel Phase 3).
+1. `feature/approval-workflow` slice 2: workflows/steps CRUD, assignment
+   enforcement, escalation timing.
+2. `feature/budget-management`: budgets, in-transaction reservation, 409 overspend.
+3. `feature/notifications`: first DomainEvent consumer (email skeleton + in-app).
+4. `feature/frontend-auth`: login UI, interceptor, guard (needs the
+   Material-vs-bespoke decision first).
 
 ## Architecture decisions (supplementing docs/decisions)
 

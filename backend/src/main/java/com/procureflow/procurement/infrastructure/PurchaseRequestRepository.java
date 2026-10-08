@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,4 +31,8 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.idempotencyKey = :key")
     Optional<PurchaseRequest> findByTenantSlugAndIdempotencyKey(
             @Param("slug") String slug, @Param("key") String key);
+
+    @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from PurchaseRequest r where r.id = :id and r.tenant.slug = :slug")
+    Optional<PurchaseRequest> lockByIdAndTenantSlug(@Param("id") UUID id, @Param("slug") String slug);
 }
