@@ -1,5 +1,6 @@
 package com.procureflow.procurement.application;
 
+import com.procureflow.budget.application.BudgetReservationPort;
 import com.procureflow.procurement.domain.PurchaseRequest;
 import com.procureflow.procurement.domain.PurchaseRequestItem;
 import com.procureflow.procurement.infrastructure.PurchaseRequestItemRepository;
@@ -27,16 +28,19 @@ public class PurchaseRequestService {
     private final PurchaseRequestItemRepository items;
     private final PurchaseRequestItemService itemService;
     private final RequestCreator creator;
+    private final BudgetReservationPort budgets;
 
     public PurchaseRequestService(
             PurchaseRequestRepository requests,
             PurchaseRequestItemRepository items,
             PurchaseRequestItemService itemService,
-            RequestCreator creator) {
+            RequestCreator creator,
+            BudgetReservationPort budgets) {
         this.requests = requests;
         this.items = items;
         this.itemService = itemService;
         this.creator = creator;
+        this.budgets = budgets;
     }
 
     /** Creates a draft or replays the original when the key was already used. */
@@ -105,12 +109,18 @@ public class PurchaseRequestService {
     public PurchaseRequest cancel(String tenantSlug, UUID id, UUID callerId, boolean admin) {
         PurchaseRequest request = scoped(tenantSlug, id);
         if (request.getStatus() != PurchaseRequest.Status.DRAFT
-                && request.getStatus() != PurchaseRequest.Status.SUBMITTED) {
-            throw ApiException.conflict("INVALID_TRANSITION", "Only draft or submitted requests can be cancelled");
+                && request.getStatus() != PurchaseRequest.Status.SUBMITTED
+                && request.getStatus() != PurchaseRequest.Status.APPROVED) {
+            throw ApiException.conflict(
+                    "INVALID_TRANSITION", "Only draft, submitted or approved requests can be cancelled");
         }
         requireOwnerOrAdmin(request, callerId, admin);
+        boolean wasApproved = request.getStatus() == PurchaseRequest.Status.APPROVED;
         request.setStatus(PurchaseRequest.Status.CANCELLED);
         requests.save(request);
+        if (wasApproved) {
+            budgets.release(tenantSlug, id);
+        }
         return reloaded(id, tenantSlug);
     }
 

@@ -28,7 +28,11 @@ public class RequestDecisionAdapter implements RequestDecisionPort {
         long total = request.getItems() == null
                 ? 0L
                 : request.getItems().stream().mapToLong(PurchaseRequestItem::lineTotalMinor).sum();
-        return new LockedRequest(request.getId(), request.getStatus().name(), request.getRequester().getId(), total);
+        String currency = request.getItems() == null || request.getItems().isEmpty()
+                ? "MAD"
+                : request.getItems().get(0).getCurrency();
+        return new LockedRequest(
+                request.getId(), request.getStatus().name(), request.getRequester().getId(), total, currency);
     }
 
     @Override
