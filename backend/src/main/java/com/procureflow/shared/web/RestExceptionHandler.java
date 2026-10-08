@@ -11,6 +11,12 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -42,6 +48,18 @@ public class RestExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleMalformedJson(HttpMessageNotReadableException ex) {
         return ResponseEntity.badRequest().body(ApiError.of("MALFORMED_JSON", "Request body is not valid JSON"));
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ApiError> handleMissingHeader(MissingRequestHeaderException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("MISSING_HEADER", "Required header missing: " + ex.getHeaderName()));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> handleMissingParameter(MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("MISSING_PARAMETER", "Required parameter missing: " + ex.getParameterName()));
     }
 
     @ExceptionHandler({AuthenticationException.class})

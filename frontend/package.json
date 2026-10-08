@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "gen:api": "openapi-typescript http://localhost:8081/v3/api-docs -o src/lib/api-types.gen.ts"
   },
   "private": true,
   "packageManager": "npm@11.9.0",
@@ -26,6 +27,7 @@
     "@angular/cli": "^21.2.26",
     "@angular/compiler-cli": "^21.2.0",
     "@playwright/test": "^1.64.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
     "vitest": "^4.1.11"

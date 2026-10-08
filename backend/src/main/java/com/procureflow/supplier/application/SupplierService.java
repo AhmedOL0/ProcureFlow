@@ -108,7 +108,13 @@ public class SupplierService {
     }
 
     public void delete(String tenantSlug, UUID id) {
-        suppliers.delete(scoped(tenantSlug, id));
+        try {
+            suppliers.delete(scoped(tenantSlug, id));
+            suppliers.flush();
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw ApiException.conflict(
+                    "SUPPLIER_REFERENCED", "Supplier is referenced by purchase documents and cannot be deleted");
+        }
     }
 
     public List<SupplierCategory> assignCategories(String tenantSlug, UUID supplierId, Set<UUID> categoryIds) {
