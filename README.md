@@ -8,9 +8,11 @@ orders and invoices, with an AI copilot that explains spend and drafts
 requests. One backend serves many tenants; tenant data never crosses tenant
 boundaries.
 
-> Status: **Phase 1 — architecture foundation.** Repository structure, module
-> boundaries, core schema, CI and docs exist. Business features land
-> incrementally per `docs/project-management/sprint-plan.md`.
+> Status: **Phase 2 — identity & organization done.** JWT authentication with
+> refresh rotation, RBAC, tenant-scoped tenants/departments/memberships and
+> integration tests are implemented and green. Business features
+> (procurement and beyond) land incrementally per
+> `docs/project-management/sprint-plan.md`.
 
 ## Business problem
 
@@ -68,11 +70,12 @@ API docs (backend running): `http://localhost:8080/swagger-ui.html`
 
 Full picture in `docs/testing/strategy.md`. Phase 1 gates:
 
-- Backend: `cd backend && ./mvnw verify` (unit + ArchUnit + JaCoCo report)
+- Backend: `cd backend && ./mvnw verify` (unit + Testcontainers integration
+  + ArchUnit + JaCoCo report)
 - Frontend unit: `cd frontend && npm test` (Vitest)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-- Integration tests (Testcontainers + PostgreSQL) arrive with the first
-  persistence feature in Phase 2.
+- Integration tests (Testcontainers + PostgreSQL) cover auth flows and
+  tenant isolation since Phase 2; each new repository adds its own.
 
 ## AI architecture
 

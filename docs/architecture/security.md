@@ -34,8 +34,11 @@
   `docs/security/secrets.md`); `.env` is git-ignored and CI uses
   repository secrets.
 
-## Phase 1 state
+## Phase 2 state
 
-`spring-boot-starter-security` is on the classpath (fails closed with a
-generated password until the filter chain lands). Real login, RBAC and
-tenant filters are the Identity & Access epic (Phase 2).
+Login, registration (which provisions or joins a workspace), single-use
+refresh rotation with theft detection, BCrypt-12 hashing, method-level RBAC
+and the tenant propagation filter are implemented and covered by
+integration tests. The JWT secret refuses to boot under 64 characters.
+OAuth2/social login stays out of scope; refresh via HttpOnly cookie (web)
+versus body token (mobile) is decided with the first client.

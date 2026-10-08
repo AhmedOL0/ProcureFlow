@@ -33,8 +33,12 @@ Plus `shared/kernel` (events, base types) and `shared/multitenancy`
 
 - One aggregate root per transaction; money-moving code locks rows
   (`SELECT ... FOR UPDATE`) and is covered by a concurrency test.
-- Repository interfaces (ports) live in `domain`; Spring Data
-  implementations live in `infrastructure`.
+- Repository interfaces live in `infrastructure` next to their adapters;
+  a module's application services call their own module's repositories
+  directly. Cross-module access goes through application-layer ports that
+  exchange ids and DTOs, never entities; cross-module JPA associations are
+  attached by id (`EntityManager.getReference`), never by loading foreign
+  aggregates.
 - Controllers are thin: validate input, call one use case, map the result.
   Business rules never live in controllers.
 - New modules start as a `package-info.java` reserving the namespace;

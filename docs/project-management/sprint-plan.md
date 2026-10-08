@@ -5,10 +5,11 @@ Repo, module boundaries, V1 schema, AI port, compose stack, CI skeletons,
 ADRs, backlog. Gates: backend `verify` green, frontend build + Vitest +
 Playwright smoke green.
 
-## Phase 2 — Identity & Organization
+## Phase 2 — Identity & Organization (done)
 Epics 1-2. JWT + refresh rotation, RBAC, tenant filter + `TenantContext`
 wiring, registration, departments, memberships. First Testcontainers
-integration tests + cross-tenant negatives.
+integration tests + cross-tenant negatives. Gates green
+(`mvn verify`: 10 unit/arch + 13 integration).
 
 ## Phase 3 — Procurement core
 Epics 3-4 (+7 lite). Suppliers, purchase requests with idempotent submit,
