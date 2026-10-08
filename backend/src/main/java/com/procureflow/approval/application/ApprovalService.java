@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,7 @@ public class ApprovalService {
     private final ApprovalAssignmentRepository assignments;
     private final RequestDecisionPort requests;
     private final BudgetReservationPort budgets;
+    private final ApplicationEventPublisher events;
     private final TenantProvisioning tenants;
 
     public ApprovalService(
@@ -52,6 +54,7 @@ public class ApprovalService {
             ApprovalAssignmentRepository assignments,
             RequestDecisionPort requests,
             BudgetReservationPort budgets,
+            ApplicationEventPublisher events,
             TenantProvisioning tenants) {
         this.decisions = decisions;
         this.delegations = delegations;
@@ -60,6 +63,7 @@ public class ApprovalService {
         this.assignments = assignments;
         this.requests = requests;
         this.budgets = budgets;
+        this.events = events;
         this.tenants = tenants;
     }
 
@@ -95,6 +99,8 @@ public class ApprovalService {
             if (approved) {
                 budgets.reserve(tenantSlug, requestId, locked.totalMinor(), locked.currency());
             }
+            events.publishEvent(PurchaseRequestDecided.now(
+                    tenantSlug, requestId, locked.requesterId(), deciderId, approved, comment));
             return decision;
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("ALREADY_DECIDED", "This request already has a decision");
