@@ -4,10 +4,11 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 4 done — Money governance** (branches `feature/approval-workflow`,
-`feature/budget-management`, `feature/notifications`, merged into
-`feature/approval-workflow` for one PR). **Next: Phase 5 — Payables**
-(`feature/purchase-orders`, `feature/invoicing`, `feature/audit-compliance`).
+**Phase 5 done — Payables** (branches `feature/purchase-orders`,
+`feature/invoicing`, `feature/audit-compliance`, merged into
+`feature/purchase-orders` for one PR). **Next: Phase 6 — Intelligence +
+hardening** (`feature/analytics`, `feature/ai-copilot`,
+`feature/quality-testing`, `feature/devops-observability`).
 
 ## Completed
 
@@ -70,21 +71,40 @@ Live state of the project. Update after every meaningful change.
   expiry, cross-tenant throughout). Full gate 70/70 green (60 IT + 10 unit/arch).
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
+### Phase 5 — Payables (on `feature/purchase-orders`, awaiting PR)
+- Orders: V9 (`purchase_orders` with unique request link + mandatory
+  supplier, `purchase_order_items` snapshotted with received tracking).
+  Creation from APPROVED only; send flips the request ORDERED in the same
+  tx; receipt accumulates per line to RECEIVED; supplier delete consults the
+  explicit order reference guard (409).
+- Invoicing: V10 (invoices with per-tenant unique numbers, lines by
+  order-line id, payments). Booking locks the order row; cumulative
+  invoiced per line never exceeds ordered (409); payments walk
+  UNPAID → PARTIAL → PAID with overpay rejected; GET carries the
+  ordered/received/invoiced match.
+- Audit: V11 (`audit_events`, append-only). `AuditTrailLogged` events from
+  decide, order transitions, invoice create/pay, budget create/delete;
+  persisted AFTER_COMMIT in a fresh tx wrapped in catch-and-log — audit
+  failure never fails business work. Reads are `audit:read` admin-only.
+- Cancel now also accepts APPROVED requests (releases the budget hold).
+- Tests: 8× OrderIT, 7× InvoiceIT, 5× AuditIT (approved-only, snapshot
+  fidelity, races, 3-way match, payment walk, admin-only reads,
+  cross-tenant throughout). Full gate 90/90 green (80 IT + 10 unit/arch).
+- Typegen regenerated; frontend build + Vitest + Playwright green.
+
 ## In progress
 
-- Phase 4 PR (`feature/approval-workflow` → `main`): assembled, gates green,
-  awaiting user review + PR creation (no `gh` on this machine — open via the
-  compare URL).
+- Phase 5 PR (`feature/purchase-orders` → `main`): assembled, gates green,
+  awaiting user review + PR creation.
 
-## Next up (Phase 5 — Payables)
+## Next up (Phase 6 — Intelligence + hardening)
 
-1. `feature/purchase-orders`: orders from APPROVED requests only, item
-   snapshot, mandatory supplier link, lifecycle; explicit supplier reference
-   guard (409) replacing the constraint-violation fallback.
-2. `feature/invoicing`: invoices on orders, 3-way-match-lite, UNPAID/PARTIAL/PAID.
-3. `feature/audit-compliance`: append-only `audit_events`, never fail the
-   observed tx, admin read endpoint.
-4. `feature/frontend-auth`: still parallel-trackable (needs the
+1. `feature/analytics`: read-only spend/supplier/lead-time KPIs over existing data.
+2. `feature/ai-copilot`: Groq adapter behind `AiProvider`, prompt library,
+   metered copilot Q&A / extraction / quotation intel.
+3. `feature/quality-testing`: coverage floors, full E2E journeys, perf budgets.
+4. `feature/devops-observability`: domain+AI metrics, alerts, Terraform decision.
+5. `feature/frontend-auth`: still parallel-trackable (needs the
    Material-vs-bespoke decision first).
 
 ## Architecture decisions (supplementing docs/decisions)
