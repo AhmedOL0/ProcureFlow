@@ -15,6 +15,7 @@ public interface RequestDecisionPort {
     /** Applies APPROVED/REJECTED plus decidedAt; call while holding the lock in the same transaction. */
     void applyDecision(String tenantSlug, UUID requestId, boolean approved);
 
-    record LockedRequest(UUID requestId, String status) {
+    /** The locked request as plain values: status name, owning requester, and item total in minor units. */
+    record LockedRequest(UUID requestId, String status, UUID requesterId, long totalMinor) {
     }
 }

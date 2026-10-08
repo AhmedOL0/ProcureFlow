@@ -16,11 +16,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -35,6 +37,12 @@ class ApprovalIT extends AbstractIntegrationTest {
     @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @Autowired
+    private com.procureflow.approval.application.ApprovalService approvals;
 
     @Test
     void approverApprovesSubmittedRequest() {
@@ -206,6 +214,102 @@ class ApprovalIT extends AbstractIntegrationTest {
                 get("/api/v1/approvals/decisions?requestId=" + request, tenantB.token(), String.class).getStatusCode());
     }
 
+    @Test
+    void assignedApproverDecidesButOutsiderCannot() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        Fixture first = join(admin.slug());
+        Fixture second = join(admin.slug());
+        UUID workflow = createWorkflow(admin.token(), "Standard", 0L, null, 3);
+        addStep(admin.token(), workflow, 1, first.userId(), HttpStatus.CREATED);
+        addStep(admin.token(), workflow, 2, second.userId(), HttpStatus.CREATED);
+
+        UUID request = submitted(admin);
+        assertEquals(
+                HttpStatus.FORBIDDEN, decide(second.token(), request, "APPROVED", null).getStatusCode());
+        assertEquals(HttpStatus.CREATED, decide(first.token(), request, "APPROVED", null).getStatusCode());
+
+        ResponseEntity<Map> state =
+                get("/api/v1/approvals/state?requestId=" + request, admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, state.getStatusCode());
+        assertNotNull(state.getBody());
+        assertEquals(1, ((Number) state.getBody().get("stepOrder")).intValue());
+        assertEquals(Boolean.FALSE, state.getBody().get("escalated"));
+    }
+
+    @Test
+    void escalationHandsAnOverdueRequestToTheNextLevel() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        Fixture first = join(admin.slug());
+        Fixture second = join(admin.slug());
+        UUID workflow = createWorkflow(admin.token(), "Standard", 0L, null, 3);
+        addStep(admin.token(), workflow, 1, first.userId(), HttpStatus.CREATED);
+        addStep(admin.token(), workflow, 2, second.userId(), HttpStatus.CREATED);
+
+        UUID request = submitted(admin);
+        attach(admin.token(), request);
+        backdateDueAt(request);
+
+        assertEquals(
+                HttpStatus.FORBIDDEN, decide(first.token(), request, "APPROVED", null).getStatusCode());
+        assertEquals(HttpStatus.CREATED, decide(second.token(), request, "APPROVED", null).getStatusCode());
+
+        UUID another = submitted(admin);
+        attach(admin.token(), another);
+        backdateDueAt(another);
+        assertEquals(1, approvals.escalateOverdue(Instant.now()));
+        ResponseEntity<Map> state = get("/api/v1/approvals/state?requestId=" + another, admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, state.getStatusCode());
+        assertNotNull(state.getBody());
+        assertEquals(2, ((Number) state.getBody().get("stepOrder")).intValue());
+        assertEquals(Boolean.TRUE, state.getBody().get("escalated"));
+    }
+
+    @Test
+    void unmatchedRequestsKeepTheLegacyApproverRule() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        createWorkflow(admin.token(), "Huge only", 99999999L, null, 3);
+
+        UUID request = submitted(admin);
+        assertEquals(HttpStatus.CREATED, decide(admin.token(), request, "APPROVED", null).getStatusCode());
+
+        ResponseEntity<String> state =
+                get("/api/v1/approvals/state?requestId=" + request, admin.token(), String.class);
+        assertEquals(HttpStatus.NOT_FOUND, state.getStatusCode());
+    }
+
+    @Test
+    void workflowsAreInvisibleAcrossTenants() {
+        Fixture tenantA = provision(uniqueSlug("acme"));
+        Fixture tenantB = provision(uniqueSlug("globex"));
+        UUID workflow = createWorkflow(tenantA.token(), "Standard", 0L, null, 3);
+
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                get("/api/v1/approvals/workflows/" + workflow + "/steps", tenantB.token(), String.class)
+                        .getStatusCode());
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                addStepRaw(tenantB.token(), workflow, Map.of("stepOrder", 1, "approverId", tenantA.userId()))
+                        .getStatusCode());
+    }
+
+    @Test
+    void workflowAndStepRulesAreValidated() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        Fixture stranger = provision(uniqueSlug("globex"));
+        UUID workflow = createWorkflow(admin.token(), "Standard", 0L, null, 3);
+
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                addStepRaw(admin.token(), workflow, Map.of("stepOrder", 1, "approverId", stranger.userId()))
+                        .getStatusCode());
+        addStep(admin.token(), workflow, 1, admin.userId(), HttpStatus.CREATED);
+        assertEquals(
+                HttpStatus.CONFLICT,
+                addStepRaw(admin.token(), workflow, Map.of("stepOrder", 1, "approverId", admin.userId()))
+                        .getStatusCode());
+    }
+
     private Fixture provision(String slug) {
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",
@@ -288,6 +392,54 @@ class ApprovalIT extends AbstractIntegrationTest {
 
     private <T> ResponseEntity<T> post(String url, String token, Object body, Class<T> type) {
         return rest.exchange(url, HttpMethod.POST, new HttpEntity<>(body, bearer(token)), type);
+    }
+
+    private UUID createWorkflow(String token, String name, long min, Long max, int days) {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("name", name);
+        body.put("minAmountMinor", min);
+        if (max != null) {
+            body.put("maxAmountMinor", max);
+        }
+        body.put("escalateAfterDays", days);
+        ResponseEntity<Map> response = rest.exchange(
+                "/api/v1/approvals/workflows", HttpMethod.POST, new HttpEntity<>(body, bearer(token)), Map.class);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        return UUID.fromString(response.getBody().get("id").toString());
+    }
+
+    private void addStep(String token, UUID workflow, int order, UUID approver, HttpStatus expected) {
+        assertEquals(
+                expected,
+                addStepRaw(token, workflow, Map.of("stepOrder", order, "approverId", approver)).getStatusCode());
+    }
+
+    private ResponseEntity<Map> addStepRaw(String token, UUID workflow, Object body) {
+        return rest.exchange(
+                "/api/v1/approvals/workflows/" + workflow + "/steps",
+                HttpMethod.POST,
+                new HttpEntity<>(body, bearer(token)),
+                Map.class);
+    }
+
+    private void attach(String token, UUID requestId) {
+        ResponseEntity<Map> response = rest.exchange(
+                "/api/v1/approvals/assignments",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("requestId", requestId), bearer(token)),
+                Map.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(Boolean.TRUE, response.getBody().get("assigned"));
+    }
+
+    private void backdateDueAt(UUID requestId) {
+        int updated = jdbc.update(
+                "UPDATE approval_assignments SET due_at = ? WHERE request_id = ?",
+                java.sql.Timestamp.from(Instant.now().minusSeconds(3600)),
+                requestId);
+        assertEquals(1, updated);
     }
 
     private record Fixture(String slug, String token, UUID userId) {

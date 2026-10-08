@@ -1,6 +1,7 @@
 package com.procureflow.procurement.application;
 
 import com.procureflow.procurement.domain.PurchaseRequest;
+import com.procureflow.procurement.domain.PurchaseRequestItem;
 import com.procureflow.procurement.infrastructure.PurchaseRequestRepository;
 import com.procureflow.shared.web.ApiException;
 import java.time.Instant;
@@ -24,7 +25,10 @@ public class RequestDecisionAdapter implements RequestDecisionPort {
         PurchaseRequest request = requests
                 .lockByIdAndTenantSlug(requestId, tenantSlug)
                 .orElseThrow(() -> ApiException.notFound("REQUEST_NOT_FOUND", "Purchase request not found"));
-        return new LockedRequest(request.getId(), request.getStatus().name());
+        long total = request.getItems() == null
+                ? 0L
+                : request.getItems().stream().mapToLong(PurchaseRequestItem::lineTotalMinor).sum();
+        return new LockedRequest(request.getId(), request.getStatus().name(), request.getRequester().getId(), total);
     }
 
     @Override
