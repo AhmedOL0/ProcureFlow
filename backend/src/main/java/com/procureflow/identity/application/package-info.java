@@ -1,2 +1,2 @@
-/** Identity application layer: authentication and user-management use cases (Phase 2). Depends only on domain + ports. */
+/** Identity application layer: authentication and user-management use cases. Depends on own repositories and cross-module ports. */
 package com.procureflow.identity.application;

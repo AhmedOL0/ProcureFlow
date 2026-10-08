@@ -1,2 +1,2 @@
-/** Identity API layer: REST controllers + request/response DTOs (Phase 2). May call application use cases only, never infrastructure directly. */
+/** Identity API layer: REST controllers + request/response DTOs. May call application use cases only, never infrastructure directly. */
 package com.procureflow.identity.api;

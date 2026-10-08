@@ -68,8 +68,16 @@ public class Department {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public Department getParent() {
         return parent;
+    }
+
+    public void setParent(Department parent) {
+        this.parent = parent;
     }
 
     public Instant getCreatedAt() {
