@@ -10,6 +10,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -192,6 +193,18 @@ class AuthFlowIT extends AbstractIntegrationTest {
         ResponseEntity<String> after = rest.postForEntity(
                 "/api/v1/auth/refresh", Map.of("refreshToken", auth.refreshToken()), String.class);
         assertEquals(HttpStatus.UNAUTHORIZED, after.getStatusCode());
+    }
+
+    @Test
+    void malformedJsonIs400Not500() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+        ResponseEntity<String> response = rest.postForEntity(
+                "/api/v1/auth/login", new HttpEntity<>("{not-json", headers), String.class);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("MALFORMED_JSON"));
     }
 
     private AuthResponse register(String tenantSlug, String email) {
