@@ -1,0 +1,12 @@
+#!/bin/sh
+# Minimal Maven Wrapper launcher — run from the backend/ directory.
+# Resolves the Maven distribution declared in .mvn/wrapper/maven-wrapper.properties
+# and caches it under ~/.m2/wrapper on first run (network required once).
+set -eu
+WRAPPER_JAR="$(dirname "$0")/.mvn/wrapper/maven-wrapper.jar"
+if [ ! -f "$WRAPPER_JAR" ]; then
+  echo "error: Maven wrapper jar not found at $WRAPPER_JAR" >&2
+  exit 1
+fi
+PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+exec java "-Dmaven.multiModuleProjectDirectory=$PROJECT_DIR" -classpath "$WRAPPER_JAR" org.apache.maven.wrapper.MavenWrapperMain "$@"

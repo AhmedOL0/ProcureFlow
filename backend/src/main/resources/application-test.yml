@@ -1,0 +1,23 @@
+# Test profile for Testcontainers-based integration tests (Phase 2+).
+# The container URL/user/password are injected by the test bootstrap;
+# Flyway migrates the schema so tests run against the real migration chain.
+server:
+  port: 0
+
+spring:
+  datasource:
+    url: ${TESTCONTAINERS_JDBC_URL:jdbc:tc:postgresql:16-alpine:///procureflow-test}
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+
+logging:
+  level:
+    com.procureflow: INFO

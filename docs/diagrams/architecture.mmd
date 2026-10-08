@@ -1,0 +1,31 @@
+%% ProcureFlow system context (Mermaid source). Render with any Mermaid
+%% renderer; keep in sync with docs/architecture/overview.md.
+flowchart TB
+  subgraph Client
+    SPA[Angular SPA<br/>auth interceptor, lazy features]
+  end
+  subgraph Edge
+    NGINX[nginx<br/>SPA static server]
+    TLS[TLS termination]
+  end
+  subgraph Backend["Spring Boot modular monolith"]
+    API[REST /api/v1]
+    MODS[identity / organization / supplier<br/>procurement / approval / budget<br/>purchaseorder / invoice<br/>notification / audit / analytics / ai]
+    EV[Domain events<br/>in-process now, RabbitMQ later]
+  end
+  subgraph Data
+    PG[(PostgreSQL 16<br/>Flyway, tenant rows)]
+    REDIS[(Redis 7<br/>cache, rate limit)]
+    RMQ[RabbitMQ 3<br/>async transport]
+  end
+  EXT[Groq API<br/>via ai module only]
+  OBS[Prometheus + Grafana]
+
+  SPA --> TLS --> NGINX
+  NGINX --> API
+  API --> MODS
+  MODS --> EV --> RMQ
+  MODS --> PG
+  API --> REDIS
+  MODS --> EXT
+  API --> OBS

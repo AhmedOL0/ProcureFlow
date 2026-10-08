@@ -1,0 +1,14 @@
+# Local development profile. Run with `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`
+# or set SPRING_PROFILES_ACTIVE=dev. Requires the compose stack (postgres/redis/rabbitmq).
+spring:
+  jpa:
+    show-sql: false
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false # no listeners in Phase 1; avoids blocking on a missing broker
+
+logging:
+  level:
+    com.procureflow: DEBUG
+    org.hibernate.SQL: WARN

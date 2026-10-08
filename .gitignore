@@ -1,0 +1,56 @@
+# ============================================================
+# ProcureFlow — global ignores
+# ============================================================
+
+# ---- OS / editors ----
+.DS_Store
+Thumbs.db
+.idea/
+**/.vscode/*
+!**/.vscode/extensions.json
+*.iml
+
+# ---- Secrets / local env ----
+.env
+!.env.example
+*.pem
+*.key
+
+# ---- Java / Maven ----
+target/
+*.class
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+!**/.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/MavenWrapperDownloader.java
+
+# ---- Node / Angular ----
+node_modules/
+dist/
+.angular/
+*.log
+
+# ---- Playwright ----
+test-results/
+playwright-report/
+playwright/.auth/
+
+# ---- Python / misc tooling ----
+__pycache__/
+.venv/
+
+# ---- Docker ----
+.docker/
+
+# ---- Terraform ----
+infrastructure/terraform/.terraform/
+infrastructure/terraform/*.tfstate
+infrastructure/terraform/*.tfstate.backup
+infrastructure/terraform/*.tfvars
+!infrastructure/terraform/*.tfvars.example
+infrastructure/terraform/.terraform.lock.hcl
+
+# ---- Monitoring local data ----
+infrastructure/monitoring/prometheus/data/
+infrastructure/monitoring/grafana/data/

@@ -1,0 +1,62 @@
+# ProcureFlow — shared defaults. Every value that differs per environment
+# lives in application-dev.yml / application-test.yml or in env vars.
+# Local secrets come from `.env` (see .env.example); never commit them.
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: procureflow
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/procureflow}
+    username: ${SPRING_DATASOURCE_USERNAME:procureflow}
+    password: ${SPRING_DATASOURCE_PASSWORD:change-me}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:procureflow}
+    password: ${RABBITMQ_PASSWORD:change-me}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  jwt:
+    # Production MUST set JWT_SECRET (>=64 chars). The identity epic adds
+    # startup validation that refuses to boot on placeholder values.
+    secret: ${JWT_SECRET:change-me-min-64-chars-for-hs512-signing-key-please-rotate-me}
+    expiration-ms: ${JWT_EXPIRATION_MS:900000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  ai:
+    enabled: ${AI_ENABLED:false}
+    groq:
+      api-key: ${GROQ_API_KEY:}
+      model: ${GROQ_MODEL:llama-3.3-70b-versatile}
