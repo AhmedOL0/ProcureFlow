@@ -7,7 +7,8 @@ Rules for AI coding agents on this repository. Commands, not suggestions.
 - Work incrementally with the context files as the system of record:
   `project-overview.md` (what), `architecture.md` (how it fits),
   `code-standards.md` + `ui-context.md` (rules), `progress-tracker.md`
-  (state). Implement against these files; resolve ambiguity in the right
+  (state). Root `AGENTS.md` is the deep reference (commands, patterns,
+  gotchas, file map) and must stay in sync with these files. Implement against these files; resolve ambiguity in the right
   file before coding, never by guessing.
 
 ## Git workflow (best practices, enforced)
