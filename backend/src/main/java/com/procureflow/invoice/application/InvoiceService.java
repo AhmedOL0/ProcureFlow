@@ -9,12 +9,14 @@ import com.procureflow.invoice.infrastructure.InvoiceRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.purchaseorder.application.InvoiceOrderPort;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.audit.application.AuditTrailLogged;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,22 +35,25 @@ public class InvoiceService {
     private final InvoicePaymentRepository payments;
     private final InvoiceOrderPort orders;
     private final TenantProvisioning tenants;
+    private final ApplicationEventPublisher events;
 
     public InvoiceService(
             InvoiceRepository invoices,
             InvoiceLineRepository lines,
             InvoicePaymentRepository payments,
             InvoiceOrderPort orders,
-            TenantProvisioning tenants) {
+            TenantProvisioning tenants,
+            ApplicationEventPublisher events) {
         this.invoices = invoices;
         this.lines = lines;
         this.payments = payments;
         this.orders = orders;
         this.tenants = tenants;
+        this.events = events;
     }
 
     @Transactional
-    public Invoice create(String tenantSlug, UUID orderId, String number, List<LineInput> inputs) {
+    public Invoice create(String tenantSlug, UUID actorId, UUID orderId, String number, List<LineInput> inputs) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         if (number == null || number.isBlank()) {
             throw ApiException.badRequest("NUMBER_REQUIRED", "Invoice number is required");
@@ -91,6 +96,10 @@ public class InvoiceService {
                         invoice, input.orderItemId(), input.quantity(), orderLine.unitPriceMinor(),
                         orderLine.currency()));
             }
+            events.publishEvent(AuditTrailLogged.now(
+                    tenantSlug, actorId, "INVOICE_CREATED", "invoice", invoice.getId(), null,
+                    Map.of("number", invoice.getNumber(), "totalMinor", invoice.getTotalMinor(),
+                            "status", "UNPAID")));
             return invoice;
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("DUPLICATE_NUMBER", "This invoice number already exists");
@@ -131,7 +140,7 @@ public class InvoiceService {
     }
 
     @Transactional
-    public Invoice pay(String tenantSlug, UUID id, long amountMinor) {
+    public Invoice pay(String tenantSlug, UUID actorId, UUID id, long amountMinor) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         if (amountMinor < 1) {
             throw ApiException.badRequest("INVALID_AMOUNT", "Payment amount must be positive");
@@ -143,9 +152,15 @@ public class InvoiceService {
         if (paid + amountMinor > invoice.getTotalMinor()) {
             throw ApiException.conflict("OVERPAID", "Payment exceeds the invoice total");
         }
+        String before = invoice.getStatus().name();
         payments.save(new InvoicePayment(invoice, amountMinor));
         invoice.applyPayments(paid + amountMinor);
-        return invoices.save(invoice);
+        invoices.save(invoice);
+        events.publishEvent(AuditTrailLogged.now(
+                tenantSlug, actorId, "INVOICE_PAID", "invoice", invoice.getId(),
+                Map.of("status", before, "paidMinor", paid),
+                Map.of("status", invoice.getStatus().name(), "paidMinor", paid + amountMinor)));
+        return invoice;
     }
 
     private Invoice scoped(String tenantSlug, UUID id) {

@@ -9,12 +9,15 @@ import com.procureflow.approval.infrastructure.ApprovalDecisionRepository;
 import com.procureflow.approval.infrastructure.ApprovalDelegationRepository;
 import com.procureflow.approval.infrastructure.ApprovalStepRepository;
 import com.procureflow.approval.infrastructure.ApprovalWorkflowRepository;
+import com.procureflow.audit.application.AuditTrailLogged;
 import com.procureflow.budget.application.BudgetReservationPort;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.procurement.application.RequestDecisionPort;
 import com.procureflow.shared.web.ApiException;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
@@ -101,6 +104,15 @@ public class ApprovalService {
             }
             events.publishEvent(PurchaseRequestDecided.now(
                     tenantSlug, requestId, locked.requesterId(), deciderId, approved, comment));
+            Map<String, Object> after = new HashMap<>();
+            after.put("status", approved ? "APPROVED" : "REJECTED");
+            after.put("deciderId", deciderId.toString());
+            if (comment != null) {
+                after.put("comment", comment);
+            }
+            events.publishEvent(AuditTrailLogged.now(
+                    tenantSlug, deciderId, "REQUEST_DECIDED", "purchase_request", requestId,
+                    Map.of("status", "SUBMITTED"), after));
             return decision;
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("ALREADY_DECIDED", "This request already has a decision");

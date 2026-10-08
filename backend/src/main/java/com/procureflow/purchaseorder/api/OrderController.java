@@ -41,7 +41,8 @@ public class OrderController {
     @Operation(summary = "Start a draft order from one approved request")
     public ResponseEntity<OrderResponse> create(
             @AuthenticationPrincipal AuthenticatedUser principal, @Valid @RequestBody CreateOrderRequest request) {
-        PurchaseOrder order = orders.create(principal.tenantId(), request.requestId(), request.supplierId());
+        PurchaseOrder order = orders.create(
+                principal.tenantId(), principal.userId(), request.requestId(), request.supplierId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(OrderResponse.from(order, orders.lines(principal.tenantId(), order.getId())));
     }
@@ -73,7 +74,7 @@ public class OrderController {
     @Operation(summary = "Send a draft order (request becomes ORDERED)")
     public ResponseEntity<OrderResponse> send(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
-        PurchaseOrder order = orders.send(principal.tenantId(), id);
+        PurchaseOrder order = orders.send(principal.tenantId(), principal.userId(), id);
         return ResponseEntity.ok(OrderResponse.from(order, orders.lines(principal.tenantId(), id)));
     }
 
@@ -86,6 +87,7 @@ public class OrderController {
             @Valid @RequestBody ReceiveRequest request) {
         PurchaseOrder order = orders.receive(
                 principal.tenantId(),
+                principal.userId(),
                 id,
                 request.lines().stream()
                         .map(line -> new OrderService.Receipt(line.itemId(), line.quantity()))
@@ -98,7 +100,7 @@ public class OrderController {
     @Operation(summary = "Close a fully received order")
     public ResponseEntity<OrderResponse> close(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
-        PurchaseOrder order = orders.close(principal.tenantId(), id);
+        PurchaseOrder order = orders.close(principal.tenantId(), principal.userId(), id);
         return ResponseEntity.ok(OrderResponse.from(order, orders.lines(principal.tenantId(), id)));
     }
 
@@ -107,7 +109,7 @@ public class OrderController {
     @Operation(summary = "Cancel a draft or sent order")
     public ResponseEntity<OrderResponse> cancel(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
-        PurchaseOrder order = orders.cancel(principal.tenantId(), id);
+        PurchaseOrder order = orders.cancel(principal.tenantId(), principal.userId(), id);
         return ResponseEntity.ok(OrderResponse.from(order, orders.lines(principal.tenantId(), id)));
     }
 }

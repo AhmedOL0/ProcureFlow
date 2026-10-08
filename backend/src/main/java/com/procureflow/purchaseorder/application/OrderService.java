@@ -8,8 +8,11 @@ import com.procureflow.purchaseorder.infrastructure.OrderItemRepository;
 import com.procureflow.purchaseorder.infrastructure.PurchaseOrderRepository;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.supplier.application.SupplierLookup;
+import com.procureflow.audit.application.AuditTrailLogged;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,22 +31,25 @@ public class OrderService {
     private final OrderSourcePort requests;
     private final SupplierLookup suppliers;
     private final TenantProvisioning tenants;
+    private final ApplicationEventPublisher events;
 
     public OrderService(
             PurchaseOrderRepository orders,
             OrderItemRepository lines,
             OrderSourcePort requests,
             SupplierLookup suppliers,
-            TenantProvisioning tenants) {
+            TenantProvisioning tenants,
+            ApplicationEventPublisher events) {
         this.orders = orders;
         this.lines = lines;
         this.requests = requests;
         this.suppliers = suppliers;
         this.tenants = tenants;
+        this.events = events;
     }
 
     @Transactional
-    public PurchaseOrder create(String tenantSlug, UUID requestId, UUID supplierId) {
+    public PurchaseOrder create(String tenantSlug, UUID actorId, UUID requestId, UUID supplierId) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         if (!suppliers.existsInTenant(supplierId, tenantSlug)) {
             throw ApiException.notFound("SUPPLIER_NOT_FOUND", "Supplier not found");
@@ -67,6 +73,9 @@ public class OrderService {
                         line.unitPriceMinor(),
                         line.currency()));
             }
+            events.publishEvent(AuditTrailLogged.now(
+                    tenantSlug, actorId, "ORDER_CREATED", "purchase_order", order.getId(), null,
+                    Map.of("status", "DRAFT", "supplierId", supplierId.toString())));
             return order;
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("ALREADY_ORDERED", "This request already has an order");
@@ -94,7 +103,7 @@ public class OrderService {
     }
 
     @Transactional
-    public PurchaseOrder send(String tenantSlug, UUID id) {
+    public PurchaseOrder send(String tenantSlug, UUID actorId, UUID id) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         PurchaseOrder order = orders
                 .lockByIdAndTenantId(id, tenantId)
@@ -105,15 +114,19 @@ public class OrderService {
         order.setStatus(PurchaseOrder.Status.SENT);
         orders.save(order);
         requests.markOrdered(tenantSlug, order.getRequestId());
+        events.publishEvent(AuditTrailLogged.now(
+                tenantSlug, actorId, "ORDER_SENT", "purchase_order", order.getId(),
+                Map.of("status", "DRAFT"), Map.of("status", "SENT")));
         return order;
     }
 
     @Transactional
-    public PurchaseOrder receive(String tenantSlug, UUID id, List<Receipt> receipts) {
+    public PurchaseOrder receive(String tenantSlug, UUID actorId, UUID id, List<Receipt> receipts) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         PurchaseOrder order = orders
                 .lockByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> ApiException.notFound("ORDER_NOT_FOUND", "Purchase order not found"));
+        String before = order.getStatus().name();
         if (order.getStatus() != PurchaseOrder.Status.SENT
                 && order.getStatus() != PurchaseOrder.Status.PARTIALLY_RECEIVED) {
             throw ApiException.conflict("INVALID_TRANSITION", "Only sent orders receive goods");
@@ -137,27 +150,40 @@ public class OrderService {
         boolean full = lines.findAllByOrder_IdOrderByCreatedAt(order.getId()).stream()
                 .allMatch(OrderItem::isFullyReceived);
         order.setStatus(full ? PurchaseOrder.Status.RECEIVED : PurchaseOrder.Status.PARTIALLY_RECEIVED);
-        return orders.save(order);
+        orders.save(order);
+        events.publishEvent(AuditTrailLogged.now(
+                tenantSlug, actorId, "ORDER_RECEIVED", "purchase_order", order.getId(),
+                Map.of("status", before), Map.of("status", order.getStatus().name(), "lines", receipts.size())));
+        return order;
     }
 
     @Transactional
-    public PurchaseOrder close(String tenantSlug, UUID id) {
+    public PurchaseOrder close(String tenantSlug, UUID actorId, UUID id) {
         PurchaseOrder order = scopedForWrite(tenantSlug, id);
         if (order.getStatus() != PurchaseOrder.Status.RECEIVED) {
             throw ApiException.conflict("INVALID_TRANSITION", "Only received orders can be closed");
         }
         order.setStatus(PurchaseOrder.Status.CLOSED);
-        return orders.save(order);
+        orders.save(order);
+        events.publishEvent(AuditTrailLogged.now(
+                tenantSlug, actorId, "ORDER_CLOSED", "purchase_order", order.getId(),
+                Map.of("status", "RECEIVED"), Map.of("status", "CLOSED")));
+        return order;
     }
 
     @Transactional
-    public PurchaseOrder cancel(String tenantSlug, UUID id) {
+    public PurchaseOrder cancel(String tenantSlug, UUID actorId, UUID id) {
         PurchaseOrder order = scopedForWrite(tenantSlug, id);
         if (order.getStatus() != PurchaseOrder.Status.DRAFT && order.getStatus() != PurchaseOrder.Status.SENT) {
             throw ApiException.conflict("INVALID_TRANSITION", "Only draft or sent orders can be cancelled");
         }
+        String before = order.getStatus().name();
         order.setStatus(PurchaseOrder.Status.CANCELLED);
-        return orders.save(order);
+        orders.save(order);
+        events.publishEvent(AuditTrailLogged.now(
+                tenantSlug, actorId, "ORDER_CANCELLED", "purchase_order", order.getId(),
+                Map.of("status", before), Map.of("status", "CANCELLED")));
+        return order;
     }
 
     private PurchaseOrder scoped(String tenantSlug, UUID id) {

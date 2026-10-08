@@ -42,6 +42,7 @@ public class InvoiceController {
             @AuthenticationPrincipal AuthenticatedUser principal, @Valid @RequestBody CreateInvoiceRequest request) {
         Invoice invoice = invoices.create(
                 principal.tenantId(),
+                principal.userId(),
                 request.orderId(),
                 request.number(),
                 request.lines().stream()
@@ -77,7 +78,7 @@ public class InvoiceController {
             @AuthenticationPrincipal AuthenticatedUser principal,
             @PathVariable UUID id,
             @Valid @RequestBody PayInvoiceRequest request) {
-        Invoice paid = invoices.pay(principal.tenantId(), id, request.amountMinor());
+        Invoice paid = invoices.pay(principal.tenantId(), principal.userId(), id, request.amountMinor());
         return ResponseEntity.ok(InvoiceResponse.from(invoices.match(principal.tenantId(), paid.getId())));
     }
 }
