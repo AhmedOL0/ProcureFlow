@@ -6,12 +6,15 @@ import com.procureflow.budget.infrastructure.BudgetRepository;
 import com.procureflow.budget.infrastructure.BudgetReservationRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.audit.application.AuditTrailLogged;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +34,17 @@ public class BudgetService implements BudgetReservationPort {
     private final BudgetRepository budgets;
     private final BudgetReservationRepository reservations;
     private final TenantProvisioning tenants;
+    private final ApplicationEventPublisher events;
 
     public BudgetService(
-            BudgetRepository budgets, BudgetReservationRepository reservations, TenantProvisioning tenants) {
+            BudgetRepository budgets,
+            BudgetReservationRepository reservations,
+            TenantProvisioning tenants,
+            ApplicationEventPublisher events) {
         this.budgets = budgets;
         this.reservations = reservations;
         this.tenants = tenants;
+        this.events = events;
     }
 
     @Override
@@ -81,7 +89,8 @@ public class BudgetService implements BudgetReservationPort {
     }
 
     @Transactional
-    public Budget create(String tenantSlug, String name, String period, long amountMinor, String currency) {
+    public Budget create(String tenantSlug, UUID actorId, String name, String period, long amountMinor,
+            String currency) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         if (name == null || name.isBlank()) {
             throw ApiException.badRequest("NAME_REQUIRED", "Budget name is required");
@@ -95,7 +104,11 @@ public class BudgetService implements BudgetReservationPort {
             throw ApiException.badRequest("INVALID_CURRENCY", "Currency must be a 3-letter ISO code");
         }
         try {
-            return budgets.saveAndFlush(new Budget(tenantId, name.trim(), period, amountMinor, code));
+            Budget budget = budgets.saveAndFlush(new Budget(tenantId, name.trim(), period, amountMinor, code));
+            events.publishEvent(AuditTrailLogged.now(
+                    tenantSlug, actorId, "BUDGET_CREATED", "budget", budget.getId(), null,
+                    Map.of("name", budget.getName(), "period", period, "amountMinor", amountMinor)));
+            return budget;
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("BUDGET_EXISTS", "A budget with this name already exists for the period");
         }
@@ -123,12 +136,15 @@ public class BudgetService implements BudgetReservationPort {
     }
 
     @Transactional
-    public void delete(String tenantSlug, UUID id) {
+    public void delete(String tenantSlug, UUID actorId, UUID id) {
         Budget budget = scoped(tenantSlug, id);
         if (reservations.existsByBudgetId(budget.getId())) {
             throw ApiException.conflict("BUDGET_IN_USE", "This budget still holds reservations");
         }
         budgets.delete(budget);
+        events.publishEvent(AuditTrailLogged.now(
+                tenantSlug, actorId, "BUDGET_DELETED", "budget", budget.getId(),
+                Map.of("name", budget.getName(), "period", budget.getPeriod()), null));
     }
 
     @Transactional(readOnly = true)
