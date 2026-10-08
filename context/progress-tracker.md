@@ -4,8 +4,9 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 2 done. Next: Phase 3 — Procurement core**
-(branch: `feature/procurement`, plus `feature/supplier-management`).
+**Phase 3 done (suppliers + procurement + typegen, merged to main).
+Next: Phase 4 — Money governance** (branches: `feature/approval-workflow`,
+`feature/budget-management`, `feature/notifications`).
 
 ## Completed
 
@@ -35,6 +36,20 @@ Live state of the project. Update after every meaningful change.
 ### Context system (this folder)
 - Six files created; anti-slop code + design rules are merge gates.
 
+### Phase 3 — Procurement core (merged to main)
+- Suppliers: tenant-scoped CRUD with search, contacts (single-primary
+  invariant), categories (assign/replace, in-use protection), monthly
+  scorecards. OFFICER role added for operational writes.
+- Purchase requests: draft lifecycle, idempotent create via
+  `Idempotency-Key` (replay answers 200 + `X-Replay`), submit validation,
+  cancel, item CRUD on drafts, supplier links validated per tenant.
+- OpenAPI typegen proven end to end: live backend → `api-types.gen.ts`
+  (26 endpoints), frontend build green with it.
+- Tests: 7× SupplierIT, 7× ProcurementIT (incl. a real two-thread race on
+  one idempotency key → exactly one row). Full suite 38/38 green.
+- Remote: `feature/supplier-management` + `feature/procurement` pushed and
+  merged with `--no-ff`; `main` green.
+
 ## In progress
 
 - Nothing. Awaiting user go-ahead for Phase 3.
@@ -49,6 +64,13 @@ Live state of the project. Update after every meaningful change.
 4. `feature/frontend-auth`: login UI, interceptor, guard (can parallel Phase 3).
 
 ## Architecture decisions (supplementing docs/decisions)
+
+- Hibernate infers no JDBC type for null parameters: optional enum/string
+  filters must branch to dedicated queries (never `IS NULL OR` with null
+  params), and blanks normalize to `""` before `LIKE`.
+- Idempotency races: the loser's transaction is poisoned, so creation is
+  orchestrated outside a transaction (pre-check → isolated REQUIRES_NEW
+  insert → reload-as-replay).
 
 - Angular 21 (not 22): CLI 22 requires Node ≥24.15, machine has 24.14.
 - Spring Boot 3.5.16 (mature line) + Flyway 11.7.2 (needs separate
