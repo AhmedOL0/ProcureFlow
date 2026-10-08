@@ -1,5 +1,6 @@
 package com.procureflow.procurement.application;
 
+import com.procureflow.budget.application.BudgetReservationPort;
 import com.procureflow.procurement.domain.PurchaseRequest;
 import com.procureflow.procurement.domain.PurchaseRequestItem;
 import com.procureflow.procurement.infrastructure.PurchaseRequestItemRepository;
@@ -8,6 +9,7 @@ import com.procureflow.shared.web.ApiException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,16 +29,22 @@ public class PurchaseRequestService {
     private final PurchaseRequestItemRepository items;
     private final PurchaseRequestItemService itemService;
     private final RequestCreator creator;
+    private final BudgetReservationPort budgets;
+    private final ApplicationEventPublisher events;
 
     public PurchaseRequestService(
             PurchaseRequestRepository requests,
             PurchaseRequestItemRepository items,
             PurchaseRequestItemService itemService,
-            RequestCreator creator) {
+            RequestCreator creator,
+            BudgetReservationPort budgets,
+            ApplicationEventPublisher events) {
         this.requests = requests;
         this.items = items;
         this.itemService = itemService;
         this.creator = creator;
+        this.budgets = budgets;
+        this.events = events;
     }
 
     /** Creates a draft or replays the original when the key was already used. */
@@ -98,6 +106,11 @@ public class PurchaseRequestService {
         request.setStatus(PurchaseRequest.Status.SUBMITTED);
         request.setSubmittedAt(Instant.now());
         requests.save(request);
+        long total = items.findAllByRequest_IdOrderByCreatedAt(id).stream()
+                .mapToLong(PurchaseRequestItem::lineTotalMinor)
+                .sum();
+        events.publishEvent(PurchaseRequestSubmitted.now(
+                tenantSlug, id, request.getRequester().getId(), request.getTitle(), total));
         return reloaded(id, tenantSlug);
     }
 
@@ -105,12 +118,18 @@ public class PurchaseRequestService {
     public PurchaseRequest cancel(String tenantSlug, UUID id, UUID callerId, boolean admin) {
         PurchaseRequest request = scoped(tenantSlug, id);
         if (request.getStatus() != PurchaseRequest.Status.DRAFT
-                && request.getStatus() != PurchaseRequest.Status.SUBMITTED) {
-            throw ApiException.conflict("INVALID_TRANSITION", "Only draft or submitted requests can be cancelled");
+                && request.getStatus() != PurchaseRequest.Status.SUBMITTED
+                && request.getStatus() != PurchaseRequest.Status.APPROVED) {
+            throw ApiException.conflict(
+                    "INVALID_TRANSITION", "Only draft, submitted or approved requests can be cancelled");
         }
         requireOwnerOrAdmin(request, callerId, admin);
+        boolean wasApproved = request.getStatus() == PurchaseRequest.Status.APPROVED;
         request.setStatus(PurchaseRequest.Status.CANCELLED);
         requests.save(request);
+        if (wasApproved) {
+            budgets.release(tenantSlug, id);
+        }
         return reloaded(id, tenantSlug);
     }
 

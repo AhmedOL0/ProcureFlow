@@ -127,7 +127,7 @@ public class PurchaseRequestController {
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('procurement:request')")
-    @Operation(summary = "Cancel a draft or submitted request")
+    @Operation(summary = "Cancel a draft, submitted or approved request (approved releases its budget hold)")
     public ResponseEntity<PurchaseRequestResponse> cancel(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
         return ResponseEntity.ok(toResponse(

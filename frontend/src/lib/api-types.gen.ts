@@ -173,7 +173,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Cancel a draft or submitted request */
+        /** Cancel a draft, submitted or approved request (approved releases its budget hold) */
         post: operations["cancel"];
         delete?: never;
         options?: never;
@@ -211,6 +211,24 @@ export interface paths {
         put?: never;
         /** Create a department */
         post: operations["create_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/budgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List pots of the current workspace, newest period first */
+        get: operations["list_5"];
+        put?: never;
+        /** Open a named pot for one month (YYYY-MM) */
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -279,6 +297,95 @@ export interface paths {
         put?: never;
         /** Log in with email and password */
         post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List approval lanes of the current workspace */
+        get: operations["listWorkflows"];
+        put?: never;
+        /** Create an approval lane matching request totals */
+        post: operations["createWorkflow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/workflows/{id}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the ordered levels of one lane */
+        get: operations["listSteps"];
+        put?: never;
+        /** Name an approver for one ordered lane level */
+        post: operations["addStep"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/delegations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List delegations of the current workspace */
+        get: operations["list_6"];
+        put?: never;
+        /** Delegate decide power to a workspace member until endsAt */
+        post: operations["delegate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the decision recorded for one request */
+        get: operations["getForRequest"];
+        put?: never;
+        /** Approve or reject a submitted request (immutable once recorded) */
+        post: operations["decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pin a submitted request to its matching lane (idempotent) */
+        post: operations["attach"];
         delete?: never;
         options?: never;
         head?: never;
@@ -395,6 +502,23 @@ export interface paths {
         patch: operations["update_3"];
         trace?: never;
     };
+    "/api/v1/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark one row read (recipient or workspace admin) */
+        patch: operations["markRead"];
+        trace?: never;
+    };
     "/api/v1/departments/{id}": {
         parameters: {
             query?: never;
@@ -414,6 +538,23 @@ export interface paths {
         patch: operations["rename_2"];
         trace?: never;
     };
+    "/api/v1/approvals/workflows/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, retime or activate/deactivate a lane (null fields unchanged) */
+        patch: operations["updateWorkflow"];
+        trace?: never;
+    };
     "/api/v1/users/{id}": {
         parameters: {
             query?: never;
@@ -423,6 +564,58 @@ export interface paths {
         };
         /** Get one user of the current workspace */
         get: operations["get_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My inbox, newest first */
+        get: operations["inbox"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/budgets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One pot with its reserved and remaining amounts */
+        get: operations["get_4"];
+        put?: never;
+        post?: never;
+        /** Close a pot (refused while holds rest on it) */
+        delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/budgets/{id}/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Holds currently resting on one pot */
+        get: operations["reservations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -448,6 +641,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approvals/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current approval step for one request (404 when no lane matched) */
+        get: operations["state"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/memberships/{id}": {
         parameters: {
             query?: never;
@@ -460,6 +670,40 @@ export interface paths {
         post?: never;
         /** Remove a membership */
         delete: operations["remove_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/workflows/{id}/steps/{stepId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove one lane level */
+        delete: operations["removeStep"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/delegations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a delegation (delegator or workspace admin) */
+        delete: operations["revoke"];
         options?: never;
         head?: never;
         patch?: never;
@@ -631,6 +875,26 @@ export interface components {
             /** Format: uuid */
             parentId?: string;
         };
+        CreateBudgetRequest: {
+            name: string;
+            period: string;
+            /** Format: int64 */
+            amountMinor: number;
+            currency?: string;
+        };
+        BudgetResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            period?: string;
+            /** Format: int64 */
+            amountMinor?: number;
+            currency?: string;
+            /** Format: int64 */
+            reservedMinor?: number;
+            /** Format: int64 */
+            remainingMinor?: number;
+        };
         RegisterRequest: {
             /** Format: email */
             email: string;
@@ -656,6 +920,84 @@ export interface components {
             email: string;
             password: string;
             tenantSlug?: string;
+        };
+        CreateWorkflowRequest: {
+            name: string;
+            /** Format: int64 */
+            minAmountMinor: number;
+            /** Format: int64 */
+            maxAmountMinor?: number;
+            /** Format: int32 */
+            escalateAfterDays?: number;
+        };
+        WorkflowResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: int64 */
+            minAmountMinor?: number;
+            /** Format: int64 */
+            maxAmountMinor?: number;
+            /** Format: int32 */
+            escalateAfterDays?: number;
+            active?: boolean;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        AddStepRequest: {
+            /** Format: int32 */
+            stepOrder?: number;
+            /** Format: uuid */
+            approverId: string;
+        };
+        StepResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: int32 */
+            stepOrder?: number;
+            /** Format: uuid */
+            approverId?: string;
+        };
+        CreateDelegationRequest: {
+            /** Format: uuid */
+            delegateId: string;
+            /** Format: date-time */
+            endsAt: string;
+        };
+        DelegationResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            delegatorId?: string;
+            /** Format: uuid */
+            delegateId?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+        };
+        DecideRequest: {
+            /** Format: uuid */
+            requestId: string;
+            /** @enum {string} */
+            decision: "APPROVED" | "REJECTED";
+            comment?: string;
+        };
+        DecisionResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            requestId?: string;
+            /** Format: uuid */
+            deciderId?: string;
+            decision?: string;
+            comment?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        AttachRequest: {
+            /** Format: uuid */
+            requestId: string;
         };
         UpdateTenantRequest: {
             name: string;
@@ -706,8 +1048,45 @@ export interface components {
             /** Format: uuid */
             supplierId?: string;
         };
+        NotificationResponse: {
+            /** Format: uuid */
+            id?: string;
+            type?: string;
+            title?: string;
+            body?: string;
+            read?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         UpdateDepartmentRequest: {
             name: string;
+        };
+        UpdateWorkflowRequest: {
+            name?: string;
+            /** Format: int32 */
+            escalateAfterDays?: number;
+            active?: boolean;
+        };
+        ReservationResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            requestId?: string;
+            /** Format: int64 */
+            amountMinor?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        AssignmentResponse: {
+            /** Format: uuid */
+            workflowId?: string;
+            /** Format: int32 */
+            stepOrder?: number;
+            /** Format: uuid */
+            approverId?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            escalated?: boolean;
         };
     };
     responses: never;
@@ -1203,6 +1582,52 @@ export interface operations {
             };
         };
     };
+    list_5: {
+        parameters: {
+            query?: {
+                period?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetResponse"][];
+                };
+            };
+        };
+    };
+    create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBudgetRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetResponse"];
+                };
+            };
+        };
+    };
     register: {
         parameters: {
             query?: never;
@@ -1293,6 +1718,214 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AuthResponse"];
+                };
+            };
+        };
+    };
+    listWorkflows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowResponse"][];
+                };
+            };
+        };
+    };
+    createWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowResponse"];
+                };
+            };
+        };
+    };
+    listSteps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StepResponse"][];
+                };
+            };
+        };
+    };
+    addStep: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddStepRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StepResponse"];
+                };
+            };
+        };
+    };
+    list_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DelegationResponse"][];
+                };
+            };
+        };
+    };
+    delegate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDelegationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DelegationResponse"];
+                };
+            };
+        };
+    };
+    getForRequest: {
+        parameters: {
+            query: {
+                requestId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DecisionResponse"];
+                };
+            };
+        };
+    };
+    decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DecisionResponse"];
+                };
+            };
+        };
+    };
+    attach: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttachRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -1615,6 +2248,28 @@ export interface operations {
             };
         };
     };
+    markRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NotificationResponse"];
+                };
+            };
+        };
+    };
     get_2: {
         parameters: {
             query?: never;
@@ -1683,6 +2338,32 @@ export interface operations {
             };
         };
     };
+    updateWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowResponse"];
+                };
+            };
+        };
+    };
     get_3: {
         parameters: {
             query?: never;
@@ -1701,6 +2382,90 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    inbox: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NotificationResponse"][];
+                };
+            };
+        };
+    };
+    get_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetResponse"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reservations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReservationResponse"][];
                 };
             };
         };
@@ -1725,7 +2490,70 @@ export interface operations {
             };
         };
     };
+    state: {
+        parameters: {
+            query: {
+                requestId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AssignmentResponse"];
+                };
+            };
+        };
+    };
     remove_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    removeStep: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                stepId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revoke: {
         parameters: {
             query?: never;
             header?: never;

@@ -167,6 +167,10 @@ public class PurchaseRequest {
         return decidedAt;
     }
 
+    public void setDecidedAt(Instant decidedAt) {
+        this.decidedAt = decidedAt;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }

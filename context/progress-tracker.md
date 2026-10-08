@@ -4,9 +4,10 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 3 done (suppliers + procurement + typegen, merged to main).
-Next: Phase 4 — Money governance** (branches: `feature/approval-workflow`,
-`feature/budget-management`, `feature/notifications`).
+**Phase 4 done — Money governance** (branches `feature/approval-workflow`,
+`feature/budget-management`, `feature/notifications`, merged into
+`feature/approval-workflow` for one PR). **Next: Phase 5 — Payables**
+(`feature/purchase-orders`, `feature/invoicing`, `feature/audit-compliance`).
 
 ## Completed
 
@@ -50,18 +51,41 @@ Next: Phase 4 — Money governance** (branches: `feature/approval-workflow`,
 - Remote: `feature/supplier-management` + `feature/procurement` pushed and
   merged with `--no-ff`; `main` green.
 
+### Phase 4 — Money governance (on `feature/approval-workflow`, awaiting PR)
+- Approval slice 1: V5 (`approval_decisions` immutable + `approval_delegations`
+  bounded/revocable); `RequestDecisionPort` locks the request `FOR UPDATE` and
+  flips status in the same transaction — concurrent deciders serialize, one wins.
+- Approval slice 2: V6 (lanes by amount range, ordered steps, per-request
+  assignments with due dates); only the step approver or a delegate may decide;
+  overdue steps escalate lazily on access + hourly scheduler backstop.
+- Budget: V7 (pots per tenant month + holds); approving reserves the total in
+  the same tx (pot rows locked id-ordered, overspend 409, currency checked);
+  cancelling an approved request releases; no pot means no governance.
+- Notifications: V8 (inbox rows); first real `DomainEvent` consumers —
+  `PurchaseRequestSubmitted/Decided` publish from submit/decide, listener runs
+  AFTER_COMMIT in a fresh tx (never rolls back business work); skeleton mail.
+- Cancel now accepts APPROVED (releases the hold); request snapshot on the
+  decision port carries requester + total + currency for reservations/notify.
+- Tests: 16× ApprovalIT, 10× BudgetIT, 6× NotificationIT (matrices, races,
+  expiry, cross-tenant throughout). Full gate 70/70 green (60 IT + 10 unit/arch).
+- Typegen regenerated; frontend build + Vitest + Playwright green.
+
 ## In progress
 
-- Nothing. Awaiting user go-ahead for Phase 3.
+- Phase 4 PR (`feature/approval-workflow` → `main`): assembled, gates green,
+  awaiting user review + PR creation (no `gh` on this machine — open via the
+  compare URL).
 
-## Next up (Phase 3)
+## Next up (Phase 5 — Payables)
 
-1. `feature/supplier-management`: suppliers, contacts, categories (+ repo
-   tests with cross-tenant negatives).
-2. `feature/procurement`: purchase requests + items, lifecycle,
-   idempotent submit with concurrency test.
-3. OpenAPI frontend type generation lands with the first real endpoints.
-4. `feature/frontend-auth`: login UI, interceptor, guard (can parallel Phase 3).
+1. `feature/purchase-orders`: orders from APPROVED requests only, item
+   snapshot, mandatory supplier link, lifecycle; explicit supplier reference
+   guard (409) replacing the constraint-violation fallback.
+2. `feature/invoicing`: invoices on orders, 3-way-match-lite, UNPAID/PARTIAL/PAID.
+3. `feature/audit-compliance`: append-only `audit_events`, never fail the
+   observed tx, admin read endpoint.
+4. `feature/frontend-auth`: still parallel-trackable (needs the
+   Material-vs-bespoke decision first).
 
 ## Architecture decisions (supplementing docs/decisions)
 
@@ -82,6 +106,11 @@ Next: Phase 4 — Money governance** (branches: `feature/approval-workflow`,
 - `@ServiceConnection` over `jdbc:tc` URLs; failsafe runs `*IT`.
 - Cross-module entity association by id (`getReference`), ports exchange
   primitives (rule recorded in `modular-monolith.md`).
+- Domain events: publishers use `ApplicationEventPublisher`; observers use
+  `@TransactionalEventListener(AFTER_COMMIT)` + `REQUIRES_NEW` so observer
+  failure never rolls back business work (notifications first, audit next).
+- Budget governance is opt-in per period: a month with no pot holds nothing,
+  so pre-budget approval tests keep passing unchanged.
 
 ## Open questions
 
