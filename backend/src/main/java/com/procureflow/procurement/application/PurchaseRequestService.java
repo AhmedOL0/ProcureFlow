@@ -9,6 +9,7 @@ import com.procureflow.shared.web.ApiException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,18 +30,21 @@ public class PurchaseRequestService {
     private final PurchaseRequestItemService itemService;
     private final RequestCreator creator;
     private final BudgetReservationPort budgets;
+    private final ApplicationEventPublisher events;
 
     public PurchaseRequestService(
             PurchaseRequestRepository requests,
             PurchaseRequestItemRepository items,
             PurchaseRequestItemService itemService,
             RequestCreator creator,
-            BudgetReservationPort budgets) {
+            BudgetReservationPort budgets,
+            ApplicationEventPublisher events) {
         this.requests = requests;
         this.items = items;
         this.itemService = itemService;
         this.creator = creator;
         this.budgets = budgets;
+        this.events = events;
     }
 
     /** Creates a draft or replays the original when the key was already used. */
@@ -102,6 +106,11 @@ public class PurchaseRequestService {
         request.setStatus(PurchaseRequest.Status.SUBMITTED);
         request.setSubmittedAt(Instant.now());
         requests.save(request);
+        long total = items.findAllByRequest_IdOrderByCreatedAt(id).stream()
+                .mapToLong(PurchaseRequestItem::lineTotalMinor)
+                .sum();
+        events.publishEvent(PurchaseRequestSubmitted.now(
+                tenantSlug, id, request.getRequester().getId(), request.getTitle(), total));
         return reloaded(id, tenantSlug);
     }
 
