@@ -9,6 +9,7 @@ import com.procureflow.approval.infrastructure.ApprovalDecisionRepository;
 import com.procureflow.approval.infrastructure.ApprovalDelegationRepository;
 import com.procureflow.approval.infrastructure.ApprovalStepRepository;
 import com.procureflow.approval.infrastructure.ApprovalWorkflowRepository;
+import com.procureflow.budget.application.BudgetReservationPort;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.procurement.application.RequestDecisionPort;
 import com.procureflow.shared.web.ApiException;
@@ -40,6 +41,7 @@ public class ApprovalService {
     private final ApprovalStepRepository steps;
     private final ApprovalAssignmentRepository assignments;
     private final RequestDecisionPort requests;
+    private final BudgetReservationPort budgets;
     private final TenantProvisioning tenants;
 
     public ApprovalService(
@@ -49,6 +51,7 @@ public class ApprovalService {
             ApprovalStepRepository steps,
             ApprovalAssignmentRepository assignments,
             RequestDecisionPort requests,
+            BudgetReservationPort budgets,
             TenantProvisioning tenants) {
         this.decisions = decisions;
         this.delegations = delegations;
@@ -56,6 +59,7 @@ public class ApprovalService {
         this.steps = steps;
         this.assignments = assignments;
         this.requests = requests;
+        this.budgets = budgets;
         this.tenants = tenants;
     }
 
@@ -88,6 +92,9 @@ public class ApprovalService {
                     comment);
             decisions.saveAndFlush(decision);
             requests.applyDecision(tenantSlug, requestId, approved);
+            if (approved) {
+                budgets.reserve(tenantSlug, requestId, locked.totalMinor(), locked.currency());
+            }
             return decision;
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("ALREADY_DECIDED", "This request already has a decision");
