@@ -285,6 +285,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approvals/delegations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List delegations of the current workspace */
+        get: operations["list_5"];
+        put?: never;
+        /** Delegate decide power to a workspace member until endsAt */
+        post: operations["delegate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the decision recorded for one request */
+        get: operations["getForRequest"];
+        put?: never;
+        /** Approve or reject a submitted request (immutable once recorded) */
+        post: operations["decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/current": {
         parameters: {
             query?: never;
@@ -460,6 +496,23 @@ export interface paths {
         post?: never;
         /** Remove a membership */
         delete: operations["remove_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approvals/delegations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a delegation (delegator or workspace admin) */
+        delete: operations["revoke"];
         options?: never;
         head?: never;
         patch?: never;
@@ -656,6 +709,43 @@ export interface components {
             email: string;
             password: string;
             tenantSlug?: string;
+        };
+        CreateDelegationRequest: {
+            /** Format: uuid */
+            delegateId: string;
+            /** Format: date-time */
+            endsAt: string;
+        };
+        DelegationResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            delegatorId?: string;
+            /** Format: uuid */
+            delegateId?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+        };
+        DecideRequest: {
+            /** Format: uuid */
+            requestId: string;
+            /** @enum {string} */
+            decision: "APPROVED" | "REJECTED";
+            comment?: string;
+        };
+        DecisionResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            requestId?: string;
+            /** Format: uuid */
+            deciderId?: string;
+            decision?: string;
+            comment?: string;
+            /** Format: date-time */
+            createdAt?: string;
         };
         UpdateTenantRequest: {
             name: string;
@@ -1297,6 +1387,96 @@ export interface operations {
             };
         };
     };
+    list_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DelegationResponse"][];
+                };
+            };
+        };
+    };
+    delegate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDelegationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DelegationResponse"];
+                };
+            };
+        };
+    };
+    getForRequest: {
+        parameters: {
+            query: {
+                requestId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DecisionResponse"];
+                };
+            };
+        };
+    };
+    decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DecisionResponse"];
+                };
+            };
+        };
+    };
     current: {
         parameters: {
             query?: never;
@@ -1726,6 +1906,26 @@ export interface operations {
         };
     };
     remove_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revoke: {
         parameters: {
             query?: never;
             header?: never;

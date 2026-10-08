@@ -214,6 +214,12 @@ ProcureFlow/
     `extensions.json` only.
 19. Trivy action refs need the `v` prefix.
 20. JWT secret ≥64 chars enforced at boot; test profile carries its own.
+21. Dev DB password lives in the `pgdata` volume from first init:
+    recreating the container is not enough — reset with
+    `ALTER USER ... PASSWORD` over the trust socket (or `down -v`).
+    Boot throwaway backends with `java -D... -jar` using EXACT
+    placeholder names (`-DSPRING_DATASOURCE_PASSWORD`,
+    `-Dapp.jwt.secret`); relaxed dotted forms don't resolve `${...}`.
 
 ---
 
