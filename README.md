@@ -8,10 +8,9 @@ orders and invoices, with an AI copilot that explains spend and drafts
 requests. One backend serves many tenants; tenant data never crosses tenant
 boundaries.
 
-> Status: **Phase 2 — identity & organization done.** JWT authentication with
-> refresh rotation, RBAC, tenant-scoped tenants/departments/memberships and
-> integration tests are implemented and green. Business features
-> (procurement and beyond) land incrementally per
+> Status: **Phase 3 — procurement core done.** Suppliers, idempotent
+> purchase requests and generated Angular API types are implemented and
+> green. Approval workflows and budgets land next, per
 > `docs/project-management/sprint-plan.md`.
 
 ## Business problem

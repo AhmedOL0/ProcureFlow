@@ -37,6 +37,11 @@ public final class PermissionCodes {
     public static final Set<String> MEMBER_DEFAULTS = Set.of(
             PROCUREMENT_REQUEST, SUPPLIER_READ, ORDER_READ, INVOICE_READ, ANALYTICS_READ);
 
+    public static final Set<String> OFFICER_DEFAULTS = Set.of(
+            SUPPLIER_READ, SUPPLIER_WRITE, PROCUREMENT_REQUEST,
+            ORDER_READ, ORDER_WRITE, INVOICE_READ, INVOICE_WRITE,
+            BUDGET_READ, ANALYTICS_READ);
+
     private PermissionCodes() {
         // constants only
     }
