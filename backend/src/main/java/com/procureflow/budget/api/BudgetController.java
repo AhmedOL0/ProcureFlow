@@ -43,6 +43,7 @@ public class BudgetController {
             @AuthenticationPrincipal AuthenticatedUser principal, @Valid @RequestBody CreateBudgetRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(BudgetResponse.from(budgets.view(budgets.create(
                 principal.tenantId(),
+                principal.userId(),
                 request.name(),
                 request.period(),
                 request.amountMinor(),
@@ -83,7 +84,7 @@ public class BudgetController {
     @Operation(summary = "Close a pot (refused while holds rest on it)")
     public ResponseEntity<Void> delete(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
-        budgets.delete(principal.tenantId(), id);
+        budgets.delete(principal.tenantId(), principal.userId(), id);
         return ResponseEntity.noContent().build();
     }
 }

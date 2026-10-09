@@ -8,9 +8,12 @@ orders and invoices, with an AI copilot that explains spend and drafts
 requests. One backend serves many tenants; tenant data never crosses tenant
 boundaries.
 
-> Status: **Phase 3 — procurement core done.** Suppliers, idempotent
-> purchase requests and generated Angular API types are implemented and
-> green. Approval workflows and budgets land next, per
+> Status: **Phase 5 — payables done.** The full procure-to-pay flow is
+> implemented and green: suppliers, idempotent purchase requests, approval
+> lanes with delegation and escalation, monthly budgets with in-transaction
+> reservation, purchase orders with receipt, invoices with 3-way match and
+> payments, an event-driven notification inbox, and an append-only audit
+> trail. Next is Phase 6 (analytics, AI copilot, hardening), per
 > `docs/project-management/sprint-plan.md`.
 
 ## Business problem
@@ -65,16 +68,40 @@ cd frontend && npm install && npm start   # http://localhost:4200
 
 API docs (backend running): `http://localhost:8080/swagger-ui.html`
 
+## API surface
+
+All routes live under `/api/v1/...` with a consistent problem envelope
+(`docs/api/README.md` is the contract; live OpenAPI at `/v3/api-docs`,
+Swagger UI at `/swagger-ui.html`). Angular types are generated from the
+live contract (`cd frontend && npm run gen:api`, checked in at
+`src/lib/api-types.gen.ts`).
+
+| Group | Endpoints | Highlights |
+|---|---|---|
+| Auth | `/auth`, `/users` | JWT + rotating refresh, RBAC, tenant provisioning |
+| Organization | `/tenants/current`, `/departments`, `/memberships` | Tenant-scoped workspaces and roles |
+| Suppliers | `/suppliers`, `/supplier-contacts`, `/supplier-categories` | CRUD, single-primary contacts, scorecards |
+| Procurement | `/purchase-requests`, `/purchase-request-items` | Idempotent create (`Idempotency-Key`), draft lifecycle |
+| Approvals | `/approvals/...` | Immutable decisions, delegations, amount lanes, escalation |
+| Budgets | `/budgets` | Monthly pots, in-transaction reservation, 409 overspend |
+| Orders | `/purchase-orders` | From approved requests only, snapshot lines, receipt |
+| Invoices | `/invoices` | 3-way match, UNPAID → PARTIAL → PAID |
+| Notifications | `/notifications` | Event-driven personal inbox |
+| Audit | `/audit-events` | Append-only trail, admin read |
+
 ## Testing strategy
 
-Full picture in `docs/testing/strategy.md`. Phase 1 gates:
+Full picture in `docs/testing/strategy.md`. Local gates (must pass before
+every push):
 
-- Backend: `cd backend && ./mvnw verify` (unit + Testcontainers integration
-  + ArchUnit + JaCoCo report)
+- Backend: `cd backend && ./mvnw verify` — 90 tests green (10 unit/ArchUnit
+  + 80 Testcontainers integration over real PostgreSQL 16): auth, tenant
+  isolation, suppliers, procurement, approvals (incl. decision races),
+  budgets (incl. reservation race), orders, invoices, notifications, audit.
 - Frontend unit: `cd frontend && npm test` (Vitest)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-- Integration tests (Testcontainers + PostgreSQL) cover auth flows and
-  tenant isolation since Phase 2; each new repository adds its own.
+- API types: boot the backend, then `cd frontend && npm run gen:api` after
+  any API change, and commit the result.
 
 ## AI architecture
 
