@@ -5,6 +5,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 
 /**
  * Guards the modular-monolith rules (see docs/architecture/modular-monolith.md).
@@ -28,4 +29,15 @@ class ArchitectureRulesTest {
                     .should().dependOnClassesThat()
                     .resideInAPackage("com.procureflow.(identity|organization|supplier|procurement|approval|budget|purchaseorder|invoice|notification|audit|analytics|ai)..")
                     .because("the shared kernel is dependency-free by definition");
+
+    @ArchTest
+    static final ArchRule noFieldInjection =
+            noFields().should().beAnnotatedWith(org.springframework.beans.factory.annotation.Autowired.class)
+                    .because("constructor injection keeps dependencies explicit and testable");
+
+    @ArchTest
+    static final ArchRule domainMustNotDependOnSpring =
+            noClasses().that().resideInAPackage("..domain..")
+                    .should().dependOnClassesThat().resideInAPackage("org.springframework..")
+                    .because("domain holds business rules only; Spring lives in outer layers");
 }
