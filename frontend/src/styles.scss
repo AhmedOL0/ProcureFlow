@@ -1,1 +1,36 @@
-/* You can add global styles to this file, and also import other style files */
+// ProcureFlow theme: Angular Material, light, azure primary, standard density.
+// No gradients, no glassmorphism, no decoration — the content is dense
+// procurement data, and the theme stays out of its way (see ui-context.md).
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$azure-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+}
+
+// Procurement status tokens: success / warning / danger plus muted text.
+// Muted text keeps >= 4.5:1 contrast on the light surface.
+:root {
+  --pf-success: #1b6b3a;
+  --pf-warning: #8a5a00;
+  --pf-danger: #b3261e;
+  --pf-muted-text: #565d66;
+  --pf-surface-card: var(--mat-sys-surface-container-low);
+}

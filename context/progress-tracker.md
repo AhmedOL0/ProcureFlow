@@ -92,20 +92,25 @@ hardening** (`feature/analytics`, `feature/ai-copilot`,
   cross-tenant throughout). Full gate 90/90 green (80 IT + 10 unit/arch).
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
+### Frontend auth (on `feature/frontend-auth`, awaiting PR)
+- Angular Material v21 (decision recorded 2026-10-09) + animations.
+- Login/register screens (reactive forms, ambiguous-tenant and conflict
+  states), session dashboard (user/tenant/roles + sign-out).
+- `AuthService` (signals, localStorage session, single-flight refresh),
+  401 interceptor with one retry, guard with session restore.
+- Tests: 4× Vitest (token helpers) + 4× Playwright (guard redirect,
+  validation, backend-down error, register navigation). Build green.
+
 ## In progress
 
-- Phase 5 PR (`feature/purchase-orders` → `main`): assembled, gates green,
-  awaiting user review + PR creation.
+- Frontend-auth PR (`feature/frontend-auth` → `main`): implemented
+  (Material v21 per the recorded decision), gates green, awaiting PR creation.
 
-## Next up (Phase 6 — Intelligence + hardening)
+## Next up (remaining)
 
-1. `feature/analytics`: read-only spend/supplier/lead-time KPIs over existing data.
-2. `feature/ai-copilot`: Groq adapter behind `AiProvider`, prompt library,
-   metered copilot Q&A / extraction / quotation intel.
-3. `feature/quality-testing`: coverage floors, full E2E journeys, perf budgets.
-4. `feature/devops-observability`: domain+AI metrics, alerts, Terraform decision.
-5. `feature/frontend-auth`: still parallel-trackable (needs the
-   Material-vs-bespoke decision first).
+1. `feature/frontend-auth` PR, then merge open PRs in dependency order.
+2. Data screens next (suppliers/requests/approvals list UIs) if you want a
+   fully clickable procure-to-pay in the browser.
 
 ## Architecture decisions (supplementing docs/decisions)
 
@@ -134,8 +139,9 @@ hardening** (`feature/analytics`, `feature/ai-copilot`,
 
 ## Open questions
 
-- Component library: Angular Material vs bespoke (blocks `frontend-auth`
-  visual direction; see `ui-context.md` review gate).
+- Component library: **decided 2026-10-09 — Angular Material v21** (tables,
+  a11y, speed for the data-dense back office; themed to pass the anti-slop
+  gates). Unblocks `frontend-auth` and all feature screens.
 - Refresh transport for web: HttpOnly cookie vs body token (decide with
   first client; mobile needs the body variant).
 - OAuth2/social login: out of scope until a customer asks.
