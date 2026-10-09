@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
@@ -48,6 +49,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(jsonEntryPoint(objectMapper, HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED"))
                         .accessDeniedHandler(jsonDeniedHandler(objectMapper)))
                 .authorizeHttpRequests(auth -> auth
+                        // CORS preflights carry no credentials by spec; the actual
+                        // request still authenticates and authorizes normally.
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/v3/api-docs/**",

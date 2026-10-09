@@ -1,0 +1,158 @@
+// Authenticated shell: navy rail (240px, overlay on handsets), header bar
+// with breadcrumbs, inbox entry and user menu. Content pages bring their
+// own .pf-page rhythm inside router-outlet.
+.shell {
+  height: 100vh;
+}
+
+.shell__rail {
+  width: 240px;
+  background: var(--pf-navy);
+  color: #dbe4f3;
+  display: flex;
+  flex-direction: column;
+  border-right: none;
+  border-radius: 0;
+}
+
+.shell__brand {
+  font: var(--pf-headline-md);
+  color: #fff;
+  letter-spacing: -0.01em;
+  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
+}
+
+.shell__rail .mat-mdc-list-item {
+  color: #dbe4f3;
+}
+.shell__rail .mat-mdc-list-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.shell__link--active {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+}
+.shell__link--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #7da2f8;
+}
+
+.shell__tenant {
+  margin-top: auto;
+  padding: var(--pf-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+.shell__tenant-name {
+  font: var(--pf-label-lg);
+  color: #fff;
+}
+.shell__tenant-user {
+  font: var(--pf-body-sm);
+  color: #9db1cc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shell__main {
+  display: flex;
+  flex-direction: column;
+}
+
+.shell__bar {
+  background: var(--pf-card);
+  border-bottom: 1px solid var(--pf-border);
+  color: #191c1e;
+  gap: var(--pf-space-sm);
+}
+
+.shell__crumbs {
+  display: flex;
+  gap: 6px;
+  font: var(--pf-label-md);
+  color: var(--pf-slate);
+}
+.shell__crumbs [aria-current='page'] {
+  color: var(--pf-navy);
+  font-weight: 600;
+}
+
+.shell__spacer {
+  flex: 1;
+}
+
+.shell__dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-danger-text);
+  color: #fff;
+  font: var(--pf-label-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shell__user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 1 !important;
+}
+.shell__user-email {
+  font: var(--pf-label-lg);
+  color: #191c1e;
+}
+.shell__user-tenant {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+}
+
+.shell__inbox-head {
+  font: var(--pf-label-md);
+  color: var(--pf-slate);
+  opacity: 1 !important;
+}
+.shell__inbox-title {
+  display: block;
+  font: var(--pf-label-lg);
+  color: #191c1e;
+}
+.shell__inbox-body {
+  display: block;
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+  white-space: normal;
+}
+.shell__unread .shell__inbox-title {
+  font-weight: 700;
+}
+.shell__inbox-empty {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+  opacity: 1 !important;
+}
+
+.shell__content {
+  flex: 1;
+  overflow: auto;
+  outline: none;
+}
+
+@media (max-width: 767px) {
+  .shell__crumbs {
+    display: none;
+  }
+}

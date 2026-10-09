@@ -12,3 +12,9 @@ logging:
   level:
     com.procureflow: DEBUG
     org.hibernate.SQL: WARN
+
+app:
+  cors:
+    # Local SPA origin. Production sets CORS_ALLOWED_ORIGINS instead;
+    # empty means same-origin only.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}

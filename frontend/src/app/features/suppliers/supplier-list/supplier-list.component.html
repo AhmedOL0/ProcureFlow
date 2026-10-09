@@ -1,0 +1,108 @@
+<div class="pf-page">
+  <pf-page-header
+    title="Supplier directory"
+    description="Every vendor your workspace buys from — search, filter, and open a file for contacts, categories and scorecards."
+    [breadcrumbs]="[{ label: 'Suppliers' }]"
+  >
+    <div slot="actions">
+      @if (canWrite) {
+        <button mat-flat-button color="primary" (click)="openCreate()">
+          <lucide-angular [img]="icons.plus" [size]="16" /> Add supplier
+        </button>
+      }
+    </div>
+  </pf-page-header>
+
+  <div class="pf-table-card">
+    <div class="supplier-filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Search name, email or tax ID</mat-label>
+        <input matInput [formControl]="searchBox" placeholder="Acme" />
+        <lucide-angular matSuffix [img]="icons.search" [size]="18" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="supplier-status">
+        <mat-label>Status</mat-label>
+        <mat-select [formControl]="statusFilter">
+          <mat-option [value]="null">All</mat-option>
+          <mat-option value="ACTIVE">Active</mat-option>
+          <mat-option value="INACTIVE">Inactive</mat-option>
+          <mat-option value="SUSPENDED">Suspended</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (loading()) {
+      <div class="supplier-loading" role="status" aria-label="Loading suppliers">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (failure(); as problem) {
+      @if (problem.status === 403) {
+        <pf-error-state
+          title="Not permitted"
+          message="Your workspace role cannot view suppliers. Ask an admin for access."
+        />
+      } @else {
+        <pf-error-state
+          title="Suppliers did not load"
+          [message]="problem.message"
+          retryLabel="Retry"
+          (retry)="reload()"
+        />
+      }
+    } @else if (total() === 0) {
+      <pf-empty-state
+        [icon]="icons.truck"
+        title="No suppliers match"
+        message="Try a different search — or add the first supplier to this workspace."
+        [actionLabel]="canWrite ? 'Add supplier' : ''"
+        (action)="openCreate()"
+      />
+    } @else {
+      <div class="supplier-table-scroll">
+      <table
+        mat-table
+        [dataSource]="pageRows()"
+        matSort
+        (matSortChange)="onSort($event)"
+        class="pf-table"
+        aria-label="Suppliers"
+      >
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="name">Supplier</th>
+          <td mat-cell *matCellDef="let row">
+            <a class="supplier-name" [routerLink]="[row.id]">{{ row.name }}</a>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
+          <td mat-cell *matCellDef="let row"><pf-status-badge [status]="row.status" /></td>
+        </ng-container>
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="email">Email</th>
+          <td mat-cell *matCellDef="let row">{{ row.email || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="phone">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="phone">Phone</th>
+          <td mat-cell *matCellDef="let row">{{ row.phone || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">Actions</span></th>
+          <td mat-cell *matCellDef="let row">
+            <a mat-button [routerLink]="[row.id]">Open</a>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+      </div>
+      <mat-paginator
+        [length]="total()"
+        [pageIndex]="page().pageIndex"
+        [pageSize]="page().pageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onPage($event)"
+        aria-label="Supplier pages"
+      />
+    }
+  </div>
+</div>

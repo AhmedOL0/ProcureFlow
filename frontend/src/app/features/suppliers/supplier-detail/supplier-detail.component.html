@@ -1,0 +1,160 @@
+<div class="pf-page">
+  @if (loading()) {
+    <div class="dossier-loading" role="status" aria-label="Loading supplier file">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    @if (problem.status === 404) {
+      <pf-error-state
+        title="Supplier not found"
+        message="It may have been deleted, or it belongs to another workspace."
+      />
+    } @else if (problem.status === 403) {
+      <pf-error-state
+        title="Not permitted"
+        message="Your workspace role cannot view suppliers. Ask an admin for access."
+      />
+    } @else {
+      <pf-error-state
+        title="Supplier file did not load"
+        [message]="failureMessage()"
+        retryLabel="Retry"
+        (retry)="reload()"
+      />
+    }
+  } @else if (supplier(); as current) {
+    <pf-page-header
+      [title]="current.name ?? 'Supplier'"
+      [description]="(current.taxId ? 'Tax ID ' + current.taxId : 'No tax ID on file')"
+      [breadcrumbs]="[{ label: 'Suppliers', url: '/suppliers' }, { label: current.name ?? 'File' }]"
+    >
+      <div slot="actions">
+        @if (canWrite) {
+          <button mat-stroked-button (click)="openEdit()">
+            <lucide-angular [img]="icons.pencil" [size]="16" /> Edit
+          </button>
+          <button mat-stroked-button color="warn" (click)="confirmDelete()">
+            <lucide-angular [img]="icons.trash" [size]="16" /> Delete
+          </button>
+        }
+      </div>
+    </pf-page-header>
+
+    <div class="dossier-head-row">
+      <pf-status-badge [status]="current.status" />
+      @if (current.email) {
+        <span class="dossier-meta">{{ current.email }}</span>
+      }
+      @if (current.phone) {
+        <span class="dossier-meta">{{ current.phone }}</span>
+      }
+    </div>
+
+    <section class="dossier-card" aria-label="Contacts">
+      <div class="dossier-card__head">
+        <h2>Contacts</h2>
+        @if (canWrite) {
+          <button mat-button (click)="openContact()">
+            <lucide-angular [img]="icons.plus" [size]="16" /> Add contact
+          </button>
+        }
+      </div>
+      @if (contacts().length === 0) {
+        <pf-empty-state
+          title="No contacts yet"
+          message="Add the people you order from — one of them can be the primary contact."
+          [actionLabel]="canWrite ? 'Add contact' : ''"
+          (action)="openContact()"
+        />
+      } @else {
+        <ul class="dossier-list">
+          @for (contact of contacts(); track contact.id) {
+            <li class="dossier-list__row">
+              <div class="dossier-list__main">
+                <span class="dossier-list__name">
+                  {{ contact.name }}
+                  @if (contact.primary) {
+                    <lucide-angular
+                      [img]="icons.star"
+                      [size]="14"
+                      class="dossier-primary"
+                      aria-label="Primary contact"
+                    />
+                  }
+                </span>
+                <span class="dossier-list__sub">
+                  {{ contact.title || 'No title' }} · {{ contact.email || 'no email' }} ·
+                  {{ contact.phone || 'no phone' }}
+                </span>
+              </div>
+              @if (canWrite) {
+                <div class="dossier-list__actions">
+                  @if (!contact.primary) {
+                    <button mat-button (click)="makePrimary(contact)">Set primary</button>
+                  }
+                  <button mat-button (click)="openContact(contact)">Edit</button>
+                  <button mat-button color="warn" (click)="removeContact(contact)">Remove</button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="dossier-card" aria-label="Categories">
+      <div class="dossier-card__head">
+        <h2>Categories</h2>
+        @if (canWrite) {
+          <button mat-button (click)="manageCategories()">
+            <lucide-angular [img]="icons.tags" [size]="16" /> Manage
+          </button>
+        }
+      </div>
+      @if (categories().length === 0) {
+        <p class="dossier-muted">No categories assigned.</p>
+      } @else {
+        <mat-chip-set aria-label="Assigned categories">
+          @for (category of categories(); track category.id) {
+            <mat-chip>{{ category.name }}</mat-chip>
+          }
+        </mat-chip-set>
+      }
+    </section>
+
+    <section class="dossier-card" aria-label="Scorecards">
+      <div class="dossier-card__head">
+        <h2>Scorecards</h2>
+        @if (canWrite) {
+          <button mat-button (click)="recordPerformance()">
+            <lucide-angular [img]="icons.plus" [size]="16" /> Record
+          </button>
+        }
+      </div>
+      @if (performances().length === 0) {
+        <p class="dossier-muted">No scorecards recorded yet.</p>
+      } @else {
+        <table class="pf-table" aria-label="Scorecards">
+          <thead>
+            <tr>
+              <th scope="col">Period</th>
+              <th scope="col" class="pf-num">On-time %</th>
+              <th scope="col" class="pf-num">Quality</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (score of performances(); track score.id) {
+              <tr>
+                <td>{{ score.period }}</td>
+                <td class="pf-num pf-data-mono">{{ score.onTimeRate ?? '—' }}</td>
+                <td class="pf-num pf-data-mono">{{ score.qualityScore ?? '—' }}</td>
+                <td>{{ score.notes || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
+</div>

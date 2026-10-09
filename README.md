@@ -8,13 +8,12 @@ orders and invoices, with an AI copilot that explains spend and drafts
 requests. One backend serves many tenants; tenant data never crosses tenant
 boundaries.
 
-> Status: **all phases complete.** The full procure-to-pay flow is implemented
-> and green: suppliers, idempotent purchase requests, approval lanes with
-> delegation and escalation, monthly budgets with in-transaction reservation,
-> purchase orders with receipt, invoices with 3-way match and payments, an
-> event-driven notification inbox, an append-only audit trail, read-only
-> analytics KPIs, a metered Groq copilot, and a Material login/session shell.
-> See `docs/project-management/sprint-plan.md` for the delivery record.
+> Status: **Phase 7 — frontend foundation + suppliers slice.** The backend
+> (V1–V12, all epics) is done; the Angular shell is now real: Material
+> design system from the stitch reference, authenticated navy-rail layout
+> with inbox entry, and the first API-backed workflow (supplier directory
+> and dossiers with contacts, categories and scorecards). See
+> `docs/project-management/sprint-plan.md` for the delivery record.
 
 ## Business problem
 
@@ -68,6 +67,9 @@ cd frontend && npm install && npm start   # http://localhost:4200
 
 API docs (backend running): `http://localhost:8080/swagger-ui.html`
 
+The dev profile allows the local SPA origin (`http://localhost:4200`) for
+CORS; production allows nothing unless `CORS_ALLOWED_ORIGINS` is set.
+
 ## API surface
 
 All routes live under `/api/v1/...` with a consistent problem envelope
@@ -103,9 +105,9 @@ every push):
   budgets (incl. reservation race), orders, invoices, notifications, audit,
   analytics, copilot, metrics. JaCoCo floors (line 0.70 / branch 0.40) fail
   the build on regression.
-- Frontend unit: `cd frontend && npm test` (Vitest, 8 tests)
+- Frontend unit: `cd frontend && npm test` (Vitest, 13 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-  (5 tests: guarded shell, auth states)
+  (6 tests: guarded shell, auth states, suppliers redirect)
 - API types: boot the backend, then `cd frontend && npm run gen:api` after
   any API change, and commit the result.
 

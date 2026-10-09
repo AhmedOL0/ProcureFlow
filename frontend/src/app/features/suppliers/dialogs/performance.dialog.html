@@ -1,0 +1,37 @@
+<h2 mat-dialog-title>Record scorecard</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="dialog-form" (ngSubmit)="save()">
+    <mat-form-field appearance="outline">
+      <mat-label>Period (YYYY-MM)</mat-label>
+      <input matInput formControlName="period" placeholder="2026-10" />
+      @if (form.controls.period.touched && form.controls.period.invalid) {
+        <mat-error>Use YYYY-MM, e.g. 2026-10.</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>On-time rate (0–100)</mat-label>
+      <input matInput type="number" formControlName="onTimeRate" min="0" max="100" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Quality score (0–100)</mat-label>
+      <input matInput type="number" formControlName="qualityScore" min="0" max="100" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Notes</mat-label>
+      <textarea matInput formControlName="notes" rows="2"></textarea>
+    </mat-form-field>
+    @if (failure()) {
+      <p class="dialog-error" role="alert">{{ failure() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
+    @if (busy()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Record scorecard
+    }
+  </button>
+</mat-dialog-actions>

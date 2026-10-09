@@ -4,9 +4,10 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Everything landed on `main`.** All 14 epics + frontend auth are merged
-(PRs #1–#6); `main` is green (backend 93 IT + 14 unit/arch with floors,
-frontend build + 8 Vitest + 5 Playwright). Awaiting the next epic.
+**Phase 7 done — frontend foundation + suppliers slice** (on
+`feature/frontend-suppliers`, awaiting PR). Design system from the stitch
+reference, authenticated shell, and the first API-backed workflow
+(suppliers) are implemented and verified live. Awaiting the next epic.
 
 ## Completed
 
@@ -94,7 +95,7 @@ frontend build + 8 Vitest + 5 Playwright). Awaiting the next epic.
   Full gate 107/107 green (93 IT + 14 unit/arch) with floors holding.
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
-### Frontend auth (on this branch, consolidated for the all-phases PR)
+### Frontend auth (merged via #5)
 - Angular Material v21 (decision recorded 2026-10-09) + animations.
 - Login/register screens (reactive forms, ambiguous-tenant and conflict
   states), session dashboard (user/tenant/roles + sign-out).
@@ -103,16 +104,36 @@ frontend build + 8 Vitest + 5 Playwright). Awaiting the next epic.
 - Tests: 4× Vitest (token helpers) + 4× Playwright (guard redirect,
   validation, backend-down error, register navigation). Build green.
 
+### Phase 7 — Frontend foundation + suppliers slice (on `feature/frontend-suppliers`, awaiting PR)
+- Design system from the stitch reference: navy/blue/teal/canvas tokens,
+  Inter (self-hosted), status pills, dense tables, shared header/empty/
+  error/confirm components, central Lucide catalog.
+- Authenticated shell: navy rail (dashboard + suppliers only — no stubs),
+  breadcrumbs, notification inbox entry (unread badge, mark-read), user menu,
+  tenant footer; drawer overlays closed on handsets, tables scroll at 360px.
+- Auth per contract: body-token refresh (no cookie transport exists —
+  verified zero Set-Cookie in backend), JWT authorities drive `hasAuthority`
+  hints, backend stays the enforcer.
+- Suppliers vertical slice: server-filtered list (client sort/page — the
+  contract returns full arrays), dossier with contacts (primary rule
+  server-side), categories + inline catalog create, scorecards; write UI
+  gated on `supplier:write`; 403/404/conflict states everywhere.
+- Backend additions (required, minimal): env-gated CORS config (dev origin
+  only) + OPTIONS permitAll for preflights; fixed dead dev fileReplacements.
+- Tests: 13× Vitest, 6× Playwright in CI; live browser pass against real
+  backend (login → list → dossier, mobile 360px) with screenshots.
+  Backend `verify` still 107/107 green after the CORS change.
+
 ## In progress
 
-- All-phases PR #6 (`feature/analytics` → `main`): open, gates green.
-  Merge it and every epic branch is landed.
+- Phase 7 PR (`feature/frontend-suppliers` → `main`): assembled, gates
+  green, awaiting PR creation.
 
 ## Next up (new process)
 
-1. Merge the all-phases PR with CI green.
-2. Data screens next (suppliers/requests/approvals list UIs) for a fully
-   clickable procure-to-pay in the browser — or whatever epic you name.
+1. Merge the Phase 7 PR with CI green.
+2. Next vertical slice (purchase requests list/detail?) — or whatever epic
+   you name.
 
 ## Architecture decisions (supplementing docs/decisions)
 

@@ -1,0 +1,52 @@
+.pf-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--pf-space-lg);
+  flex-wrap: wrap;
+}
+
+.pf-head__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--pf-label-md);
+  color: var(--pf-slate);
+  margin-bottom: var(--pf-space-xs);
+}
+.pf-head__crumbs a {
+  color: var(--pf-slate);
+  text-decoration: none;
+}
+.pf-head__crumbs a:hover {
+  color: var(--pf-blue);
+}
+.pf-head__crumb-current {
+  color: #191c1e;
+  font-weight: 600;
+}
+.pf-head__sep {
+  display: inline-flex;
+  color: var(--pf-slate);
+}
+
+.pf-head__title {
+  font: var(--pf-headline-lg);
+  color: var(--pf-navy);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.pf-head__subtitle {
+  font: var(--pf-body-md);
+  color: var(--pf-slate);
+  margin: var(--pf-space-xs) 0 0;
+  max-width: 48rem;
+}
+
+.pf-head__actions {
+  display: flex;
+  gap: var(--pf-space-sm);
+  align-items: center;
+  flex-shrink: 0;
+}

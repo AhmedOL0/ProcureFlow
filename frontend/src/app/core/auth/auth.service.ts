@@ -41,6 +41,29 @@ export class AuthService {
     return this.tokens()?.accessToken ?? null;
   }
 
+  /**
+   * Client-side permission hint for hiding actions the backend would
+   * reject anyway (403). Guards improve UX; authorization stays server-side.
+   */
+  hasAuthority(code: string): boolean {
+    const token = this.accessToken();
+    if (!token) {
+      return false;
+    }
+    const parts = token.split('.');
+    if (parts.length !== 3 || !parts[1]) {
+      return false;
+    }
+    try {
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))) as {
+        authorities?: unknown;
+      };
+      return Array.isArray(payload.authorities) && (payload.authorities as unknown[]).includes(code);
+    } catch {
+      return false;
+    }
+  }
+
   login(email: string, password: string, tenantSlug?: string): Observable<UserResponse> {
     const body: LoginRequest = { email, password, ...(tenantSlug ? { tenantSlug } : {}) };
     return this.http.post<AuthResponse>(`${this.api}/api/v1/auth/login`, body).pipe(
