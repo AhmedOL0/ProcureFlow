@@ -16,6 +16,11 @@ test('guests cannot open suppliers directly', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
+test('guests cannot open requests directly', async ({ page }) => {
+  await page.goto('/requests');
+  await expect(page).toHaveURL(/\/login/);
+});
+
 test('empty login shows validation, not a request', async ({ page }) => {
   await page.goto('/login');
   await page.getByRole('button', { name: 'Sign in' }).click();

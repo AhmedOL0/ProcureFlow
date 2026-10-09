@@ -14,7 +14,7 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
-import { Bell, LayoutDashboard, Menu, Truck, User } from '../../shared/icons';
+import { Bell, FileText, Inbox, LayoutDashboard, Menu, Truck, User } from '../../shared/icons';
 import { Breadcrumb } from '../../shared/components/page-header/page-header.component';
 
 interface NavItem {
@@ -50,6 +50,8 @@ export class ShellComponent {
   readonly nav: NavItem[] = [
     { label: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
     { label: 'Suppliers', url: '/suppliers', icon: Truck },
+    { label: 'Requests', url: '/requests', icon: FileText },
+    { label: 'Approvals', url: '/approvals', icon: Inbox },
   ];
 
   private readonly handset = toSignal(

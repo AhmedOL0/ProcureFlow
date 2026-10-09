@@ -1,0 +1,165 @@
+<div class="pf-page">
+  @if (loading()) {
+    <div class="request-loading" role="status" aria-label="Loading request file">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    @if (problem.status === 404) {
+      <pf-error-state
+        title="Request not found"
+        message="It may have been deleted, or it belongs to another workspace."
+      />
+    } @else if (problem.status === 403) {
+      <pf-error-state
+        title="Not permitted"
+        message="Your workspace role cannot view purchase requests. Ask an admin for access."
+      />
+    } @else {
+      <pf-error-state
+        title="Request file did not load"
+        [message]="failureMessage()"
+        retryLabel="Retry"
+        (retry)="reload()"
+      />
+    }
+  } @else if (request(); as current) {
+    <pf-page-header
+      [title]="current.title ?? 'Request'"
+      [description]="current.description || 'No description given.'"
+      [breadcrumbs]="[{ label: 'Requests', url: '/requests' }, { label: current.title ?? 'File' }]"
+    >
+      <div slot="actions">
+        @if (canEdit()) {
+          <button mat-stroked-button (click)="openEdit()">
+            <lucide-angular [img]="icons.pencil" [size]="16" /> Edit
+          </button>
+          <button mat-stroked-button color="warn" (click)="confirmDelete()">
+            <lucide-angular [img]="icons.trash" [size]="16" /> Delete
+          </button>
+        }
+        @if (isDraft() && canEdit()) {
+          <button mat-flat-button color="primary" (click)="submit()" [disabled]="acting()">
+            Submit for approval
+          </button>
+        }
+        @if ((isDraft() || isSubmitted()) && canEdit()) {
+          <button mat-stroked-button (click)="cancel()" [disabled]="acting()">Cancel request</button>
+        }
+        @if (isSubmitted() && canDecide()) {
+          <button mat-flat-button color="primary" (click)="decide(true)" [disabled]="acting()">Approve</button>
+          <button mat-stroked-button color="warn" (click)="decide(false)" [disabled]="acting()">Reject</button>
+        }
+      </div>
+    </pf-page-header>
+
+    <div class="request-head-row">
+      <pf-status-badge [status]="current.status" />
+      <span class="request-priority">{{ current.priority ?? 'MEDIUM' }} priority</span>
+      <span class="request-total pf-data-mono">{{ formatMinor(current.totalMinor) }}</span>
+    </div>
+
+    @if (decision(); as verdict) {
+      <section class="request-card" aria-label="Decision">
+        <h2>Decision — {{ verdict.decision }}</h2>
+        @if (verdict.comment) {
+          <p class="request-note">“{{ verdict.comment }}”</p>
+        }
+        <p class="request-muted">Approving reserves the request total against the monthly budget.</p>
+      </section>
+    }
+
+    @if (lane(); as assignment) {
+      <section class="request-card" aria-label="Approval lane">
+        <h2>Approval lane</h2>
+        <p class="request-muted">
+          Step {{ assignment.stepOrder }} awaits its approver
+          @if (assignment.escalated) {
+            <strong>(escalated)</strong>
+          }
+          · due {{ assignment.dueAt }}
+        </p>
+      </section>
+    }
+
+    @if (canSeeBudget) {
+      @let pot = budget();
+      <section class="request-card" aria-label="Budget context">
+        <h2>Budget — this month</h2>
+        @if (pot === null) {
+          <p class="request-muted">Loading budget…</p>
+        } @else if (pot === 'missing') {
+          <p class="request-muted">No budget configured for this month — approvals proceed unreserved.</p>
+        } @else {
+          <p class="request-budget">
+            <span>{{ pot.name }}</span>
+            <span class="pf-data-mono">{{ formatMinor(pot.remainingMinor) }} left of {{ formatMinor(pot.amountMinor) }}</span>
+          </p>
+          <p class="request-muted">{{ formatMinor(pot.reservedMinor) }} currently reserved.</p>
+        }
+      </section>
+    }
+
+    <section class="request-card" aria-label="History">
+      <h2>History</h2>
+      <ul class="request-history">
+        @for (entry of historyEntries(); track entry.label) {
+          <li><span class="request-history__label">{{ entry.label }}</span> {{ readableDate(entry.at) }}</li>
+        }
+      </ul>
+    </section>
+
+    <section class="request-card" aria-label="Items">
+      <div class="request-card__head">
+        <h2>Items ({{ (current.items ?? []).length }})</h2>
+        @if (isDraft() && canEdit()) {
+          <button mat-button (click)="openItem()">
+            <lucide-angular [img]="icons.plus" [size]="16" /> Add item
+          </button>
+        }
+      </div>
+      @if ((current.items ?? []).length === 0) {
+        <pf-empty-state
+          [icon]="icons.file"
+          title="No items yet"
+          message="A request needs at least one line before it can be submitted."
+          [actionLabel]="isDraft() && canEdit() ? 'Add item' : ''"
+          (action)="openItem()"
+        />
+      } @else {
+        <table class="pf-table" aria-label="Request items">
+          <thead>
+            <tr>
+              <th scope="col">Description</th>
+              <th scope="col">Category</th>
+              <th scope="col" class="pf-num">Qty</th>
+              <th scope="col" class="pf-num">Unit price</th>
+              <th scope="col" class="pf-num">Line total</th>
+              <th scope="col">Supplier</th>
+              @if (isDraft() && canEdit()) {
+                <th scope="col"><span class="pf-sr-only">Actions</span></th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of current.items ?? []; track item.id) {
+              <tr>
+                <td>{{ item.description }}</td>
+                <td>{{ item.category || '—' }}</td>
+                <td class="pf-num pf-data-mono">{{ item.quantity }}</td>
+                <td class="pf-num pf-data-mono">{{ formatMinor(item.unitPriceMinor ?? 0, item.currency ?? 'MAD') }}</td>
+                <td class="pf-num pf-data-mono">{{ formatMinor((item.quantity ?? 0) * (item.unitPriceMinor ?? 0), item.currency ?? 'MAD') }}</td>
+                <td>{{ supplierNameFor()(item.supplierId) }}</td>
+                @if (isDraft() && canEdit()) {
+                  <td>
+                    <button mat-button (click)="openItem(item)">Edit</button>
+                    <button mat-button color="warn" (click)="removeItem(item)">Remove</button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
+</div>
