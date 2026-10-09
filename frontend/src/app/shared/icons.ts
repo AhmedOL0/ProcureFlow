@@ -15,6 +15,7 @@ export {
   Star,
   Tags,
   Trash2,
+  TriangleAlert,
   Truck,
   User,
   Users,

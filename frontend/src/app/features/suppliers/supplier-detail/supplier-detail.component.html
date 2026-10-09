@@ -42,6 +42,12 @@
 
     <div class="dossier-head-row">
       <pf-status-badge [status]="current.status" />
+      @if (scoreSummary(); as summary) {
+        <span class="dossier-stat pf-data-mono">
+          {{ summary.avg }}% on-time · {{ summary.periods }}
+          {{ summary.periods === 1 ? 'scorecard' : 'scorecards' }}
+        </span>
+      }
       @if (current.email) {
         <span class="dossier-meta">{{ current.email }}</span>
       }

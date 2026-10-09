@@ -16,6 +16,15 @@
   color: var(--pf-slate);
 }
 
+.dossier-stat {
+  font: var(--pf-label-md);
+  color: var(--pf-blue);
+  background: var(--pf-info-bg);
+  border: 1px solid var(--pf-info-border);
+  border-radius: var(--pf-radius-pill);
+  padding: 2px 8px;
+}
+
 .dossier-card {
   background: var(--pf-card);
   border: 1px solid var(--pf-border);

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -53,6 +53,18 @@ export class SupplierDetailComponent {
   protected readonly contacts = signal<SupplierContact[]>([]);
   protected readonly categories = signal<SupplierCategory[]>([]);
   protected readonly performances = signal<SupplierPerformance[]>([]);
+
+  /** Header facts from real scorecards: average on-time and coverage. */
+  protected readonly scoreSummary = computed(() => {
+    const rates = this.performances()
+      .map((s) => s.onTimeRate)
+      .filter((r): r is number => typeof r === 'number');
+    if (rates.length === 0) {
+      return null;
+    }
+    const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+    return { avg: Math.round(avg * 10) / 10, periods: this.performances().length };
+  });
 
   private supplierId(): string {
     return this.route.snapshot.paramMap.get('id') ?? '';
