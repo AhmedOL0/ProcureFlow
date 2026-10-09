@@ -120,9 +120,9 @@ reference, authenticated shell, and the first API-backed workflow
   gated on `supplier:write`; 403/404/conflict states everywhere.
 - Backend additions (required, minimal): env-gated CORS config (dev origin
   only) + OPTIONS permitAll for preflights; fixed dead dev fileReplacements.
-- Tests: 13× Vitest, 6× Playwright in CI; live browser pass against real
-  backend (login → list → dossier, mobile 360px) with screenshots.
-  Backend `verify` still 107/107 green after the CORS change.
+- Tests: 17× Vitest, 6× Playwright in CI; live browser pass against real
+  backend (login → list → dossier, mobile 360px, Stitch directory) with
+  screenshots. Backend `verify` still 107/107 green after the CORS change.
 
 ## In progress
 

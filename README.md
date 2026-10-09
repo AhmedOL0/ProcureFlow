@@ -105,7 +105,7 @@ every push):
   budgets (incl. reservation race), orders, invoices, notifications, audit,
   analytics, copilot, metrics. JaCoCo floors (line 0.70 / branch 0.40) fail
   the build on regression.
-- Frontend unit: `cd frontend && npm test` (Vitest, 13 tests)
+- Frontend unit: `cd frontend && npm test` (Vitest, 17 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
   (6 tests: guarded shell, auth states, suppliers redirect)
 - API types: boot the backend, then `cd frontend && npm run gen:api` after
