@@ -513,6 +513,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/extract-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a sentence into a structured request draft */
+        post: operations["extract"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/explain-spend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explain spend figures for a period (or all time) */
+        post: operations["explain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/compare-quotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compare 2-10 supplier quotations */
+        post: operations["compare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask about workspace spend (answers cite KPI queries) */
+        post: operations["chat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/current": {
         parameters: {
             query?: never;
@@ -822,6 +890,74 @@ export interface paths {
         };
         /** Current approval step for one request (404 when no lane matched) */
         get: operations["state"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Supplier scorecard aggregation */
+        get: operations["suppliers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/spend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Spend totals with category and monthly breakdowns */
+        get: operations["spend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approval queue depth and decision lead times */
+        get: operations["approvals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metered AI calls for the workspace, optionally per month */
+        get: operations["usage"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1258,6 +1394,37 @@ export interface components {
             /** Format: uuid */
             requestId: string;
         };
+        ChatRequest: {
+            question: string;
+        };
+        DraftItemResponse: {
+            description?: string;
+            /** Format: int32 */
+            quantity?: number;
+            /** Format: int64 */
+            unitPriceMinor?: number;
+        };
+        DraftResponse: {
+            title?: string;
+            priority?: string;
+            items?: components["schemas"]["DraftItemResponse"][];
+        };
+        ExplainRequest: {
+            period?: string;
+        };
+        ChatResponse: {
+            answer?: string;
+            citations?: string[];
+            model?: string;
+        };
+        CompareRequest: {
+            quotes: components["schemas"]["QuoteInput"][];
+        };
+        QuoteInput: {
+            supplier: string;
+            /** Format: int64 */
+            amountMinor?: number;
+        };
         UpdateTenantRequest: {
             name: string;
         };
@@ -1360,6 +1527,64 @@ export interface components {
             /** Format: date-time */
             dueAt?: string;
             escalated?: boolean;
+        };
+        SupplierKpiResponse: {
+            /** Format: uuid */
+            supplierId?: string;
+            supplierName?: string;
+            /** Format: int32 */
+            periods?: number;
+            avgOnTime?: number;
+            avgQuality?: number;
+        };
+        MonthResponse: {
+            period?: string;
+            /** Format: int64 */
+            orderedMinor?: number;
+            /** Format: int64 */
+            invoicedMinor?: number;
+            /** Format: int64 */
+            paidMinor?: number;
+        };
+        SpendResponse: {
+            /** Format: int64 */
+            requestedMinor?: number;
+            /** Format: int64 */
+            orderedMinor?: number;
+            /** Format: int64 */
+            invoicedMinor?: number;
+            /** Format: int64 */
+            paidMinor?: number;
+            byCategory?: components["schemas"]["CategoryResponse"][];
+            byPeriod?: components["schemas"]["MonthResponse"][];
+        };
+        ApprovalKpiResponse: {
+            /** Format: int64 */
+            pending?: number;
+            /** Format: int64 */
+            decided?: number;
+            /** Format: double */
+            avgLeadHours?: number;
+            /** Format: double */
+            maxLeadHours?: number;
+        };
+        FeatureUsageResponse: {
+            feature?: string;
+            /** Format: int64 */
+            calls?: number;
+            /** Format: int64 */
+            promptTokens?: number;
+            /** Format: int64 */
+            completionTokens?: number;
+        };
+        UsageResponse: {
+            /** Format: int64 */
+            calls?: number;
+            /** Format: int64 */
+            promptTokens?: number;
+            /** Format: int64 */
+            completionTokens?: number;
+            byFeature?: components["schemas"]["FeatureUsageResponse"][];
         };
     };
     responses: never;
@@ -2413,6 +2638,102 @@ export interface operations {
             };
         };
     };
+    extract: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DraftResponse"];
+                };
+            };
+        };
+    };
+    explain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExplainRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatResponse"];
+                };
+            };
+        };
+    };
+    compare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatResponse"];
+                };
+            };
+        };
+    };
+    chat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatResponse"];
+                };
+            };
+        };
+    };
     current: {
         parameters: {
             query?: never;
@@ -3058,6 +3379,90 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AssignmentResponse"];
+                };
+            };
+        };
+    };
+    suppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SupplierKpiResponse"][];
+                };
+            };
+        };
+    };
+    spend: {
+        parameters: {
+            query?: {
+                period?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SpendResponse"];
+                };
+            };
+        };
+    };
+    approvals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApprovalKpiResponse"];
+                };
+            };
+        };
+    };
+    usage: {
+        parameters: {
+            query?: {
+                period?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UsageResponse"];
                 };
             };
         };

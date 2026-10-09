@@ -4,11 +4,10 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 5 done — Payables** (branches `feature/purchase-orders`,
-`feature/invoicing`, `feature/audit-compliance`, merged into
-`feature/purchase-orders` for one PR). **Next: Phase 6 — Intelligence +
-hardening** (`feature/analytics`, `feature/ai-copilot`,
-`feature/quality-testing`, `feature/devops-observability`).
+**All 14 epics + frontend auth complete on this branch.** Everything
+outstanding (Phase 6 + frontend auth) goes to `main` in one all-phases PR,
+superseding #4 and #5. After the merge: new process (data screens or
+whatever epic you name).
 
 ## Completed
 
@@ -92,7 +91,11 @@ hardening** (`feature/analytics`, `feature/ai-copilot`,
   cross-tenant throughout). Full gate 90/90 green (80 IT + 10 unit/arch).
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
-### Frontend auth (on `feature/frontend-auth`, awaiting PR)
+- Tests: 5× AnalyticsIT, 6× AiIT + 2 unit, 2× MetricsIT (+4 arch rules).
+  Full gate 107/107 green (93 IT + 14 unit/arch) with floors holding.
+- Typegen regenerated; frontend build + Vitest + Playwright green.
+
+### Frontend auth (on this branch, consolidated for the all-phases PR)
 - Angular Material v21 (decision recorded 2026-10-09) + animations.
 - Login/register screens (reactive forms, ambiguous-tenant and conflict
   states), session dashboard (user/tenant/roles + sign-out).
@@ -103,14 +106,14 @@ hardening** (`feature/analytics`, `feature/ai-copilot`,
 
 ## In progress
 
-- Frontend-auth PR (`feature/frontend-auth` → `main`): implemented
-  (Material v21 per the recorded decision), gates green, awaiting PR creation.
+- All-phases PR #6 (`feature/analytics` → `main`): open, gates green.
+  Merge it and every epic branch is landed.
 
-## Next up (remaining)
+## Next up (new process)
 
-1. `feature/frontend-auth` PR, then merge open PRs in dependency order.
-2. Data screens next (suppliers/requests/approvals list UIs) if you want a
-   fully clickable procure-to-pay in the browser.
+1. Merge the all-phases PR with CI green.
+2. Data screens next (suppliers/requests/approvals list UIs) for a fully
+   clickable procure-to-pay in the browser — or whatever epic you name.
 
 ## Architecture decisions (supplementing docs/decisions)
 

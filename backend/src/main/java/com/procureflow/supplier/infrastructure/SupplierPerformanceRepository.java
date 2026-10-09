@@ -14,5 +14,9 @@ public interface SupplierPerformanceRepository extends JpaRepository<SupplierPer
             + " and p.supplier.tenant.slug = :slug order by p.period desc")
     List<SupplierPerformance> findAllBySupplier(@Param("supplierId") UUID supplierId, @Param("slug") String slug);
 
+    @Query("select p from SupplierPerformance p join fetch p.supplier s where s.tenant.slug = :slug"
+            + " order by s.name asc, p.period asc")
+    List<SupplierPerformance> findAllByTenantSlug(@Param("slug") String slug);
+
     boolean existsBySupplier_IdAndPeriod(UUID supplierId, String period);
 }
