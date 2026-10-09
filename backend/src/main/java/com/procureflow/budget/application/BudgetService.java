@@ -7,6 +7,7 @@ import com.procureflow.budget.infrastructure.BudgetReservationRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.audit.application.AuditTrailLogged;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
@@ -35,16 +36,19 @@ public class BudgetService implements BudgetReservationPort {
     private final BudgetReservationRepository reservations;
     private final TenantProvisioning tenants;
     private final ApplicationEventPublisher events;
+    private final MeterRegistry meters;
 
     public BudgetService(
             BudgetRepository budgets,
             BudgetReservationRepository reservations,
             TenantProvisioning tenants,
-            ApplicationEventPublisher events) {
+            ApplicationEventPublisher events,
+            MeterRegistry meters) {
         this.budgets = budgets;
         this.reservations = reservations;
         this.tenants = tenants;
         this.events = events;
+        this.meters = meters;
     }
 
     @Override
@@ -68,6 +72,7 @@ public class BudgetService implements BudgetReservationPort {
             }
         }
         if (target == null) {
+            meters.counter("procureflow.budget.overspends").increment();
             throw ApiException.conflict("OVERSPEND", "No budget for the period covers this amount");
         }
         if (!target.getCurrency().equalsIgnoreCase(currency)) {
@@ -75,6 +80,7 @@ public class BudgetService implements BudgetReservationPort {
         }
         try {
             reservations.saveAndFlush(new BudgetReservation(tenantId, target.getId(), requestId, amountMinor));
+            meters.counter("procureflow.budget.reservations").increment();
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("ALREADY_RESERVED", "This request already holds budget");
         }
