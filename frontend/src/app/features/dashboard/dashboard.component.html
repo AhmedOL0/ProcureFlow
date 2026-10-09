@@ -1,0 +1,28 @@
+@let user = auth.currentUser();
+@if (user) {
+  <mat-card class="dashboard-card">
+    <mat-card-header>
+      <mat-card-title>Welcome, {{ user.email }}</mat-card-title>
+      <mat-card-subtitle>Workspace: {{ user.tenantSlug }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="dashboard-roles-label">Roles in this workspace:</p>
+      <mat-chip-set aria-label="Workspace roles">
+        @for (role of user.roles ?? []; track role) {
+          <mat-chip>{{ role }}</mat-chip>
+        } @empty {
+          <span class="dashboard-muted">No roles assigned.</span>
+        }
+      </mat-chip-set>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-stroked-button (click)="signOut()">Sign out</button>
+    </mat-card-actions>
+  </mat-card>
+} @else {
+  <mat-card class="dashboard-card">
+    <mat-card-content>
+      <p class="dashboard-muted">Loading your session…</p>
+    </mat-card-content>
+  </mat-card>
+}

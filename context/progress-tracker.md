@@ -4,11 +4,10 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 6 done — Intelligence + hardening** (branches `feature/analytics`,
-`feature/ai-copilot`, `feature/quality-testing`,
-`feature/devops-observability`, merged into `feature/analytics` for one PR).
-**Remaining: `feature/frontend-auth`** (login UI, interceptor, guard —
-blocked on the Material-vs-bespoke decision).
+**All 14 epics + frontend auth complete on this branch.** Everything
+outstanding (Phase 6 + frontend auth) goes to `main` in one all-phases PR,
+superseding #4 and #5. After the merge: new process (data screens or
+whatever epic you name).
 
 ## Completed
 
@@ -92,40 +91,29 @@ blocked on the Material-vs-bespoke decision).
   cross-tenant throughout). Full gate 90/90 green (80 IT + 10 unit/arch).
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
-### Phase 6 — Intelligence + hardening (on `feature/analytics`, awaiting PR)
-- Analytics: read-only KPIs over four provider-owned read ports (requests,
-  orders, invoices, scorecards). Spend totals + category/month slices with
-  period filter, supplier averages, approval queue + lead times. No new
-  transactional state.
-- AI copilot: `GroqAiProvider` (conditional on `AI_ENABLED`, short timeouts)
-  behind `AiProvider`; versioned prompt library; strict output validation;
-  per-tenant metering (`ai_usage`). Four use cases: KPI-cited chat, spend
-  explanations, NL request extraction, quotation comparison. Prompts carry
-  aggregates only. Fixed a ship-blocker: optional provider so the app boots
-  with AI disabled (503 per use case).
-- Quality: JaCoCo floors enforced (line 0.70 / branch 0.40, measured
-  0.75/0.44); ArchUnit gains no-field-injection + domain-owns-no-Spring.
-  Focused runs trip the ratchet by design — the full `verify` is the gate.
-- Observability: Micrometer counters (decisions, reservations/overspends,
-  invoices/payments, AI calls) verified by MetricsIT; `alerts.yml` wired
-  into Prometheus; ADR-008 (Terraform state/provider). Noted: Boot disables
-  metrics export in test contexts, so the suite asserts the registry while
-  the scrape path (stock Boot) was verified on dev.
 - Tests: 5× AnalyticsIT, 6× AiIT + 2 unit, 2× MetricsIT (+4 arch rules).
   Full gate 107/107 green (93 IT + 14 unit/arch) with floors holding.
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
+### Frontend auth (on this branch, consolidated for the all-phases PR)
+- Angular Material v21 (decision recorded 2026-10-09) + animations.
+- Login/register screens (reactive forms, ambiguous-tenant and conflict
+  states), session dashboard (user/tenant/roles + sign-out).
+- `AuthService` (signals, localStorage session, single-flight refresh),
+  401 interceptor with one retry, guard with session restore.
+- Tests: 4× Vitest (token helpers) + 4× Playwright (guard redirect,
+  validation, backend-down error, register navigation). Build green.
+
 ## In progress
 
-- Phase 6 PR (`feature/analytics` → `feature/purchase-orders`, stacked):
-  assembled, gates green, awaiting PR creation.
+- All-phases PR (`feature/analytics` → `main`): everything outstanding in
+  one place (Phase 6 + frontend auth), gates green, awaiting PR creation.
 
-## Next up (remaining)
+## Next up (new process)
 
-1. `feature/frontend-auth`: login/register UI, token interceptor with
-   refresh, auth guard, tenant-aware API client. Blocked on ONE decision:
-   Angular Material vs bespoke (see `ui-context.md` review gate) — ask the
-   user, record, then build.
+1. Merge the all-phases PR with CI green.
+2. Data screens next (suppliers/requests/approvals list UIs) for a fully
+   clickable procure-to-pay in the browser — or whatever epic you name.
 
 ## Architecture decisions (supplementing docs/decisions)
 
@@ -154,8 +142,9 @@ blocked on the Material-vs-bespoke decision).
 
 ## Open questions
 
-- Component library: Angular Material vs bespoke (blocks `frontend-auth`
-  visual direction; see `ui-context.md` review gate).
+- Component library: **decided 2026-10-09 — Angular Material v21** (tables,
+  a11y, speed for the data-dense back office; themed to pass the anti-slop
+  gates). Unblocks `frontend-auth` and all feature screens.
 - Refresh transport for web: HttpOnly cookie vs body token (decide with
   first client; mobile needs the body variant).
 - OAuth2/social login: out of scope until a customer asks.
