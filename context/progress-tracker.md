@@ -4,10 +4,9 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**All 14 epics + frontend auth complete on this branch.** Everything
-outstanding (Phase 6 + frontend auth) goes to `main` in one all-phases PR,
-superseding #4 and #5. After the merge: new process (data screens or
-whatever epic you name).
+**Everything landed on `main`.** All 14 epics + frontend auth are merged
+(PRs #1–#6); `main` is green (backend 93 IT + 14 unit/arch with floors,
+frontend build + 8 Vitest + 5 Playwright). Awaiting the next epic.
 
 ## Completed
 
