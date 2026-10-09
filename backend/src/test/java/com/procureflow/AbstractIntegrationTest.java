@@ -22,6 +22,27 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 public abstract class AbstractIntegrationTest {
 
+    /**
+     * Digest-pinned Postgres for every suite. A digest (unlike a floating
+     * tag) makes Testcontainers skip the remote freshness check and use the
+     * runner cache, so CI no longer burns 13 Hub lookups per run — the
+     * failure mode that killed a full green suite on a Hub hiccup. Bump the
+     * digest deliberately when a new alpine rebuild is wanted.
+     */
+    protected static final String POSTGRES_IMAGE =
+            "postgres@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea";
+
+    /**
+     * One container per test class (see the class javadoc), all from the
+     * pinned digest above. The explicit substitute declaration is required
+     * because Testcontainers rejects digest-pinned names otherwise.
+     */
+    protected static org.testcontainers.containers.PostgreSQLContainer<?> postgresContainer() {
+        return new org.testcontainers.containers.PostgreSQLContainer<>(
+                org.testcontainers.utility.DockerImageName.parse(POSTGRES_IMAGE)
+                        .asCompatibleSubstituteFor("postgres"));
+    }
+
     @Autowired
     protected TestRestTemplate rest;
 

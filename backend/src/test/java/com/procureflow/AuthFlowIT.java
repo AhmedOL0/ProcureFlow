@@ -25,7 +25,7 @@ class AuthFlowIT extends AbstractIntegrationTest {
 
     @Container
     @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+    static final PostgreSQLContainer<?> POSTGRES = postgresContainer();
 
     @Test
     void registerCreatesTenantAndAdminWithTokens() {
