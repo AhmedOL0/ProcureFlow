@@ -8,13 +8,13 @@ orders and invoices, with an AI copilot that explains spend and drafts
 requests. One backend serves many tenants; tenant data never crosses tenant
 boundaries.
 
-> Status: **Phase 5 — payables done.** The full procure-to-pay flow is
-> implemented and green: suppliers, idempotent purchase requests, approval
-> lanes with delegation and escalation, monthly budgets with in-transaction
-> reservation, purchase orders with receipt, invoices with 3-way match and
-> payments, an event-driven notification inbox, and an append-only audit
-> trail. Next is Phase 6 (analytics, AI copilot, hardening), per
-> `docs/project-management/sprint-plan.md`.
+> Status: **all phases complete.** The full procure-to-pay flow is implemented
+> and green: suppliers, idempotent purchase requests, approval lanes with
+> delegation and escalation, monthly budgets with in-transaction reservation,
+> purchase orders with receipt, invoices with 3-way match and payments, an
+> event-driven notification inbox, an append-only audit trail, read-only
+> analytics KPIs, a metered Groq copilot, and a Material login/session shell.
+> See `docs/project-management/sprint-plan.md` for the delivery record.
 
 ## Business problem
 
@@ -88,28 +88,36 @@ live contract (`cd frontend && npm run gen:api`, checked in at
 | Invoices | `/invoices` | 3-way match, UNPAID → PARTIAL → PAID |
 | Notifications | `/notifications` | Event-driven personal inbox |
 | Audit | `/audit-events` | Append-only trail, admin read |
+| Analytics | `/analytics/...` | Spend, supplier and approval KPIs (read-only) |
+| AI copilot | `/ai/...` | KPI-cited chat, spend explanations, request extraction, quotation comparison (metered, `ai:use`) |
+| Frontend auth | `/login`, `/register`, `/dashboard` | Angular Material session shell (guard + refresh interceptor) |
 
 ## Testing strategy
 
 Full picture in `docs/testing/strategy.md`. Local gates (must pass before
 every push):
 
-- Backend: `cd backend && ./mvnw verify` — 90 tests green (10 unit/ArchUnit
-  + 80 Testcontainers integration over real PostgreSQL 16): auth, tenant
+- Backend: `cd backend && ./mvnw verify` — 107 tests green (14 unit/ArchUnit
+  + 93 Testcontainers integration over real PostgreSQL 16): auth, tenant
   isolation, suppliers, procurement, approvals (incl. decision races),
-  budgets (incl. reservation race), orders, invoices, notifications, audit.
-- Frontend unit: `cd frontend && npm test` (Vitest)
+  budgets (incl. reservation race), orders, invoices, notifications, audit,
+  analytics, copilot, metrics. JaCoCo floors (line 0.70 / branch 0.40) fail
+  the build on regression.
+- Frontend unit: `cd frontend && npm test` (Vitest, 8 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
+  (5 tests: guarded shell, auth states)
 - API types: boot the backend, then `cd frontend && npm run gen:api` after
   any API change, and commit the result.
 
 ## AI architecture
 
 Angular never calls Groq. Flow: Angular → Spring Boot → `ai` module
-(prompts, validation, auth, usage metering) → Groq API. The provider
-abstraction (`AiProvider`) exists now; the Groq adapter, prompt library and
-the four designed use cases (copilot, analytics explanations, request
-extraction, quotation intelligence) land in Phase 6 behind `AI_ENABLED=true`.
+(prompts, validation, auth, usage metering) → Groq API. The `GroqAiProvider`
+is live behind `AI_ENABLED` (503 per use case while disabled); prompts are
+versioned (`Prompts.VERSION`, metered per call), outputs are validated, and
+prompts carry KPI aggregates only — no user identities or secrets. Use
+cases: KPI-cited chat, spend explanations, request extraction, quotation
+comparison, plus a per-tenant usage endpoint.
 
 ## Security
 
@@ -121,9 +129,11 @@ Details: `docs/architecture/security.md`.
 ## Observability
 
 Actuator exposes `health`, `info` and `prometheus`; Prometheus + Grafana
-configs live in `infrastructure/monitoring/`. Planned metrics cover HTTP,
-JVM, DB, cache, domain events (requests, approvals) and AI usage
-(count, latency, errors, tokens).
+configs live in `infrastructure/monitoring/` (first alert rules in
+`prometheus/alerts.yml`: overspend spikes, 5xx rate, AI failures/usage).
+Domain counters (`procureflow.decisions`, `procureflow.budget.*`,
+`procureflow.invoices*`, `procureflow.ai.calls`) ship from the services;
+AI token usage is metered per tenant in `ai_usage`.
 
 ## CI/CD
 
