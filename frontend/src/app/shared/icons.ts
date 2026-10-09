@@ -7,6 +7,7 @@ export {
   CircleAlert,
   CircleCheck,
   FileText,
+  Inbox,
   LayoutDashboard,
   Menu,
   Pencil,
@@ -19,6 +20,7 @@ export {
   Truck,
   User,
   Users,
+  Wallet,
   X,
 } from 'lucide-angular';
 export type { LucideIconData } from 'lucide-angular';

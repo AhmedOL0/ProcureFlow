@@ -1,0 +1,39 @@
+.inbox-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--pf-space-2xl);
+}
+
+.inbox-card {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  padding: var(--pf-space-lg);
+}
+.inbox-card h2 {
+  font: var(--pf-headline-sm);
+  color: var(--pf-navy);
+  margin: 0 0 var(--pf-space-md);
+}
+.inbox-muted {
+  font: var(--pf-body-md);
+  color: var(--pf-slate);
+  margin: 0;
+}
+
+.inbox-title {
+  color: var(--pf-blue);
+  font-weight: 500;
+  text-decoration: none;
+}
+.inbox-title:hover {
+  text-decoration: underline;
+}
+
+.pf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

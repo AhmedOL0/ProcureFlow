@@ -32,6 +32,19 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/suppliers/suppliers.routes').then((m) => m.SUPPLIER_ROUTES),
       },
+      {
+        path: 'requests',
+        loadChildren: () =>
+          import('./features/procurement/procurement.routes').then((m) => m.PROCUREMENT_ROUTES),
+      },
+      {
+        path: 'approvals',
+        loadComponent: () =>
+          import('./features/procurement/approval-inbox/approval-inbox.component').then(
+            (m) => m.ApprovalInboxComponent,
+          ),
+        data: { breadcrumb: 'Approvals' },
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],
   },
