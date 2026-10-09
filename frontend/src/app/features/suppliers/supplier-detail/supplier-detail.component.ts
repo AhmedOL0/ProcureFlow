@@ -4,7 +4,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { forkJoin } from 'rxjs';
 
@@ -30,7 +30,7 @@ import { PerformanceDialogComponent, PerformanceDialogData } from '../dialogs/pe
 @Component({
   selector: 'app-supplier-detail',
   imports: [
-    RouterLink, MatButtonModule, MatChipsModule, MatDialogModule, MatDividerModule,
+    MatButtonModule, MatChipsModule, MatDialogModule, MatDividerModule,
     MatProgressSpinnerModule, LucideAngularModule, PageHeaderComponent, StatusBadgeComponent,
     EmptyStateComponent, ErrorStateComponent,
   ],
