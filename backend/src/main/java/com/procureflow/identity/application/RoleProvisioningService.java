@@ -16,13 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Seeds the per-tenant role skeleton on first use: TENANT_ADMIN holds every
- * permission, MEMBER holds the safe defaults. Custom roles arrive with the
- * admin console; until then these two cover the whole product.
+ * permission, OFFICER covers operational writes, MEMBER holds the safe
+ * defaults. Custom roles arrive with the admin console.
  */
 @Service
 public class RoleProvisioningService {
 
     public static final String TENANT_ADMIN = "TENANT_ADMIN";
+    public static final String OFFICER = "OFFICER";
     public static final String MEMBER = "MEMBER";
 
     private final RoleRepository roles;
@@ -46,11 +47,15 @@ public class RoleProvisioningService {
         Role admin = new Role(tenant, TENANT_ADMIN);
         admin.setDescription("Full control over the tenant workspace");
         admin.getPermissions().addAll(permissions.findAllByCodeIn(PermissionCodes.ALL));
+        roles.save(admin);
         Role member = new Role(tenant, MEMBER);
         member.setDescription("Request and read-only access");
         member.getPermissions().addAll(permissions.findAllByCodeIn(PermissionCodes.MEMBER_DEFAULTS));
-        roles.save(admin);
         roles.save(member);
+        Role officer = new Role(tenant, OFFICER);
+        officer.setDescription("Procurement officers: suppliers, orders, invoices");
+        officer.getPermissions().addAll(permissions.findAllByCodeIn(PermissionCodes.OFFICER_DEFAULTS));
+        roles.save(officer);
     }
 
     @Transactional(readOnly = true)
