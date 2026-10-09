@@ -1,0 +1,197 @@
+<div class="pf-page">
+  <pf-page-header
+    title="Supplier directory"
+    description="Every vendor your workspace buys from — search, filter, and open a file for contacts, categories and scorecards."
+    [breadcrumbs]="[{ label: 'Suppliers' }]"
+  >
+    <div slot="actions">
+      @if (canWrite) {
+        <button mat-flat-button color="primary" (click)="openCreate()">
+          <lucide-angular [img]="icons.plus" [size]="16" /> Add supplier
+        </button>
+      }
+    </div>
+  </pf-page-header>
+
+  @if (!loading() && !failure()) {
+    <div class="supplier-kpis" role="region" aria-label="Supplier summary">
+      @for (kpi of kpis(); track kpi.label) {
+        <div class="supplier-kpi">
+          <div class="supplier-kpi__top">
+            <span class="supplier-kpi__label">{{ kpi.label }}</span>
+            <lucide-angular [img]="kpi.icon" [size]="18" class="supplier-kpi__icon" />
+          </div>
+          <div class="supplier-kpi__value">{{ kpi.value }}</div>
+          <div class="supplier-kpi__sub">{{ kpi.sub }}</div>
+          <div class="supplier-kpi__bar" aria-hidden="true">
+            <div class="supplier-kpi__fill" [style.width.%]="kpi.bar ?? 0"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="pf-table-card">
+    <div class="supplier-filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Search name, email or tax ID</mat-label>
+        <input matInput [formControl]="searchBox" placeholder="Acme" />
+        <lucide-angular matSuffix [img]="icons.search" [size]="18" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="supplier-filter-sm">
+        <mat-label>Status</mat-label>
+        <mat-select [formControl]="statusFilter">
+          <mat-option [value]="null">All</mat-option>
+          <mat-option value="ACTIVE">Active</mat-option>
+          <mat-option value="INACTIVE">Inactive</mat-option>
+          <mat-option value="SUSPENDED">Suspended</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="supplier-filter-sm">
+        <mat-label>Category</mat-label>
+        <mat-select [formControl]="categoryFilter">
+          <mat-option [value]="null">All</mat-option>
+          @for (category of catalog(); track category.id) {
+            <mat-option [value]="category.id">{{ category.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="supplier-chips">
+      <mat-chip-set aria-label="Quick filters">
+        <mat-chip-option [selected]="statusFilter.value === null" (click)="setStatusFilter(null)">
+          All ({{ counts().all }})
+        </mat-chip-option>
+        <mat-chip-option [selected]="statusFilter.value === 'ACTIVE'" (click)="setStatusFilter('ACTIVE')">
+          Active ({{ counts().active }})
+        </mat-chip-option>
+        <mat-chip-option [selected]="statusFilter.value === 'INACTIVE'" (click)="setStatusFilter('INACTIVE')">
+          Inactive ({{ counts().inactive }})
+        </mat-chip-option>
+        <mat-chip-option [selected]="statusFilter.value === 'SUSPENDED'" (click)="setStatusFilter('SUSPENDED')">
+          Suspended ({{ counts().suspended }})
+        </mat-chip-option>
+      </mat-chip-set>
+      <div class="supplier-count">
+        <span>Showing {{ pageRows().length }} of {{ filtered().length }} suppliers</span>
+        <button mat-button (click)="resetFilters()">Reset filters</button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="supplier-loading" role="status" aria-label="Loading suppliers">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (failure(); as problem) {
+      @if (problem.status === 403) {
+        <pf-error-state
+          title="Not permitted"
+          message="Your workspace role cannot view suppliers. Ask an admin for access."
+        />
+      } @else {
+        <pf-error-state
+          title="Suppliers did not load"
+          [message]="problem.message"
+          retryLabel="Retry"
+          (retry)="reload()"
+        />
+      }
+    } @else if (filtered().length === 0) {
+      <pf-empty-state
+        [icon]="icons.truck"
+        title="No suppliers match"
+        message="Try different filters — or add the first supplier to this workspace."
+        [actionLabel]="canWrite ? 'Add supplier' : ''"
+        (action)="openCreate()"
+      />
+    } @else {
+      <div class="supplier-table-scroll">
+        <table
+          mat-table
+          [dataSource]="pageRows()"
+          matSort
+          (matSortChange)="onSort($event)"
+          class="pf-table"
+          aria-label="Suppliers"
+        >
+          <ng-container matColumnDef="supplier">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="supplier">Supplier</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="supplier-cell">
+                <span class="supplier-avatar" aria-hidden="true">{{ icons.initials(row.supplier.name) }}</span>
+                <span class="supplier-id">
+                  <a class="supplier-name" [routerLink]="[row.supplier.id]">{{ row.supplier.name }}</a>
+                  <span class="supplier-tax">{{ row.supplier.taxId || 'No tax ID' }}</span>
+                </span>
+              </span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="categories">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="categories">Categories</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.categories.length === 0) {
+                <span class="supplier-muted">—</span>
+              } @else {
+                <span class="supplier-cats">
+                  {{ row.categories[0]?.name }}
+                  @if (row.categories.length > 1) {
+                    <span class="supplier-more">+{{ row.categories.length - 1 }}</span>
+                  }
+                </span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="contact">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="contact">Primary contact</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.primaryContact) {
+                <span class="supplier-contact">
+                  {{ row.primaryContact.name }}
+                  <span class="supplier-muted">{{ row.primaryContact.email || 'no email' }}</span>
+                </span>
+              } @else {
+                <span class="supplier-muted">—</span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="performance">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="performance" class="pf-num">On-time</th>
+            <td mat-cell *matCellDef="let row" class="pf-num">
+              @if (row.averageOnTime === null) {
+                <span class="supplier-muted">—</span>
+              } @else {
+                <span class="supplier-score">
+                  <span class="pf-data-mono">{{ row.averageOnTime }}%</span>
+                  <span class="supplier-bar" aria-hidden="true">
+                    <span class="supplier-fill" [style.width.%]="row.averageOnTime"></span>
+                  </span>
+                </span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
+            <td mat-cell *matCellDef="let row"><pf-status-badge [status]="row.supplier.status" /></td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">Actions</span></th>
+            <td mat-cell *matCellDef="let row">
+              <a mat-button [routerLink]="[row.supplier.id]">Open</a>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="filtered().length"
+        [pageIndex]="page().pageIndex"
+        [pageSize]="page().pageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onPage($event)"
+        aria-label="Supplier pages"
+      />
+    }
+  </div>
+</div>

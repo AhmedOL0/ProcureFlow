@@ -1,7 +1,18 @@
-// ProcureFlow theme: Angular Material, light, azure primary, standard density.
-// No gradients, no glassmorphism, no decoration — the content is dense
-// procurement data, and the theme stays out of its way (see ui-context.md).
+// ProcureFlow design tokens — translated from
+// stitch_procureflow_enterprise_saas_ui/procureflow_design_system/DESIGN.md
+// into Angular Material + custom properties. One system: every component
+// consumes these tokens, never raw hex.
 @use '@angular/material' as mat;
+
+// Self-hosted Inter (variable, latin) so rendering is identical online,
+// offline and in CI screenshots.
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/assets/fonts/inter-latin.woff2') format('woff2');
+}
 
 html {
   color-scheme: light;
@@ -18,19 +29,201 @@ html {
   );
 }
 
-body {
-  margin: 0;
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-  background: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
+// --- Brand & surface -------------------------------------------------
+:root {
+  --pf-navy: #142b4a; // nav rails, headings, structural containers
+  --pf-blue: #2563eb; // interactive only: CTAs, links, active states
+  --pf-blue-hover: #1d4ed8;
+  --pf-blue-active: #1e40af;
+  --pf-teal: #0f766e; // machine-intelligence surfaces only
+  --pf-teal-hover: #115e59;
+  --pf-canvas: #f5f7fa; // app backdrop
+  --pf-card: #ffffff;
+  --pf-slate: #475569; // secondary text, labels, timestamps
+  --pf-border: #e2e8f0; // grid rows, panel borders, inputs
+  --pf-border-strong: #cbd5e1;
+  --pf-header-bg: #f8fafc; // table headers
+  --pf-row-hover: #f8fafc;
+
+  // --- Semantic status (bg / text / border) --------------------------
+  --pf-success-bg: #f0fdf4;
+  --pf-success-text: #15803d;
+  --pf-success-border: #bbf7d0;
+  --pf-warning-bg: #fffbeb;
+  --pf-warning-text: #b45309;
+  --pf-warning-border: #fde68a;
+  --pf-danger-bg: #fef2f2;
+  --pf-danger-text: #b91c1c;
+  --pf-danger-border: #fecaca;
+  --pf-info-bg: #f0f9ff;
+  --pf-info-text: #0369a1;
+  --pf-info-border: #bae6fd;
+  --pf-neutral-bg: #f1f5f9;
+  --pf-neutral-text: #475569;
+  --pf-neutral-border: #cbd5e1;
+
+  // --- Shape & spacing (4px base) ------------------------------------
+  --pf-radius-sm: 4px;
+  --pf-radius-md: 8px;
+  --pf-radius-lg: 12px;
+  --pf-radius-pill: 9999px;
+  --pf-space-xs: 4px;
+  --pf-space-sm: 8px;
+  --pf-space-md: 12px;
+  --pf-space-lg: 16px;
+  --pf-space-xl: 24px;
+  --pf-space-2xl: 32px;
+  --pf-gutter: 16px;
+  --pf-gutter-desktop: 24px;
+  --pf-margin-desktop: 32px;
+
+  // --- Type scale (Inter w/ system fallback; tabular figures for data)
+  --pf-font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pf-display-lg: 700 36px/44px var(--pf-font);
+  --pf-headline-lg: 600 24px/32px var(--pf-font);
+  --pf-headline-md: 600 20px/28px var(--pf-font);
+  --pf-headline-sm: 600 16px/24px var(--pf-font);
+  --pf-body-lg: 400 16px/24px var(--pf-font);
+  --pf-body-md: 400 14px/20px var(--pf-font);
+  --pf-body-sm: 400 13px/18px var(--pf-font);
+  --pf-label-lg: 500 14px/20px var(--pf-font);
+  --pf-label-md: 500 12px/16px var(--pf-font);
+  --pf-label-sm: 600 11px/14px var(--pf-font);
+
+  // --- Material bridge: keep Material components on-palette ----------
+  --mat-sys-primary: var(--pf-blue);
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-surface: var(--pf-canvas);
+  --mat-sys-on-surface: #191c1e;
+  --mat-sys-surface-container-lowest: #ffffff;
+  --mat-sys-error: var(--pf-danger-text);
 }
 
-// Procurement status tokens: success / warning / danger plus muted text.
-// Muted text keeps >= 4.5:1 contrast on the light surface.
-:root {
-  --pf-success: #1b6b3a;
-  --pf-warning: #8a5a00;
-  --pf-danger: #b3261e;
-  --pf-muted-text: #565d66;
-  --pf-surface-card: var(--mat-sys-surface-container-low);
+body {
+  margin: 0;
+  font-family: var(--pf-font);
+  background: var(--pf-canvas);
+  color: #191c1e;
+}
+
+// Money, quantities and SKUs align in columns.
+.pf-data-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+// Visible keyboard focus everywhere (Material leaves gaps on custom parts).
+:focus-visible {
+  outline: 2px solid var(--pf-blue);
+  outline-offset: 2px;
+  border-radius: var(--pf-radius-sm);
+}
+
+// Skip link for keyboard users.
+.pf-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--pf-navy);
+  color: #fff;
+  padding: 8px 16px;
+  z-index: 1000;
+  border-radius: 0 0 8px 0;
+}
+.pf-skip-link:focus-visible {
+  left: 0;
+  outline-color: #fff;
+}
+
+// Dense operational tables: 40px headers, 48px rows, right-aligned figures.
+.pf-table-card {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  overflow: hidden;
+}
+table.pf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--pf-body-md);
+}
+table.pf-table thead th {
+  background: var(--pf-header-bg);
+  font: var(--pf-label-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-slate);
+  text-align: left;
+  padding: 0 16px;
+  height: 40px;
+  border-bottom: 1px solid var(--pf-border);
+  white-space: nowrap;
+}
+table.pf-table tbody td {
+  padding: 0 16px;
+  height: 48px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+table.pf-table tbody tr:last-child td {
+  border-bottom: none;
+}
+table.pf-table tbody tr:hover td {
+  background: var(--pf-row-hover);
+}
+table.pf-table td.pf-num,
+table.pf-table th.pf-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+// Page rhythm shared by every feature screen.
+.pf-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-lg);
+  padding: var(--pf-gutter);
+  max-width: 1280px;
+}
+@media (min-width: 1280px) {
+  .pf-page {
+    padding: var(--pf-gutter-desktop) var(--pf-margin-desktop);
+  }
+}
+
+// Status pills: 11px/600/uppercase/tracked, tint per state.
+.pf-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--pf-radius-pill);
+  font: var(--pf-label-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.pf-badge--success {
+  background: var(--pf-success-bg);
+  color: var(--pf-success-text);
+  border-color: var(--pf-success-border);
+}
+.pf-badge--warning {
+  background: var(--pf-warning-bg);
+  color: var(--pf-warning-text);
+  border-color: var(--pf-warning-border);
+}
+.pf-badge--danger {
+  background: var(--pf-danger-bg);
+  color: var(--pf-danger-text);
+  border-color: var(--pf-danger-border);
+}
+.pf-badge--info {
+  background: var(--pf-info-bg);
+  color: var(--pf-info-text);
+  border-color: var(--pf-info-border);
+}
+.pf-badge--neutral {
+  background: var(--pf-neutral-bg);
+  color: var(--pf-neutral-text);
+  border-color: var(--pf-neutral-border);
 }

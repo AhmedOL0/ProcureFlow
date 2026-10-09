@@ -1,0 +1,88 @@
+<a class="pf-skip-link" href="#main-content">Skip to main content</a>
+<mat-sidenav-container class="shell">
+  <mat-sidenav
+    class="shell__rail"
+    [mode]="drawerMode()"
+    [opened]="drawerOpened()"
+    (closed)="drawerOpened.set(false)"
+  >
+    <div class="shell__brand">ProcureFlow</div>
+    <mat-nav-list>
+      @for (item of nav; track item.url) {
+        <a
+          mat-list-item
+          [routerLink]="item.url"
+          routerLinkActive="shell__link--active"
+          (click)="closeOnNavigate()"
+        >
+          <lucide-angular matListItemIcon [img]="item.icon" [size]="18" />
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+    <div class="shell__tenant">
+      @let shellUser = auth.currentUser();
+      @if (shellUser) {
+        <span class="shell__tenant-name">{{ shellUser.tenantSlug }}</span>
+        <span class="shell__tenant-user">{{ shellUser.email }}</span>
+      }
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell__main">
+    <mat-toolbar class="shell__bar">
+      <button mat-icon-button (click)="toggleDrawer()" aria-label="Toggle navigation">
+        <lucide-angular [img]="icons.menu" [size]="20" />
+      </button>
+      @if (breadcrumbs().length > 0) {
+        <nav class="shell__crumbs" aria-label="Breadcrumb">
+          @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
+            <span [attr.aria-current]="last ? 'page' : null">{{ crumb.label }}</span>
+          }
+        </nav>
+      }
+      <span class="shell__spacer"></span>
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="inboxMenu"
+        (menuOpened)="openInbox()"
+        aria-label="Notifications"
+      >
+        <lucide-angular [img]="icons.bell" [size]="20" />
+        @if (inbox.unread() > 0) {
+          <span class="shell__dot" aria-hidden="true">{{ inbox.unread() }}</span>
+        }
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Account">
+        <lucide-angular [img]="icons.user" [size]="20" />
+      </button>
+    </mat-toolbar>
+
+    <mat-menu #inboxMenu="matMenu" class="shell__inbox">
+      <div class="shell__inbox-head" mat-menu-item disabled>Notifications</div>
+      @for (item of inbox.items().slice(0, 8); track item.id) {
+        <button mat-menu-item (click)="read(item)" [class.shell__unread]="!item.read">
+          <span class="shell__inbox-title">{{ item.title }}</span>
+          <span class="shell__inbox-body">{{ item.body }}</span>
+        </button>
+      } @empty {
+        <div class="shell__inbox-empty" mat-menu-item disabled>No notifications yet.</div>
+      }
+    </mat-menu>
+
+    <mat-menu #userMenu="matMenu">
+      @let menuUser = auth.currentUser();
+      @if (menuUser) {
+        <div class="shell__user" mat-menu-item disabled>
+          <span class="shell__user-email">{{ menuUser.email }}</span>
+          <span class="shell__user-tenant">{{ menuUser.tenantSlug }}</span>
+        </div>
+      }
+      <button mat-menu-item (click)="signOut()">Sign out</button>
+    </mat-menu>
+
+    <main id="main-content" class="shell__content">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

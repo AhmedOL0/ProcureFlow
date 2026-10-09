@@ -45,8 +45,11 @@ management:
 springdoc:
   api-docs:
     path: /v3/api-docs
+    # Secure by default: prod serves no docs unless explicitly enabled.
+    enabled: ${API_DOCS_ENABLED:false}
   swagger-ui:
     path: /swagger-ui.html
+    enabled: ${SWAGGER_UI_ENABLED:false}
 
 app:
   jwt:

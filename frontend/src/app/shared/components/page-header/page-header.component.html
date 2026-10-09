@@ -1,0 +1,27 @@
+<div class="pf-head">
+  <div class="pf-head__titles">
+    @if (breadcrumbs().length > 0) {
+      <nav class="pf-head__crumbs" aria-label="Breadcrumb">
+        @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
+          @if (!last && crumb.url) {
+            <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+          } @else {
+            <span [attr.aria-current]="last ? 'page' : null" [class.pf-head__crumb-current]="last">
+              {{ crumb.label }}
+            </span>
+          }
+          @if (!last) {
+            <lucide-angular [img]="chevron" [size]="14" class="pf-head__sep" />
+          }
+        }
+      </nav>
+    }
+    <h1 class="pf-head__title">{{ title() }}</h1>
+    @if (description()) {
+      <p class="pf-head__subtitle">{{ description() }}</p>
+    }
+  </div>
+  <div class="pf-head__actions">
+    <ng-content select="[slot=actions]" />
+  </div>
+</div>

@@ -4,7 +4,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . ./
-RUN npm run build
+# The API base is baked at build time (Angular has no runtime env).
+# Compose passes ANGULAR_API_URL; plain `docker build` keeps localhost:8080.
+ARG ANGULAR_API_URL=http://localhost:8080
+RUN sed -i "s|http://localhost:8080|${ANGULAR_API_URL}|g" src/environments/environment.ts \
+  && npm run build
 
 FROM nginx:stable-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf

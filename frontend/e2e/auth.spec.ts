@@ -11,6 +11,11 @@ test('guests land on the login screen', async ({ page }) => {
   await expect(page.getByText('Sign in to ProcureFlow')).toBeVisible();
 });
 
+test('guests cannot open suppliers directly', async ({ page }) => {
+  await page.goto('/suppliers');
+  await expect(page).toHaveURL(/\/login/);
+});
+
 test('empty login shows validation, not a request', async ({ page }) => {
   await page.goto('/login');
   await page.getByRole('button', { name: 'Sign in' }).click();

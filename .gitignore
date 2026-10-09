@@ -54,3 +54,6 @@ infrastructure/terraform/.terraform.lock.hcl
 # ---- Monitoring local data ----
 infrastructure/monitoring/prometheus/data/
 infrastructure/monitoring/grafana/data/
+
+# Local design reference (large generated mockups, machine-specific)
+stitch_procureflow_enterprise_saas_ui/
