@@ -4,7 +4,8 @@ WORKDIR /app
 COPY pom.xml ./
 COPY .mvn .mvn
 COPY mvnw mvnw.cmd ./
-RUN chmod +x mvnw && ./mvnw -B -q dependency:go-offline
+# Defense in depth: a CRLF-checked-out wrapper breaks `#!/bin/sh` (exit 127).
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && ./mvnw -B -q dependency:go-offline
 COPY src ./src
 RUN ./mvnw -B -DskipTests package
 

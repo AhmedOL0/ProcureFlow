@@ -1,0 +1,6 @@
+# Line-ending discipline: shell scripts and Unix configs must stay LF so
+# Docker Linux builds and `sh` wrappers keep working on Windows checkouts.
+backend/mvnw text eol=lf
+backend/mvnw.cmd text eol=crlf
+*.sh text eol=lf
+.gitattributes text eol=lf

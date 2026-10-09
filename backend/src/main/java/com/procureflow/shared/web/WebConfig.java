@@ -17,7 +17,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final List<String> allowedOrigins;
 
-    public WebConfig(@Value("${app.cors.allowed-origins:}") List<String> allowedOrigins) {
+    // NB: the env var does NOT relaxed-bind under the app.* prefix, so it
+    // is referenced explicitly as the fallback (an unset/blank value means
+    // same-origin only).
+    public WebConfig(@Value("${app.cors.allowed-origins:${CORS_ALLOWED_ORIGINS:}}") List<String> allowedOrigins) {
         this.allowedOrigins = allowedOrigins.stream().filter(origin -> !origin.isBlank()).toList();
     }
 
