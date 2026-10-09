@@ -11,9 +11,12 @@ wiring, registration, departments, memberships. First Testcontainers
 integration tests + cross-tenant negatives. Gates green
 (`mvn verify`: 10 unit/arch + 13 integration).
 
-## Phase 3 — Procurement core
-Epics 3-4 (+7 lite). Suppliers, purchase requests with idempotent submit,
-first purchase orders. OpenAPI frontend type generation lands.
+## Phase 3 — Procurement core (done)
+Epics 3-4 (+7 lite). Suppliers (CRUD, contacts with single-primary rule,
+categories, monthly scorecards), purchase requests with idempotent submit
+(unique key + race-to-replay, concurrency-tested), draft lifecycle, OpenAPI
+frontend type generation (`npm run gen:api` → `api-types.gen.ts`). OFFICER
+role added for operational writes. Gates green (`mvn verify`: 38/38).
 
 ## Phase 4 — Money governance
 Epics 5-6 (+9). Approval workflows with delegation/escalation, budget
