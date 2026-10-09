@@ -106,8 +106,8 @@ whatever epic you name).
 
 ## In progress
 
-- All-phases PR (`feature/analytics` → `main`): everything outstanding in
-  one place (Phase 6 + frontend auth), gates green, awaiting PR creation.
+- All-phases PR #6 (`feature/analytics` → `main`): open, gates green.
+  Merge it and every epic branch is landed.
 
 ## Next up (new process)
 
