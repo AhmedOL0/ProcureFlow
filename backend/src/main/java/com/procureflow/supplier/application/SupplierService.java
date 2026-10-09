@@ -2,6 +2,7 @@ package com.procureflow.supplier.application;
 
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.organization.domain.Tenant;
+import com.procureflow.purchaseorder.application.SupplierOrderUsage;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.supplier.domain.Supplier;
 import com.procureflow.supplier.domain.SupplierCategory;
@@ -16,9 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Supplier lifecycle, always scoped to the caller's tenant. Deletes are
- * direct for now: no referencing tables exist yet. The purchase-order epic
- * adds a reference guard here before orders can point at suppliers.
+ * Supplier lifecycle, always scoped to the caller's tenant. Deletes consult
+ * the purchase-order reference guard first and answer 409 while an order
+ * points at the supplier; other links (request items) still surface through
+ * the constraint fallback below.
  */
 @Service
 @Transactional
@@ -27,16 +29,19 @@ public class SupplierService {
     private final SupplierRepository suppliers;
     private final SupplierCategoryRepository categories;
     private final TenantProvisioning tenants;
+    private final SupplierOrderUsage orderUsage;
     private final EntityManager entities;
 
     public SupplierService(
             SupplierRepository suppliers,
             SupplierCategoryRepository categories,
             TenantProvisioning tenants,
+            SupplierOrderUsage orderUsage,
             EntityManager entities) {
         this.suppliers = suppliers;
         this.categories = categories;
         this.tenants = tenants;
+        this.orderUsage = orderUsage;
         this.entities = entities;
     }
 
@@ -108,6 +113,10 @@ public class SupplierService {
     }
 
     public void delete(String tenantSlug, UUID id) {
+        if (orderUsage.isReferenced(tenantSlug, id)) {
+            throw ApiException.conflict(
+                    "SUPPLIER_REFERENCED", "Supplier is referenced by purchase orders and cannot be deleted");
+        }
         try {
             suppliers.delete(scoped(tenantSlug, id));
             suppliers.flush();

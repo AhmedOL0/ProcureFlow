@@ -181,6 +181,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List orders of the current workspace, newest first */
+        get: operations["list_3"];
+        put?: never;
+        /** Start a draft order from one approved request */
+        post: operations["create_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a draft order (request becomes ORDERED) */
+        post: operations["send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record goods receipt per line (over-receipt is rejected) */
+        post: operations["receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a fully received order */
+        post: operations["close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a draft or sent order */
+        post: operations["cancel_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/memberships": {
         parameters: {
             query?: never;
@@ -189,10 +275,45 @@ export interface paths {
             cookie?: never;
         };
         /** List memberships of the current workspace */
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         /** Add a user to a department */
         post: operations["add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List invoices of the current workspace, newest first */
+        get: operations["list_5"];
+        put?: never;
+        /** Book an invoice against a sent order (over-invoicing rejected) */
+        post: operations["create_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invoices/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a payment (UNPAID → PARTIAL → PAID) */
+        post: operations["pay"];
         delete?: never;
         options?: never;
         head?: never;
@@ -207,10 +328,10 @@ export interface paths {
             cookie?: never;
         };
         /** List departments of the current workspace */
-        get: operations["list_4"];
+        get: operations["list_6"];
         put?: never;
         /** Create a department */
-        post: operations["create_4"];
+        post: operations["create_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -225,10 +346,10 @@ export interface paths {
             cookie?: never;
         };
         /** List pots of the current workspace, newest period first */
-        get: operations["list_5"];
+        get: operations["list_7"];
         put?: never;
         /** Open a named pot for one month (YYYY-MM) */
-        post: operations["create_5"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -347,7 +468,7 @@ export interface paths {
             cookie?: never;
         };
         /** List delegations of the current workspace */
-        get: operations["list_6"];
+        get: operations["list_8"];
         put?: never;
         /** Delegate decide power to a workspace member until endsAt */
         post: operations["delegate"];
@@ -572,6 +693,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One order with its lines and total */
+        get: operations["get_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notifications": {
         parameters: {
             query?: never;
@@ -589,6 +727,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One invoice with its 3-way match and paid total */
+        get: operations["get_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/budgets/{id}": {
         parameters: {
             query?: never;
@@ -597,7 +752,7 @@ export interface paths {
             cookie?: never;
         };
         /** One pot with its reserved and remaining amounts */
-        get: operations["get_4"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         /** Close a pot (refused while holds rest on it) */
@@ -633,6 +788,23 @@ export interface paths {
         };
         /** Current authenticated user */
         get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List trail rows, newest first, optionally filtered */
+        get: operations["list_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -849,6 +1021,51 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        CreateOrderRequest: {
+            /** Format: uuid */
+            requestId: string;
+            /** Format: uuid */
+            supplierId: string;
+        };
+        OrderLineResponse: {
+            /** Format: uuid */
+            id?: string;
+            description?: string;
+            category?: string;
+            /** Format: int32 */
+            quantity?: number;
+            /** Format: int64 */
+            unitPriceMinor?: number;
+            currency?: string;
+            /** Format: int32 */
+            receivedQty?: number;
+            /** Format: int64 */
+            lineTotalMinor?: number;
+        };
+        OrderResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            requestId?: string;
+            /** Format: uuid */
+            supplierId?: string;
+            status?: string;
+            currency?: string;
+            /** Format: int64 */
+            totalMinor?: number;
+            lines?: components["schemas"]["OrderLineResponse"][];
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        ReceiptLine: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: int32 */
+            quantity?: number;
+        };
+        ReceiveRequest: {
+            lines: components["schemas"]["ReceiptLine"][];
+        };
         AddMembershipRequest: {
             /** Format: uuid */
             userId: string;
@@ -862,6 +1079,48 @@ export interface components {
             userId?: string;
             /** Format: uuid */
             departmentId?: string;
+        };
+        CreateInvoiceRequest: {
+            /** Format: uuid */
+            orderId: string;
+            number: string;
+            lines: components["schemas"]["InvoiceLineInput"][];
+        };
+        InvoiceLineInput: {
+            /** Format: uuid */
+            orderItemId: string;
+            /** Format: int32 */
+            quantity?: number;
+        };
+        InvoiceResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            orderId?: string;
+            number?: string;
+            status?: string;
+            /** Format: int64 */
+            totalMinor?: number;
+            currency?: string;
+            /** Format: int64 */
+            paidMinor?: number;
+            match?: components["schemas"]["MatchLineResponse"][];
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        MatchLineResponse: {
+            /** Format: uuid */
+            orderItemId?: string;
+            /** Format: int32 */
+            orderedQty?: number;
+            /** Format: int32 */
+            receivedQty?: number;
+            /** Format: int64 */
+            invoicedQty?: number;
+        };
+        PayInvoiceRequest: {
+            /** Format: int64 */
+            amountMinor?: number;
         };
         CreateDepartmentRequest: {
             name: string;
@@ -1074,6 +1333,20 @@ export interface components {
             requestId?: string;
             /** Format: int64 */
             amountMinor?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        AuditEventResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            actorId?: string;
+            action?: string;
+            entityType?: string;
+            /** Format: uuid */
+            entityId?: string;
+            beforeJson?: string;
+            afterJson?: string;
             /** Format: date-time */
             createdAt?: string;
         };
@@ -1496,6 +1769,144 @@ export interface operations {
     };
     list_3: {
         parameters: {
+            query?: {
+                status?: "DRAFT" | "SENT" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CLOSED" | "CANCELLED";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderResponse"][];
+                };
+            };
+        };
+    };
+    create_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderResponse"];
+                };
+            };
+        };
+    };
+    send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderResponse"];
+                };
+            };
+        };
+    };
+    receive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderResponse"];
+                };
+            };
+        };
+    };
+    close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderResponse"];
+                };
+            };
+        };
+    };
+    cancel_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderResponse"];
+                };
+            };
+        };
+    };
+    list_4: {
+        parameters: {
             query?: never;
             header?: never;
             path?: never;
@@ -1538,7 +1949,79 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
+        parameters: {
+            query?: {
+                status?: "UNPAID" | "PARTIAL" | "PAID";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InvoiceResponse"][];
+                };
+            };
+        };
+    };
+    create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InvoiceResponse"];
+                };
+            };
+        };
+    };
+    pay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InvoiceResponse"];
+                };
+            };
+        };
+    };
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -1558,7 +2041,7 @@ export interface operations {
             };
         };
     };
-    create_4: {
+    create_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -1582,7 +2065,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_7: {
         parameters: {
             query?: {
                 period?: string;
@@ -1604,7 +2087,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -1814,7 +2297,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -2386,6 +2869,28 @@ export interface operations {
             };
         };
     };
+    get_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OrderResponse"];
+                };
+            };
+        };
+    };
     inbox: {
         parameters: {
             query?: never;
@@ -2406,7 +2911,29 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InvoiceResponse"];
+                };
+            };
+        };
+    };
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -2486,6 +3013,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    list_9: {
+        parameters: {
+            query?: {
+                entityType?: string;
+                entityId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuditEventResponse"][];
                 };
             };
         };
