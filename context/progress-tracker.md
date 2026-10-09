@@ -4,11 +4,11 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 5 done — Payables** (branches `feature/purchase-orders`,
-`feature/invoicing`, `feature/audit-compliance`, merged into
-`feature/purchase-orders` for one PR). **Next: Phase 6 — Intelligence +
-hardening** (`feature/analytics`, `feature/ai-copilot`,
-`feature/quality-testing`, `feature/devops-observability`).
+**Phase 6 done — Intelligence + hardening** (branches `feature/analytics`,
+`feature/ai-copilot`, `feature/quality-testing`,
+`feature/devops-observability`, merged into `feature/analytics` for one PR).
+**Remaining: `feature/frontend-auth`** (login UI, interceptor, guard —
+blocked on the Material-vs-bespoke decision).
 
 ## Completed
 
@@ -92,20 +92,40 @@ hardening** (`feature/analytics`, `feature/ai-copilot`,
   cross-tenant throughout). Full gate 90/90 green (80 IT + 10 unit/arch).
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
+### Phase 6 — Intelligence + hardening (on `feature/analytics`, awaiting PR)
+- Analytics: read-only KPIs over four provider-owned read ports (requests,
+  orders, invoices, scorecards). Spend totals + category/month slices with
+  period filter, supplier averages, approval queue + lead times. No new
+  transactional state.
+- AI copilot: `GroqAiProvider` (conditional on `AI_ENABLED`, short timeouts)
+  behind `AiProvider`; versioned prompt library; strict output validation;
+  per-tenant metering (`ai_usage`). Four use cases: KPI-cited chat, spend
+  explanations, NL request extraction, quotation comparison. Prompts carry
+  aggregates only. Fixed a ship-blocker: optional provider so the app boots
+  with AI disabled (503 per use case).
+- Quality: JaCoCo floors enforced (line 0.70 / branch 0.40, measured
+  0.75/0.44); ArchUnit gains no-field-injection + domain-owns-no-Spring.
+  Focused runs trip the ratchet by design — the full `verify` is the gate.
+- Observability: Micrometer counters (decisions, reservations/overspends,
+  invoices/payments, AI calls) verified by MetricsIT; `alerts.yml` wired
+  into Prometheus; ADR-008 (Terraform state/provider). Noted: Boot disables
+  metrics export in test contexts, so the suite asserts the registry while
+  the scrape path (stock Boot) was verified on dev.
+- Tests: 5× AnalyticsIT, 6× AiIT + 2 unit, 2× MetricsIT (+4 arch rules).
+  Full gate 107/107 green (93 IT + 14 unit/arch) with floors holding.
+- Typegen regenerated; frontend build + Vitest + Playwright green.
+
 ## In progress
 
-- Phase 5 PR (`feature/purchase-orders` → `main`): assembled, gates green,
-  awaiting user review + PR creation.
+- Phase 6 PR (`feature/analytics` → `feature/purchase-orders`, stacked):
+  assembled, gates green, awaiting PR creation.
 
-## Next up (Phase 6 — Intelligence + hardening)
+## Next up (remaining)
 
-1. `feature/analytics`: read-only spend/supplier/lead-time KPIs over existing data.
-2. `feature/ai-copilot`: Groq adapter behind `AiProvider`, prompt library,
-   metered copilot Q&A / extraction / quotation intel.
-3. `feature/quality-testing`: coverage floors, full E2E journeys, perf budgets.
-4. `feature/devops-observability`: domain+AI metrics, alerts, Terraform decision.
-5. `feature/frontend-auth`: still parallel-trackable (needs the
-   Material-vs-bespoke decision first).
+1. `feature/frontend-auth`: login/register UI, token interceptor with
+   refresh, auth guard, tenant-aware API client. Blocked on ONE decision:
+   Angular Material vs bespoke (see `ui-context.md` review gate) — ask the
+   user, record, then build.
 
 ## Architecture decisions (supplementing docs/decisions)
 
