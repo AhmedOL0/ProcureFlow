@@ -1,0 +1,40 @@
+# ProcureFlow alert rules (Phase 6: first SLOs). Loaded by prometheus.yml
+# `rule_files`. Thresholds are starting points; tune from Grafana history.
+groups:
+  - name: procureflow-money
+    rules:
+      - alert: BudgetOverspendSpike
+        expr: increase(procureflow_budget_overspends_total[15m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Overspend rejections spiking ({{ $value }} in 15m)"
+
+      - alert: ApprovalErrorsHigh
+        expr: |
+          sum by (job) (increase(http_server_requests_seconds_count{status=~"5.."}[10m])) > 3
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend 5xx rate high"
+
+  - name: procureflow-ai
+    rules:
+      - alert: AiProviderFailing
+        expr: |
+          sum by (job) (increase(http_server_requests_seconds_count{uri="/api/v1/ai/**",status=~"5.."}[10m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI endpoints failing — check Groq key/quota"
+
+      - alert: AiUsageJump
+        expr: increase(procureflow_ai_calls_total[1h]) > 500
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI call volume jumped ({{ $value }}/h) — check metering"
