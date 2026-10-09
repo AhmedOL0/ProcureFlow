@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,18 +37,23 @@ public class CopilotService {
     private final AiUsageRecordRepository usage;
     private final TenantProvisioning tenants;
     private final ObjectMapper json;
+    private final MeterRegistry meters;
 
     public CopilotService(
-            AiProvider provider,
+            ObjectProvider<AiProvider> providers,
             AnalyticsService analytics,
             AiUsageRecordRepository usage,
             TenantProvisioning tenants,
-            ObjectMapper json) {
-        this.provider = provider;
+            ObjectMapper json,
+            MeterRegistry meters) {
+        // The provider bean exists only when AI_ENABLED=true (Groq) or in tests
+        // (fake); a null here means "disabled", answered as 503 per use case.
+        this.provider = providers.getIfAvailable();
         this.analytics = analytics;
         this.usage = usage;
         this.tenants = tenants;
         this.json = json;
+        this.meters = meters;
     }
 
     @Transactional
@@ -158,7 +165,7 @@ public class CopilotService {
     }
 
     private void requireAvailable() {
-        if (!provider.isAvailable()) {
+        if (provider == null || !provider.isAvailable()) {
             throw ApiException.unavailable("AI_DISABLED", "AI features are disabled (AI_ENABLED=false)");
         }
     }
@@ -171,6 +178,7 @@ public class CopilotService {
                 Prompts.VERSION,
                 result.promptTokens(),
                 result.completionTokens()));
+        meters.counter("procureflow.ai.calls", "feature", feature).increment();
     }
 
     private static String monthOf(AiUsageRecord row) {

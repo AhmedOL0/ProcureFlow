@@ -10,6 +10,7 @@ import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.purchaseorder.application.InvoiceOrderPort;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.audit.application.AuditTrailLogged;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ public class InvoiceService {
     private final InvoiceOrderPort orders;
     private final TenantProvisioning tenants;
     private final ApplicationEventPublisher events;
+    private final MeterRegistry meters;
 
     public InvoiceService(
             InvoiceRepository invoices,
@@ -43,13 +45,15 @@ public class InvoiceService {
             InvoicePaymentRepository payments,
             InvoiceOrderPort orders,
             TenantProvisioning tenants,
-            ApplicationEventPublisher events) {
+            ApplicationEventPublisher events,
+            MeterRegistry meters) {
         this.invoices = invoices;
         this.lines = lines;
         this.payments = payments;
         this.orders = orders;
         this.tenants = tenants;
         this.events = events;
+        this.meters = meters;
     }
 
     @Transactional
@@ -100,6 +104,7 @@ public class InvoiceService {
                     tenantSlug, actorId, "INVOICE_CREATED", "invoice", invoice.getId(), null,
                     Map.of("number", invoice.getNumber(), "totalMinor", invoice.getTotalMinor(),
                             "status", "UNPAID")));
+            meters.counter("procureflow.invoices").increment();
             return invoice;
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("DUPLICATE_NUMBER", "This invoice number already exists");
@@ -156,6 +161,7 @@ public class InvoiceService {
         payments.save(new InvoicePayment(invoice, amountMinor));
         invoice.applyPayments(paid + amountMinor);
         invoices.save(invoice);
+        meters.counter("procureflow.invoice.payments").increment();
         events.publishEvent(AuditTrailLogged.now(
                 tenantSlug, actorId, "INVOICE_PAID", "invoice", invoice.getId(),
                 Map.of("status", before, "paidMinor", paid),

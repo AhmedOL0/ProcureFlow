@@ -11,6 +11,7 @@ import com.procureflow.approval.infrastructure.ApprovalStepRepository;
 import com.procureflow.approval.infrastructure.ApprovalWorkflowRepository;
 import com.procureflow.audit.application.AuditTrailLogged;
 import com.procureflow.budget.application.BudgetReservationPort;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.procurement.application.RequestDecisionPort;
 import com.procureflow.shared.web.ApiException;
@@ -47,6 +48,7 @@ public class ApprovalService {
     private final RequestDecisionPort requests;
     private final BudgetReservationPort budgets;
     private final ApplicationEventPublisher events;
+    private final MeterRegistry meters;
     private final TenantProvisioning tenants;
 
     public ApprovalService(
@@ -58,6 +60,7 @@ public class ApprovalService {
             RequestDecisionPort requests,
             BudgetReservationPort budgets,
             ApplicationEventPublisher events,
+            MeterRegistry meters,
             TenantProvisioning tenants) {
         this.decisions = decisions;
         this.delegations = delegations;
@@ -67,6 +70,7 @@ public class ApprovalService {
         this.requests = requests;
         this.budgets = budgets;
         this.events = events;
+        this.meters = meters;
         this.tenants = tenants;
     }
 
@@ -113,6 +117,7 @@ public class ApprovalService {
             events.publishEvent(AuditTrailLogged.now(
                     tenantSlug, deciderId, "REQUEST_DECIDED", "purchase_request", requestId,
                     Map.of("status", "SUBMITTED"), after));
+            meters.counter("procureflow.decisions", "verdict", approved ? "approved" : "rejected").increment();
             return decision;
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("ALREADY_DECIDED", "This request already has a decision");
