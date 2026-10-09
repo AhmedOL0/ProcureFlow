@@ -22,6 +22,12 @@ app:
     # Fixed 64-char test key (HS512 needs >= 512 bits). Never used outside tests.
     secret: test-only-jwt-secret-0123456789-abcdefghijklmnopqrstuvwxyz-0123456789
 
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
 logging:
   level:
     com.procureflow: INFO
