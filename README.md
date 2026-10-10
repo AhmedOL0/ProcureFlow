@@ -93,7 +93,7 @@ live contract (`cd frontend && npm run gen:api`, checked in at
 | Analytics | `/analytics/...` | Spend, supplier and approval KPIs (read-only) |
 | AI copilot | `/ai/...` | KPI-cited chat, spend explanations, request extraction, quotation comparison (metered, `ai:use`) |
 | Frontend auth | `/login`, `/register`, `/dashboard` | Angular Material session shell (guard + refresh interceptor) |
-| Frontend workflows | `/suppliers`, `/requests`, `/requests/mine`, `/approvals`, `/orders`, `/invoices`, `/budgets`, `/analytics`, `/notifications`, `/admin`, `/admin/users`, `/admin/departments`, `/admin/workflows`, `/admin/audit` | Directory + dossier screens with lifecycle actions, all API-backed |
+| Frontend workflows | `/dashboard`, `/workspace`, `/suppliers`, `/requests`, `/requests/mine`, `/approvals`, `/orders`, `/invoices`, `/budgets`, `/analytics`, `/notifications`, `/admin`, `/admin/users`, `/admin/departments`, `/admin/workflows`, `/admin/audit` | Directory + dossier screens with lifecycle actions, all API-backed |
 
 ## Testing strategy
 

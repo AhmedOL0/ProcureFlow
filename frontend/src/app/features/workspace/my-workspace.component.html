@@ -1,0 +1,120 @@
+<div class="pf-page">
+  @let me = user();
+  <pf-page-header
+    [title]="me?.email ? 'Hello, ' + me?.email : 'My workspace'"
+    description="Your requests, your unread notifications, your next action."
+    [breadcrumbs]="[{ label: 'My workspace' }]"
+  >
+    <div slot="actions">
+      @if (canRequest) {
+        <a mat-flat-button color="primary" routerLink="/requests/new">
+          <lucide-angular [img]="icons.plus" [size]="16" /> New request
+        </a>
+      }
+      <a mat-stroked-button routerLink="/approvals">Approval inbox</a>
+    </div>
+  </pf-page-header>
+
+  @if (loading()) {
+    <div class="workspace-loading" role="status" aria-label="Loading workspace">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    <pf-error-state
+      title="Workspace did not load"
+      [message]="problem.message"
+      retryLabel="Retry"
+      (retry)="reload()"
+    />
+  } @else {
+    <div class="pf-kpis" role="region" aria-label="My summary">
+      <div class="pf-kpi">
+        <div class="pf-kpi__top">
+          <span class="pf-kpi__label">My open requests</span>
+          <lucide-angular [img]="icons.file" [size]="18" class="pf-kpi__icon" />
+        </div>
+        <div class="pf-kpi__value">{{ openMine().length }}</div>
+        <div class="pf-kpi__sub">{{ mine().length }} raised in total</div>
+      </div>
+      <div class="pf-kpi">
+        <div class="pf-kpi__top">
+          <span class="pf-kpi__label">Unread notifications</span>
+          <lucide-angular [img]="icons.bell" [size]="18" class="pf-kpi__icon" />
+        </div>
+        <div class="pf-kpi__value">{{ inbox.unread() }}</div>
+        <div class="pf-kpi__sub">events addressed to me</div>
+      </div>
+      <div class="pf-kpi">
+        <div class="pf-kpi__top">
+          <span class="pf-kpi__label">My roles</span>
+          <lucide-angular [img]="icons.inbox" [size]="18" class="pf-kpi__icon" />
+        </div>
+        <div class="pf-kpi__value">{{ (me?.roles ?? []).length }}</div>
+        <div class="pf-kpi__sub">{{ (me?.roles ?? []).join(', ') || 'no roles assigned' }}</div>
+      </div>
+    </div>
+
+    <div class="workspace-columns">
+      <section class="pf-table-card" aria-label="My latest requests">
+        <div class="workspace-card-head">
+          <div class="pf-section-head">
+            <h2>My latest requests</h2>
+            <a routerLink="/requests/mine">View all mine</a>
+          </div>
+        </div>
+        @if (recentMine().length === 0) {
+          <pf-empty-state
+            [icon]="icons.file"
+            title="Nothing raised yet"
+            message="Requests you create appear here with their live status."
+          />
+        } @else {
+          <ul class="workspace-rows">
+            @for (row of recentMine(); track row.id) {
+              <li class="workspace-row">
+                <div class="workspace-row__main">
+                  <a class="workspace-row__title" [routerLink]="['/requests', row.id]">
+                    {{ row.title || 'Untitled request' }}
+                  </a>
+                  <span class="workspace-row__meta">
+                    <pf-status-badge [status]="row.status ?? ''" />
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="pf-table-card" aria-label="Unread notifications">
+        <div class="workspace-card-head">
+          <div class="pf-section-head">
+            <h2>Unread</h2>
+            <a routerLink="/notifications">View all</a>
+          </div>
+        </div>
+        @if (latestUnread().length === 0) {
+          <pf-empty-state
+            [icon]="icons.bell"
+            title="All caught up"
+            message="New submissions and decisions land here."
+          />
+        } @else {
+          <ul class="workspace-rows">
+            @for (item of latestUnread(); track item.id) {
+              <li class="workspace-row">
+                <div class="workspace-row__main">
+                  <span class="workspace-row__title">{{ item.title }}</span>
+                  <span class="workspace-row__meta">{{ formatInstant(item.createdAt) }}</span>
+                </div>
+                @if (item.id) {
+                  <button mat-button (click)="inbox.markRead(item.id ?? '')">Mark read</button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</div>

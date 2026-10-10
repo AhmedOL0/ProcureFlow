@@ -28,6 +28,12 @@ export const routes: Routes = [
         data: { breadcrumb: 'Dashboard' },
       },
       {
+        path: 'workspace',
+        loadComponent: () =>
+          import('./features/workspace/my-workspace.component').then((m) => m.MyWorkspaceComponent),
+        data: { breadcrumb: 'My workspace' },
+      },
+      {
         path: 'suppliers',
         loadChildren: () =>
           import('./features/suppliers/suppliers.routes').then((m) => m.SUPPLIER_ROUTES),

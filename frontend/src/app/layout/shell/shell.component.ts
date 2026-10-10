@@ -60,7 +60,13 @@ export class ShellComponent {
   protected readonly icons = { bell: Bell, menu: Menu, dashboard: LayoutDashboard, truck: Truck, user: User };
 
   readonly nav: NavSection[] = [
-    { label: 'Workspace', items: [{ label: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }] },
+    {
+      label: 'Workspace',
+      items: [
+        { label: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+        { label: 'My Workspace', url: '/workspace', icon: User },
+      ],
+    },
     {
       label: 'Procurement',
       items: [

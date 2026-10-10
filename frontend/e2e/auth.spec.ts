@@ -35,6 +35,7 @@ test('guests cannot open operations directly', async ({ page }) => {
     '/admin/audit',
     '/approvals',
     '/requests/mine',
+    '/workspace',
   ]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login/);
