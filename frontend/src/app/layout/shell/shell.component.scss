@@ -183,6 +183,10 @@
   overflow: auto;
   outline: none;
 }
+.shell__content:focus-visible {
+  outline: 2px solid var(--pf-focus-ring);
+  outline-offset: -2px;
+}
 
 @media (max-width: 767px) {
   .shell__crumbs {

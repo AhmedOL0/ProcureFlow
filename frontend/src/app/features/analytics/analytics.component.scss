@@ -30,6 +30,14 @@
 .analytics-card-head {
   padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
   border-bottom: 1px solid var(--pf-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-md);
+}
+
+.analytics-card-filter mat-form-field {
+  width: 100%;
+  max-width: 280px;
 }
 
 .analytics-bars {

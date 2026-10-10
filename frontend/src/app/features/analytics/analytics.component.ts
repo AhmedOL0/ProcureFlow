@@ -7,7 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { forkJoin, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
@@ -52,6 +52,8 @@ export class AnalyticsComponent {
   protected readonly canSeeAiUsage = this.auth.hasAuthority('ai:use');
 
   readonly periodBox = new FormControl('', { nonNullable: true });
+  readonly categoryBox = new FormControl('', { nonNullable: true });
+  readonly supplierBox = new FormControl('', { nonNullable: true });
 
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
@@ -59,8 +61,26 @@ export class AnalyticsComponent {
   protected readonly supplierKpis = signal<SupplierKpi[]>([]);
   protected readonly approvalKpis = signal<ApprovalKpi | null>(null);
   protected readonly aiUsage = signal<AiUsage | null>(null);
+  private readonly categoryQuery = signal('');
+  private readonly supplierQuery = signal('');
 
-  protected readonly categories = computed(() => toSpendCategories(this.spend()?.byCategory));
+  /**
+   * Server-side filtering stops at the period: the contracts expose no
+   * department/supplier/status/category parameters, so the two searches
+   * below filter the returned aggregates client-side and say so.
+   */
+  protected readonly categories = computed(() => {
+    const query = this.categoryQuery().trim().toLowerCase();
+    return toSpendCategories(this.spend()?.byCategory).filter(
+      (row) => !query || row.category.toLowerCase().includes(query),
+    );
+  });
+  protected readonly suppliers = computed(() => {
+    const query = this.supplierQuery().trim().toLowerCase();
+    return this.supplierKpis().filter(
+      (row) => !query || (row.supplierName ?? '').toLowerCase().includes(query),
+    );
+  });
   protected readonly months = computed<SpendMonth[]>(() => this.spend()?.byPeriod ?? []);
 
   protected readonly categoryMax = computed(() =>
@@ -77,6 +97,12 @@ export class AnalyticsComponent {
 
   constructor() {
     this.periodBox.setValue(this.analytics.currentPeriodUtc());
+    this.categoryBox.valueChanges
+      .pipe(debounceTime(200), distinctUntilChanged())
+      .subscribe((value) => this.categoryQuery.set(value));
+    this.supplierBox.valueChanges
+      .pipe(debounceTime(200), distinctUntilChanged())
+      .subscribe((value) => this.supplierQuery.set(value));
     this.reload();
   }
 

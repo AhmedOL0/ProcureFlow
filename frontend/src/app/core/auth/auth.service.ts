@@ -55,7 +55,11 @@ export class AuthService {
       return false;
     }
     try {
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))) as {
+      // Base64url omits padding; Chromium tolerates that, other engines
+      // throw — restore it so authority checks work in every browser.
+      const normalized = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+      const payload = JSON.parse(atob(padded)) as {
         authorities?: unknown;
       };
       return Array.isArray(payload.authorities) && (payload.authorities as unknown[]).includes(code);
@@ -117,6 +121,41 @@ export class AuthService {
         return of(false);
       }),
     );
+  }
+
+  /** Refreshes the profile from the workspace record (GET /users/me). */
+  refreshProfile(): Observable<UserResponse> {
+    return this.http.get<UserResponse>(`${this.api}/api/v1/users/me`).pipe(
+      tap((user) => this.currentUser.set(user)),
+    );
+  }
+
+  /** Updates the caller's own profile (first/last names only, per contract). */
+  updateOwnProfile(firstName: string | null, lastName: string | null): Observable<UserResponse> {
+    return this.http
+      .patch<UserResponse>(`${this.api}/api/v1/users/me`, { firstName, lastName })
+      .pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  /** Changes the caller's password; every session ends, so the caller signs in again. */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/api/v1/auth/change-password`, {
+      currentPassword,
+      newPassword,
+    });
+  }
+
+  /** Starts an email-link reset. The answer is generic by design. */
+  forgotPassword(email: string, tenantSlug?: string): Observable<{ message?: string }> {
+    return this.http.post<{ message?: string }>(`${this.api}/api/v1/auth/forgot-password`, {
+      email,
+      ...(tenantSlug?.trim() ? { tenantSlug: tenantSlug.trim() } : {}),
+    });
+  }
+
+  /** Redeems a reset token for a new password. */
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/api/v1/auth/reset-password`, { token, newPassword });
   }
 
   logout(navigate = true): void {

@@ -22,6 +22,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Helpdesk reset: set a workspace password, revoking all its sessions */
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suppliers": {
         parameters: {
             query?: never;
@@ -356,6 +373,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Redeem a reset token for a new password */
+        post: operations["resetPassword_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/register": {
         parameters: {
             query?: never;
@@ -418,6 +452,40 @@ export interface paths {
         put?: never;
         /** Log in with email and password */
         post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start an email-link password reset (always the same generic answer) */
+        post: operations["forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change the caller's own password, revoking all its sessions */
+        post: operations["changePassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -581,6 +649,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one user of the current workspace */
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a workspace profile (names only, null stays unchanged) */
+        patch: operations["updateProfile"];
+        trace?: never;
+    };
+    "/api/v1/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current workspace profile (self, no admin rights needed) */
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the caller's own profile (names only, null stays unchanged) */
+        patch: operations["updateOwnProfile"];
+        trace?: never;
+    };
     "/api/v1/tenants/current": {
         parameters: {
             query?: never;
@@ -607,7 +711,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get one supplier of the current workspace */
-        get: operations["get"];
+        get: operations["get_1"];
         put?: never;
         post?: never;
         /** Delete a supplier and its contacts/scorecards */
@@ -662,7 +766,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get one request with its items and total */
-        get: operations["get_1"];
+        get: operations["get_2"];
         put?: never;
         post?: never;
         /** Delete a draft request with its items */
@@ -716,7 +820,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get one department of the current workspace */
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
         /** Delete an empty department */
@@ -742,23 +846,6 @@ export interface paths {
         head?: never;
         /** Rename, retime or activate/deactivate a lane (null fields unchanged) */
         patch: operations["updateWorkflow"];
-        trace?: never;
-    };
-    "/api/v1/users/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get one user of the current workspace */
-        get: operations["get_3"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v1/purchase-orders/{id}": {
@@ -855,7 +942,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current authenticated user */
-        get: operations["me"];
+        get: operations["me_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1038,6 +1125,9 @@ export interface components {
             status?: string;
             tenantSlug?: string;
             roles?: string[];
+        };
+        SetPasswordRequest: {
+            password: string;
         };
         CreateSupplierRequest: {
             name: string;
@@ -1290,6 +1380,10 @@ export interface components {
             /** Format: int64 */
             remainingMinor?: number;
         };
+        ResetPasswordRequest: {
+            token: string;
+            newPassword: string;
+        };
         RegisterRequest: {
             /** Format: email */
             email: string;
@@ -1315,6 +1409,18 @@ export interface components {
             email: string;
             password: string;
             tenantSlug?: string;
+        };
+        ForgotPasswordRequest: {
+            /** Format: email */
+            email: string;
+            tenantSlug?: string;
+        };
+        MessageResponse: {
+            message?: string;
+        };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
         };
         CreateWorkflowRequest: {
             name: string;
@@ -1424,6 +1530,10 @@ export interface components {
             supplier: string;
             /** Format: int64 */
             amountMinor?: number;
+        };
+        UpdateProfileRequest: {
+            firstName?: string;
+            lastName?: string;
         };
         UpdateTenantRequest: {
             name: string;
@@ -1636,6 +1746,30 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["UserResponse"];
                 };
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2336,6 +2470,28 @@ export interface operations {
             };
         };
     };
+    resetPassword_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     register: {
         parameters: {
             query?: never;
@@ -2427,6 +2583,52 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["AuthResponse"];
                 };
+            };
+        };
+    };
+    forgotPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MessageResponse"];
+                };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2734,6 +2936,98 @@ export interface operations {
             };
         };
     };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    updateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    updateOwnProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
     current: {
         parameters: {
             query?: never;
@@ -2778,7 +3072,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -2938,7 +3232,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3074,7 +3368,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3164,28 +3458,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["WorkflowResponse"];
-                };
-            };
-        };
-    };
-    get_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UserResponse"];
                 };
             };
         };
@@ -3318,7 +3590,7 @@ export interface operations {
             };
         };
     };
-    me: {
+    me_1: {
         parameters: {
             query?: never;
             header?: never;

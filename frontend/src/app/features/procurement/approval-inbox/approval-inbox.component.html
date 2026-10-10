@@ -33,6 +33,7 @@
           message="Nothing awaits a verdict. Submitted requests will queue here."
         />
       } @else {
+        <div class="inbox-table-scroll">
         <table mat-table [dataSource]="pending()" class="pf-table" aria-label="Pending approvals">
           <ng-container matColumnDef="title">
             <th mat-header-cell *matHeaderCellDef>Request</th>
@@ -63,6 +64,7 @@
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
         </table>
+        </div>
       }
     </section>
 
@@ -71,6 +73,7 @@
       @if (decided().length === 0) {
         <p class="inbox-muted">No verdicts recorded yet.</p>
       } @else {
+        <div class="inbox-table-scroll">
         <table mat-table [dataSource]="decided()" class="pf-table" aria-label="Recent decisions">
           <ng-container matColumnDef="title">
             <th mat-header-cell *matHeaderCellDef>Request</th>
@@ -95,6 +98,7 @@
           <tr mat-header-row *matHeaderRowDef="decidedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: decidedColumns"></tr>
         </table>
+        </div>
       }
     </section>
   }

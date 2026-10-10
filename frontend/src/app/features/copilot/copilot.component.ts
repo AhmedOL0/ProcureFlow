@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
@@ -65,6 +65,7 @@ export class CopilotComponent {
   protected readonly answer = signal<ChatAnswer | null>(null);
   protected readonly draft = signal<RequestDraft | null>(null);
   protected readonly draftSaved = signal(false);
+  private running: Subscription | null = null;
 
   readonly questionBox = new FormControl('', { nonNullable: true, validators: [Validators.required] });
   readonly periodBox = new FormControl('', { nonNullable: true });
@@ -93,6 +94,13 @@ export class CopilotComponent {
     }
     this.mode.set(mode);
     this.failure.set(null);
+  }
+
+  /** Cancels the in-flight provider call (HttpClient aborts on unsubscribe). */
+  cancel(): void {
+    this.running?.unsubscribe();
+    this.running = null;
+    this.busy.set(false);
   }
 
   addQuote(): void {
@@ -184,15 +192,18 @@ export class CopilotComponent {
   }
 
   private run<T>(call: Observable<T>, apply: (result: T) => void): void {
+    this.running?.unsubscribe();
     this.busy.set(true);
     this.failure.set(null);
     this.answer.set(null);
-    call.subscribe({
+    this.running = call.subscribe({
       next: (result) => {
+        this.running = null;
         this.busy.set(false);
         apply(result);
       },
       error: (error: unknown) => {
+        this.running = null;
         this.busy.set(false);
         this.failure.set(parseApiFailure(error));
       },

@@ -172,6 +172,13 @@
   background: var(--pf-blue);
 }
 
+.supplier-table-scroll {
+  overflow-x: auto;
+}
+.supplier-table-scroll table.pf-table {
+  min-width: 680px;
+}
+
 .pf-sr-only {
   position: absolute;
   width: 1px;

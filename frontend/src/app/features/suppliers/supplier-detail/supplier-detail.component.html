@@ -78,12 +78,9 @@
                 <span class="dossier-list__name">
                   {{ contact.name }}
                   @if (contact.primary) {
-                    <lucide-angular
-                      [img]="icons.star"
-                      [size]="14"
-                      class="dossier-primary"
-                      aria-label="Primary contact"
-                    />
+                    <span role="img" aria-label="Primary contact">
+                      <lucide-angular [img]="icons.star" [size]="14" class="dossier-primary" aria-hidden="true" />
+                    </span>
                   }
                 </span>
                 <span class="dossier-list__sub">
@@ -138,6 +135,7 @@
       @if (performances().length === 0) {
         <p class="dossier-muted">No scorecards recorded yet.</p>
       } @else {
+        <div class="dossier-table-scroll">
         <table class="pf-table" aria-label="Scorecards">
           <thead>
             <tr>
@@ -158,6 +156,7 @@
             }
           </tbody>
         </table>
+        </div>
       }
     </section>
   }

@@ -13,11 +13,20 @@
     <mat-form-field appearance="outline">
       <mat-label>Invoice number</mat-label>
       <input matInput [formControl]="numberControl" maxlength="50" placeholder="INV-2026-001" />
+      @if (numberControl.hasError('required') && numberControl.touched) {
+        <mat-error>An invoice number is required.</mat-error>
+      }
+      @if (numberControl.hasError('maxlength') && numberControl.touched) {
+        <mat-error>Keep it under 50 characters.</mat-error>
+      }
     </mat-form-field>
     @for (row of quantities(); track row.line.id) {
       <mat-form-field appearance="outline">
         <mat-label>{{ row.line.description }} (ordered {{ row.line.quantity }})</mat-label>
         <input matInput type="number" [formControl]="row.control" min="0" step="1" />
+        @if (row.control.touched && row.control.invalid) {
+          <mat-error>Enter 0 or more.</mat-error>
+        }
       </mat-form-field>
     }
     @if (failure()) {

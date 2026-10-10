@@ -44,3 +44,10 @@
 .order-card__head h2 {
   margin: 0;
 }
+
+.order-table-scroll {
+  overflow-x: auto;
+}
+.order-table-scroll table.pf-table {
+  min-width: 560px;
+}

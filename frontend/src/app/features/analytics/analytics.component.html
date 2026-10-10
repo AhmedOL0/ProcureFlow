@@ -1,7 +1,7 @@
 <div class="pf-page">
   <pf-page-header
     title="Analytics & reports"
-    description="Server-computed spend, supplier and approval aggregates. Figures are read-only rollups, never ledger edits."
+    description="Server-computed spend, supplier and approval aggregates. Server filtering stops at the period — category and supplier searches filter the returned rows."
     [breadcrumbs]="[{ label: 'Analytics' }]"
   >
     <div slot="actions">
@@ -92,6 +92,12 @@
       <section class="pf-table-card" aria-label="Spend by category">
         <div class="analytics-card-head">
           <div class="pf-section-head"><h2>Category allocation</h2></div>
+          <div class="analytics-card-filter">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Filter categories</mat-label>
+              <input matInput [formControl]="categoryBox" placeholder="Cloud" />
+            </mat-form-field>
+          </div>
         </div>
         @if (categories().length === 0) {
           <pf-empty-state
@@ -121,8 +127,14 @@
       <section class="pf-table-card" aria-label="Supplier scorecards">
         <div class="analytics-card-head">
           <div class="pf-section-head"><h2>Supplier performance</h2></div>
+          <div class="analytics-card-filter">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Filter suppliers</mat-label>
+              <input matInput [formControl]="supplierBox" placeholder="Bechtle" />
+            </mat-form-field>
+          </div>
         </div>
-        @if (supplierKpis().length === 0) {
+        @if (suppliers().length === 0) {
           <pf-empty-state
             [icon]="icons.truck"
             title="No scorecard data"
@@ -130,7 +142,7 @@
           />
         } @else {
           <div class="analytics-table-scroll">
-            <table mat-table [dataSource]="supplierKpis()" class="pf-table" aria-label="Supplier KPIs">
+            <table mat-table [dataSource]="suppliers()" class="pf-table" aria-label="Supplier KPIs">
               <ng-container matColumnDef="supplier">
                 <th mat-header-cell *matHeaderCellDef>Supplier</th>
                 <td mat-cell *matCellDef="let row">

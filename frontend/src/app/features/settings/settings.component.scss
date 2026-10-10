@@ -1,0 +1,49 @@
+.settings-notice {
+  background: var(--pf-success-bg);
+  border: 1px solid var(--pf-success-border);
+  color: var(--pf-success-text);
+  border-radius: var(--pf-radius-md);
+  padding: var(--pf-space-md);
+  font: var(--pf-body-md);
+  margin: 0;
+}
+
+.settings-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--pf-space-2xl);
+}
+
+.settings-card-head {
+  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.settings-body {
+  padding: var(--pf-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-md);
+}
+
+.settings-line {
+  font: var(--pf-body-md);
+  color: var(--pf-text);
+  margin: 0;
+}
+
+.settings-muted {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+  margin: 0;
+}
+
+.settings-row {
+  display: flex;
+  gap: var(--pf-space-md);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.settings-row mat-form-field {
+  flex: 1 1 220px;
+}

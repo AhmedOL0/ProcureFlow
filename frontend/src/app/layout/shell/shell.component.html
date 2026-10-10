@@ -41,7 +41,7 @@
         <lucide-angular [img]="icons.menu" [size]="20" />
       </button>
       @if (breadcrumbs().length > 0) {
-        <nav class="shell__crumbs" aria-label="Breadcrumb">
+        <nav class="shell__crumbs" aria-label="Location">
           @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
             <span [attr.aria-current]="last ? 'page' : null">{{ crumb.label }}</span>
           }
@@ -72,7 +72,9 @@
           <span class="shell__inbox-body">{{ item.body }}</span>
         </button>
       } @empty {
-        <div class="shell__inbox-empty" mat-menu-item disabled>No notifications yet.</div>
+        <div class="shell__inbox-empty" mat-menu-item disabled>
+          <span role="status">No notifications yet.</span>
+        </div>
       }
       <a mat-menu-item routerLink="/notifications" class="shell__inbox-all">View all</a>
     </mat-menu>
@@ -85,10 +87,11 @@
           <span class="shell__user-tenant">{{ menuUser.tenantSlug }}</span>
         </div>
       }
+      <a mat-menu-item routerLink="/settings">Account settings</a>
       <button mat-menu-item (click)="signOut()">Sign out</button>
     </mat-menu>
 
-    <main id="main-content" class="shell__content">
+    <main id="main-content" class="shell__content" tabindex="-1">
       <router-outlet />
     </main>
   </mat-sidenav-content>

@@ -5,8 +5,8 @@
     [breadcrumbs]="[{ label: 'Copilot' }]"
   />
 
-  <div class="copilot-modes" aria-label="Copilot workflows">
-    <mat-chip-set>
+  <div class="copilot-modes">
+    <mat-chip-set aria-label="Copilot workflows">
       @for (entry of modes; track entry.id) {
         <mat-chip-option [selected]="mode() === entry.id" (click)="setMode(entry.id)">
           {{ entry.label }}
@@ -17,6 +17,7 @@
 
   @if (mode() === 'chat') {
     <section class="pf-table-card" aria-label="Ask the copilot">
+      <h2 class="pf-sr-only">Ask the copilot</h2>
       <div class="copilot-ask">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Ask about your procurement data</mat-label>
@@ -37,6 +38,7 @@
           <div class="copilot-loading" role="status" aria-label="Thinking">
             <mat-spinner diameter="28" />
             <span class="copilot-thinking">Reading your KPIs…</span>
+            <button mat-button (click)="cancel()">Cancel</button>
           </div>
         } @else if (failure(); as problem) {
           <pf-error-state
@@ -47,6 +49,7 @@
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
+            <p class="copilot-ai-tag">AI-generated interpretation — verify against the citations below</p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">
@@ -72,6 +75,7 @@
 
   @if (mode() === 'explain') {
     <section class="pf-table-card" aria-label="Explain spend">
+      <h2 class="pf-sr-only">Explain spend</h2>
       <div class="copilot-ask">
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="copilot-period">
           <mat-label>Period (blank = overall)</mat-label>
@@ -84,6 +88,7 @@
           <div class="copilot-loading" role="status" aria-label="Explaining">
             <mat-spinner diameter="28" />
             <span class="copilot-thinking">Aggregating spend…</span>
+            <button mat-button (click)="cancel()">Cancel</button>
           </div>
         } @else if (failure(); as problem) {
           <pf-error-state
@@ -94,6 +99,7 @@
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
+            <p class="copilot-ai-tag">AI-generated interpretation — verify against the citations below</p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">
@@ -119,6 +125,7 @@
 
   @if (mode() === 'extract') {
     <section class="pf-table-card" aria-label="Draft from words">
+      <h2 class="pf-sr-only">Draft a request from words</h2>
       <div class="copilot-ask copilot-ask--column">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Describe what you need, in your own words</mat-label>
@@ -146,6 +153,7 @@
           <div class="copilot-loading" role="status" aria-label="Structuring">
             <mat-spinner diameter="28" />
             <span class="copilot-thinking">Structuring the draft…</span>
+            <button mat-button (click)="cancel()">Cancel</button>
           </div>
         } @else if (failure(); as problem) {
           <pf-error-state
@@ -191,16 +199,23 @@
 
   @if (mode() === 'compare') {
     <section class="pf-table-card" aria-label="Compare quotations">
+      <h2 class="pf-sr-only">Compare quotations</h2>
       <div class="copilot-quotes">
         @for (row of quoteRows.controls; track row; let i = $index) {
           <div class="copilot-quote-row" [formGroup]="row">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Supplier {{ i + 1 }}</mat-label>
               <input matInput formControlName="supplier" placeholder="Bechtle" />
+              @if (row.get('supplier')?.hasError('required') && row.get('supplier')?.touched) {
+                <mat-error>Supplier {{ i + 1 }} needs a name.</mat-error>
+              }
             </mat-form-field>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="copilot-amount">
               <mat-label>Amount</mat-label>
               <input matInput formControlName="amount" inputmode="decimal" placeholder="12500.00" />
+              @if (row.get('amount')?.touched && row.get('amount')?.invalid) {
+                <mat-error>Enter a number with up to 2 decimals.</mat-error>
+              }
             </mat-form-field>
             <button
               mat-icon-button
@@ -226,6 +241,7 @@
           <div class="copilot-loading" role="status" aria-label="Comparing">
             <mat-spinner diameter="28" />
             <span class="copilot-thinking">Weighing the quotes…</span>
+            <button mat-button (click)="cancel()">Cancel</button>
           </div>
         } @else if (failure(); as problem) {
           <pf-error-state
@@ -236,6 +252,7 @@
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
+            <p class="copilot-ai-tag">AI-generated interpretation — verify against the citations below</p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">

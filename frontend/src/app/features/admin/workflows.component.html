@@ -64,14 +64,23 @@
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Min amount</mat-label>
             <input matInput formControlName="minAmount" inputmode="decimal" placeholder="0.00" />
+            @if (laneForm.controls.minAmount.touched && laneForm.controls.minAmount.invalid) {
+              <mat-error>Enter a number with up to 2 decimals.</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Max amount (blank = open)</mat-label>
             <input matInput formControlName="maxAmount" inputmode="decimal" placeholder="50000.00" />
+            @if (laneForm.controls.maxAmount.touched && laneForm.controls.maxAmount.invalid) {
+              <mat-error>Enter a number with up to 2 decimals.</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Escalate after (days)</mat-label>
             <input matInput formControlName="escalateAfterDays" inputmode="numeric" />
+            @if (laneForm.controls.escalateAfterDays.touched && laneForm.controls.escalateAfterDays.invalid) {
+              <mat-error>Enter whole days.</mat-error>
+            }
           </mat-form-field>
           <button mat-flat-button color="primary" (click)="createLane()" [disabled]="busy()">Create lane</button>
         </div>

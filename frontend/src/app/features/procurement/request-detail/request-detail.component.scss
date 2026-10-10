@@ -77,6 +77,13 @@
   margin: 0;
 }
 
+.request-table-scroll {
+  overflow-x: auto;
+}
+.request-table-scroll table.pf-table {
+  min-width: 640px;
+}
+
 .pf-sr-only {
   position: absolute;
   width: 1px;

@@ -4,10 +4,12 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 8 done — procurement workflows end to end** (on
-`feature/frontend-procurement`, awaiting PR). Requests, approval inbox,
-orders, invoices, admin and audit screens are implemented against real
-contracts and verified live. Awaiting the next phase.
+**Phase 12 — production release & portfolio readiness (this review).**
+Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
+#12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
+Playwright green, live-verified screens in `docs/screens/`. This pass:
+regression gates, security/a11y/perf review with evidence, infra + CI
+review, README/portfolio overhaul, demo workspace docs.
 
 ## Completed
 
@@ -53,7 +55,7 @@ contracts and verified live. Awaiting the next phase.
 - Remote: `feature/supplier-management` + `feature/procurement` pushed and
   merged with `--no-ff`; `main` green.
 
-### Phase 4 — Money governance (on `feature/approval-workflow`, awaiting PR)
+### Phase 4 - Money governance (merged)
 - Approval slice 1: V5 (`approval_decisions` immutable + `approval_delegations`
   bounded/revocable); `RequestDecisionPort` locks the request `FOR UPDATE` and
   flips status in the same transaction — concurrent deciders serialize, one wins.
@@ -72,7 +74,7 @@ contracts and verified live. Awaiting the next phase.
   expiry, cross-tenant throughout). Full gate 70/70 green (60 IT + 10 unit/arch).
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
-### Phase 5 — Payables (on `feature/purchase-orders`, awaiting PR)
+### Phase 5 - Payables (merged)
 - Orders: V9 (`purchase_orders` with unique request link + mandatory
   supplier, `purchase_order_items` snapshotted with received tracking).
   Creation from APPROVED only; send flips the request ORDERED in the same
@@ -106,7 +108,7 @@ contracts and verified live. Awaiting the next phase.
 - Tests: 4× Vitest (token helpers) + 4× Playwright (guard redirect,
   validation, backend-down error, register navigation). Build green.
 
-### Phase 7 — Frontend foundation + suppliers slice (on `feature/frontend-suppliers`, awaiting PR)
+### Phase 7 - Frontend foundation + suppliers slice (merged via #8)
 - Design system from the stitch reference: navy/blue/teal/canvas tokens,
   Inter (self-hosted), status pills, dense tables, shared header/empty/
   error/confirm components, central Lucide catalog.
@@ -126,7 +128,7 @@ contracts and verified live. Awaiting the next phase.
   backend (login → list → dossier, mobile 360px, Stitch directory) with
   screenshots. Backend `verify` still 107/107 green after the CORS change.
 
-### Phase 8 — Procurement workflows end to end (on `feature/frontend-procurement`, awaiting PR)
+### Phase 8 - Procurement workflows end to end (merged via #10)
 - Requests: directory (server status filter + chips, client search/sort/page),
   dossier with items, lifecycle actions, approve/reject with comments,
   decision + lane + budget-context + history cards.
@@ -145,25 +147,38 @@ contracts and verified live. Awaiting the next phase.
 
 ## In progress
 
-- Phase 8 PR (`feature/frontend-operations` → `main`, PR #10): assembled,
-  gates green. A design-system pass on the same branch follows the stitch
-  reference: hardened tokens, grouped navy rail, real-data overview
-  dashboard, auth mastheads, zero raw hex/undefined tokens.
-- RBAC persona roles (`feature/rbac-persona-roles` → `main`, PR #11):
-  APPROVER/FINANCE/AUDITOR defaults, additive provisioning, 4× new IT,
-  full backend verify green.
-- Governance pages (same frontend branch): Budgets & Spend, Analytics &
-  Reports (+AI usage metering), ProcureAI Copilot (chat/explain/extract/
-  compare, live on Groq `openai/gpt-oss-120b`), Notifications page, admin
-  split into Workspace/Users/Departments/Policies, My Requests,
-  My Workspace, page-map rail with permission-aware entries. All
-  live-verified with screenshots, including MEMBER vs APPROVER rail
-  matrices and the 403 behind hidden entries.
+- Phase 12 review (this pass) on `feature/frontend-operations`.
 
-## Next up (Phase 9+)
+## In progress
 
-1. Merge the Phase 8 PR with CI green.
-2. Whatever epic you name next.
+- Account management backend (`feature/account-management` → `main`,
+  PR #12 OPEN, mergeable): profile edits, password changes, email-link
+  reset via Brevo (16× AccountIT, 113 IT green). Merge BEFORE any
+  settings-UI merge — the frontend depends on its endpoints.
+- Security hardening (`feature/hardening-pass` → `main`, PR #13 OPEN):
+  HSTS + frame-deny, explicit inbox auth, audit redaction + unit test.
+- Frontend line (`feature/frontend-operations`, includes merged #10):
+  unmerged commits → design system, emerald re-theme, governance pages,
+  workspace, copilot, account settings UI, Phase 10–11 work. Next PR
+  after #12 merges.
+
+## Next up
+
+1. Merge #12 → #13 → frontend line (dependency order).
+2. Brevo live proof needs confirmed login email + SMTP-key provenance +
+   a validated sender (currently 535 on auth).
+3. Beyond release: pagination envelopes, login/AI rate limits, inbox
+   bulk decisions endpoint, SMTP for real delivery.
+
+## Known limitations (carried, not hidden)
+
+- Email delivery unverified live; reset flow proven via mocks + log-mode.
+- No login/AI rate limiting (BCrypt-12 + no enumeration today).
+- Approval inbox does per-row decision reads (N+1, fine at current scale).
+- Frontend ~1.3MB total JS / 6KB main across lazy chunks (measured, no
+  perf work taken).
+- Dev-server discipline: kill by PORT (netstat→PID), never by cmdline
+  substring; check `NG_EXIT`/`$LASTEXITCODE` immediately, never via a pipe.
 
 ## Architecture decisions (supplementing docs/decisions)
 
@@ -199,4 +214,4 @@ contracts and verified live. Awaiting the next phase.
   first client; mobile needs the body variant).
 - OAuth2/social login: out of scope until a customer asks.
 - Cloud provider + state backend for Terraform (DevOps epic).
-- Coverage floors: enforce from Phase 3 (currently report-only).
+- Coverage floors: enforced (`pom.xml`: line 0.70 / branch 0.40 fail the build).

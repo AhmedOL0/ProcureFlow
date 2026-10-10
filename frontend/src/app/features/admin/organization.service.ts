@@ -64,6 +64,14 @@ export class OrganizationService {
   createUser(body: components['schemas']['CreateUserRequest']): Observable<WorkspaceUser> {
     return this.http.post<WorkspaceUser>(`${this.base}/users`, body);
   }
+
+  updateProfile(id: string, firstName: string | null, lastName: string | null): Observable<WorkspaceUser> {
+    return this.http.patch<WorkspaceUser>(`${this.base}/users/${id}`, { firstName, lastName });
+  }
+
+  resetPassword(id: string, password: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/users/${id}/password`, { password });
+  }
 }
 
 /** Append-only trail reads. The backend offers no mutation endpoints. */

@@ -34,7 +34,12 @@
         @for (user of users(); track user.id) {
           <li class="admin-list__row">
             <span>{{ user.email }}</span>
-            <span class="admin-roles">{{ (user.roles ?? []).join(', ') || 'no roles' }}</span>
+            <span class="admin-list__actions">
+              <span class="admin-roles">{{ (user.roles ?? []).join(', ') || 'no roles' }}</span>
+              @if (canManageUsers) {
+                <button mat-button (click)="resetPassword(user)">Reset password</button>
+              }
+            </span>
           </li>
         }
       </ul>

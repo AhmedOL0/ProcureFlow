@@ -89,3 +89,10 @@
   color: var(--pf-slate);
   margin: 0;
 }
+
+.dossier-table-scroll {
+  overflow-x: auto;
+}
+.dossier-table-scroll table.pf-table {
+  min-width: 520px;
+}

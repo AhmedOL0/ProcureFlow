@@ -8,7 +8,8 @@
   `TODO` without a tracked follow-up, no dead code committed.
 - No fake implementations presented as production-ready. Placeholders are
   namespaced, documented with their target phase, and fail fast with an
-  explicit message (see `AiProvider`: interface only, zero beans).
+  explicit message (see `LogMailPort`: sink behind the `MailPort` until
+  SMTP credentials land).
 - No giant classes/files: services stay focused; a file growing past
   ~250 lines is a split candidate. No `any`, no untyped maps as domain
   models, no stringly-typed business states (use enums/records).

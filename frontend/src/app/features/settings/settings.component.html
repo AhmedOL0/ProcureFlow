@@ -1,0 +1,113 @@
+<div class="pf-page">
+  <pf-page-header
+    title="Account settings"
+    description="Your profile names and password. Email, roles and status change through their own workflows, not here."
+    [breadcrumbs]="[{ label: 'Settings' }]"
+  />
+
+  @if (notice()) {
+    <p class="settings-notice" role="status">{{ notice() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="settings-loading" role="status" aria-label="Loading settings">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    <pf-error-state
+      title="Settings did not load"
+      [message]="failureMessage()"
+      retryLabel="Retry"
+      (retry)="reload()"
+    />
+  } @else {
+    @let me = user();
+    <section class="pf-table-card" aria-label="Profile">
+      <div class="settings-card-head">
+        <div class="pf-section-head"><h2>Profile</h2></div>
+      </div>
+      <div class="settings-body" [formGroup]="profileForm">
+        <p class="settings-line">Signed in as <strong>{{ me?.email }}</strong> in {{ me?.tenantSlug }}</p>
+        <div class="settings-row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>First name</mat-label>
+            <input matInput formControlName="firstName" autocomplete="given-name" maxlength="100" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Last name</mat-label>
+            <input matInput formControlName="lastName" autocomplete="family-name" maxlength="100" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="saveProfile()" [disabled]="savingProfile()">
+            Save profile
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="pf-table-card" aria-label="Password">
+      <div class="settings-card-head">
+        <div class="pf-section-head"><h2>Password</h2></div>
+      </div>
+      <div class="settings-body" [formGroup]="passwordForm">
+        <p class="settings-muted">Changing your password signs you out everywhere — you sign in again with the new one.</p>
+        <div class="settings-row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Current password</mat-label>
+            <input
+              matInput
+              formControlName="currentPassword"
+              autocomplete="current-password"
+              [type]="showCurrent() ? 'text' : 'password'"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              (click)="showCurrent.set(!showCurrent())"
+              [attr.aria-label]="showCurrent() ? 'Hide current password' : 'Show current password'"
+            >
+              <lucide-angular [img]="showCurrent() ? icons.hide : icons.show" [size]="18" />
+            </button>
+            @if (passwordForm.controls.currentPassword.hasError('required') && passwordForm.controls.currentPassword.touched) {
+              <mat-error>Enter your current password.</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>New password (12+ characters)</mat-label>
+            <input
+              matInput
+              formControlName="newPassword"
+              autocomplete="new-password"
+              [type]="showNew() ? 'text' : 'password'"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              (click)="showNew.set(!showNew())"
+              [attr.aria-label]="showNew() ? 'Hide new password' : 'Show new password'"
+            >
+              <lucide-angular [img]="showNew() ? icons.hide : icons.show" [size]="18" />
+            </button>
+            @if (passwordForm.controls.newPassword.hasError('required') && passwordForm.controls.newPassword.touched) {
+              <mat-error>Enter a new password.</mat-error>
+            }
+            @if (passwordForm.controls.newPassword.hasError('minlength') && passwordForm.controls.newPassword.touched) {
+              <mat-error>At least 12 characters.</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Confirm new password</mat-label>
+            <input matInput formControlName="confirmPassword" autocomplete="new-password" type="password" />
+            @if (passwordForm.controls.confirmPassword.hasError('mismatch')) {
+              <mat-error>The two passwords do not match.</mat-error>
+            }
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="changePassword()" [disabled]="changingPassword()">
+            Change password
+          </button>
+        </div>
+      </div>
+    </section>
+  }
+</div>

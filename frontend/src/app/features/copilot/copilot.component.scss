@@ -48,6 +48,25 @@
   max-width: 70ch;
   white-space: pre-wrap;
 }
+.copilot-ai-tag {
+  display: inline-block;
+  font: var(--pf-label-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-copper-text);
+  background: var(--pf-copper-bg);
+  border: 1px solid var(--pf-copper-border);
+  border-radius: var(--pf-radius-pill);
+  padding: 2px 8px;
+  margin: 0 0 var(--pf-space-sm);
+}
+.pf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
 .copilot-cites {
   list-style: none;
   margin: 0 0 var(--pf-space-md);
@@ -103,6 +122,7 @@
   display: flex;
   gap: var(--pf-space-md);
   align-items: center;
+  flex-wrap: wrap;
 }
 .copilot-quote-row mat-form-field {
   flex: 1 1 auto;

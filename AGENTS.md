@@ -62,9 +62,13 @@ ProcureFlow/
   ISO currency; `Idempotency-Key` on creation, replays answer 200 with
   `X-Replay: true`.
 - **Flyway append-only** — V1 core schema, V2 refresh+permissions,
-  V3 suppliers, V4 purchase requests; `ddl-auto=validate` everywhere.
-- **AI behind a port** — `AiProvider` interface only; Groq adapter lands
-  in Phase 6; frontend never holds keys (`AI_ENABLED=false`).
+  V3 suppliers, V4 purchase requests, V5–V13 decisions/workflows/budgets/
+  notifications/orders/invoices/audit/AI/reset; `ddl-auto=validate`
+  everywhere. A DB with a newer migration refuses older code — never
+  restart a backend image older than the applied migration head.
+- **AI behind a port** — `AiProvider` + live `GroqAiProvider`
+  (`openai/gpt-oss-120b`, needs `GROQ_API_KEY` + `AI_ENABLED=true`,
+  503 per use case while disabled); frontend never holds keys.
 
 ---
 
@@ -153,11 +157,11 @@ ProcureFlow/
   the backend up; script targets `:8081`, boot accordingly) after any
   API change, and commit the result.
 - Vitest covers pure TS (`shared/utils` pattern — no TestBed needed);
-  Playwright smoke covers the shell (webServer auto-starts `ng serve`).
-- No UI library installed yet (Angular Material vs bespoke is an open
-  question). No new dependency for decoration; `ui-context.md` gates
-  every visual change (no generic AI aesthetic, real states, contrast,
-  axe-clean).
+  Playwright covers the shell plus stubbed critical journeys
+  (`e2e/journeys.spec.ts`, deterministic doubles, no live backend/AI in CI;
+  live browser passes stay manual with screenshots).
+- Angular Material 21 (decided); `ui-context.md` gates every visual change
+  (no generic AI aesthetic, real states, contrast, axe-clean).
 
 ---
 
@@ -181,8 +185,8 @@ ProcureFlow/
 
 ## Git Workflow
 
-- `main` is always green. Work on `feature/<epic>` (13 exist, one per
-  epic + `feature/frontend-auth`); rebase onto `main` before starting.
+- `main` is always green. Work on `feature/<epic>` (rebase onto `main`
+  before starting).
 - Land via PR on GitHub (or local `--no-ff` merge when driving solo):
   green gates + reviewed diff + synced docs + UI evidence.
 - Conventional Commits; every commit buildable; never force-push shared
@@ -220,6 +224,16 @@ ProcureFlow/
     Boot throwaway backends with `java -D... -jar` using EXACT
     placeholder names (`-DSPRING_DATASOURCE_PASSWORD`,
     `-Dapp.jwt.secret`); relaxed dotted forms don't resolve `${...}`.
+22. Kill dev servers by PORT (`netstat -ano` → PID), never by cmdline
+    substring (`bin\ng" serve` never matches `ng serve`) — zombies serve
+    stale bundles for hours and poison every verification after them.
+23. Check build exit codes immediately (`$out = ...; $LASTEXITCODE`),
+    never through a pipe — truncated output and wrong `$?` hide red builds.
+24. `(ngSubmit)` without `[formGroup]` never fires (it is not a native
+    event) — the form falls back to native GET navigation.
+25. JWT base64url needs `=` padding restored before `atob` — Chromium
+    tolerates the omission, other engines throw and every authority check
+    silently fails.
 
 ---
 

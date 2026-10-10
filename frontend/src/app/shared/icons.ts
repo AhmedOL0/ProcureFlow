@@ -8,6 +8,8 @@ export {
   CircleAlert,
   CircleCheck,
   ClipboardList,
+  Eye,
+  EyeOff,
   FileText,
   Inbox,
   LayoutDashboard,

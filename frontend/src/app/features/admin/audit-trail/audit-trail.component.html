@@ -51,7 +51,14 @@
           <ng-container matColumnDef="action">
             <th mat-header-cell *matHeaderCellDef>Action</th>
             <td mat-cell *matCellDef="let row">
-              <button class="audit-action" (click)="toggle(row)">{{ row.action }}</button>
+              <button
+                class="audit-action"
+                (click)="toggle(row)"
+                [attr.aria-expanded]="isExpanded(row)"
+                [attr.aria-controls]="'payloads-' + row.id"
+              >
+                {{ row.action }}
+              </button>
             </td>
           </ng-container>
           <ng-container matColumnDef="target">
@@ -61,7 +68,7 @@
           <ng-container matColumnDef="expandedDetail">
             <td mat-cell *matCellDef="let row" [attr.colspan]="columns.length">
               @if (isExpanded(row)) {
-                <div class="audit-payloads">
+                <div class="audit-payloads" [attr.id]="'payloads-' + row.id">
                   <div>
                     <p class="audit-payload__label">Before</p>
                     <pre class="audit-payload">{{ row.beforeJson || '—' }}</pre>

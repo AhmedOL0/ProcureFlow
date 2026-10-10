@@ -12,6 +12,9 @@ export interface PromptDialogData {
   initial?: string;
   confirmLabel?: string;
   required?: boolean;
+  /** Masked input plus minimum length, for secrets like passwords. */
+  secret?: boolean;
+  minLength?: number;
 }
 
 /** Single labeled text input with confirm/cancel. Labeled, focusable, testable. */
@@ -26,9 +29,12 @@ export interface PromptDialogData {
       }
       <mat-form-field appearance="outline" class="pf-prompt__field">
         <mat-label>{{ data.label }}</mat-label>
-        <input matInput [formControl]="value" cdkFocusInitial />
+        <input matInput [formControl]="value" [type]="data.secret ? 'password' : 'text'" cdkFocusInitial />
         @if (value.hasError('required') && value.touched) {
           <mat-error>A value is required.</mat-error>
+        }
+        @if (value.hasError('minlength') && value.touched) {
+          <mat-error>At least {{ data.minLength }} characters.</mat-error>
         }
       </mat-form-field>
     </mat-dialog-content>
@@ -58,7 +64,10 @@ export class PromptDialogComponent {
   protected readonly data = inject<PromptDialogData>(MAT_DIALOG_DATA);
   readonly value = new FormControl(this.data.initial ?? '', {
     nonNullable: true,
-    validators: this.data.required === false ? [] : [Validators.required],
+    validators: [
+      ...(this.data.required === false ? [] : [Validators.required]),
+      ...(this.data.minLength ? [Validators.minLength(this.data.minLength)] : []),
+    ],
   });
 
   confirm(): void {

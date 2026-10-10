@@ -30,12 +30,22 @@ Requesters, approvers/managers, procurement officers, finance, tenant admins.
 - Phase 1 (done): repository, module boundaries, V1 schema, AI port, CI/docs.
 - Phase 2 (done): JWT auth + refresh rotation, RBAC, tenants/departments/
   memberships, integration tests.
-- Phase 3: suppliers, purchase requests (idempotent), purchase orders lite,
-  OpenAPI type generation for Angular.
-- Phase 4: approvals (delegation/escalation), budget reservation,
+- Phase 3 (done): suppliers, purchase requests (idempotent), purchase
+  orders lite, OpenAPI type generation for Angular.
+- Phase 4 (done): approvals (delegation/escalation), budget reservation,
   event-driven notifications.
-- Phase 5: full orders, invoices, payment status, audit trail.
-- Phase 6: analytics KPIs, Groq adapter, copilot, extraction, quotation intel.
+- Phase 5 (done): full orders, invoices, payment status, audit trail.
+- Phase 6 (done): analytics KPIs, Groq adapter, copilot, extraction,
+  quotation intel.
+- Phase 7 (done): Angular shell + suppliers slice, Material system.
+- Phase 8 (done): procurement workflows end to end in the browser.
+- Phase 9 (done): remaining page-map pages (budgets, analytics,
+  notifications, admin split) + persona roles (APPROVER/FINANCE/AUDITOR).
+- Phase 10 (done): analytics/AI experience — dashboard financial pulse,
+  copilot hardening, account settings + email-link reset (PR #12).
+- Phase 11 (done): hardening — journeys E2E, security headers, audit
+  redaction, a11y pass, perf baselines.
+- Phase 12 (this review): release + portfolio readiness.
 
 ## Scope boundaries
 

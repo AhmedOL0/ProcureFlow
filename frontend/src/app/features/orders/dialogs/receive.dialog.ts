@@ -34,7 +34,11 @@ export class ReceiveDialogComponent {
             }),
             quantity: new FormControl(0, {
               nonNullable: true,
-              validators: [Validators.required, Validators.min(0)],
+              validators: [
+                Validators.required,
+                Validators.min(0),
+                Validators.max((line.quantity ?? 0) - (line.receivedQty ?? 0)),
+              ],
             }),
           }),
       ),
@@ -54,6 +58,10 @@ export class ReceiveDialogComponent {
 
   save(): void {
     if (this.busy()) {
+      return;
+    }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
     const lines = this.rows()

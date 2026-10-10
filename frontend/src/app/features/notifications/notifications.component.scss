@@ -21,6 +21,7 @@
   gap: var(--pf-space-md);
   padding: var(--pf-space-md) var(--pf-space-lg);
   border-bottom: 1px solid var(--pf-row-border);
+  flex-wrap: wrap;
 }
 .notifications-row:last-child {
   border-bottom: none;

@@ -30,6 +30,13 @@
   text-decoration: underline;
 }
 
+.inbox-table-scroll {
+  overflow-x: auto;
+}
+.inbox-table-scroll table.pf-table {
+  min-width: 560px;
+}
+
 .pf-sr-only {
   position: absolute;
   width: 1px;

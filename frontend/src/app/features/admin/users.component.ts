@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -10,6 +11,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PromptDialogComponent } from '../../shared/components/prompt-dialog/prompt-dialog.component';
 import { Users } from '../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
 import { OrganizationService, WorkspaceUser } from './organization.service';
@@ -34,6 +36,7 @@ import { OrganizationService, WorkspaceUser } from './organization.service';
 export class UsersComponent {
   private readonly org = inject(OrganizationService);
   private readonly auth = inject(AuthService);
+  private readonly dialogs = inject(MatDialog);
 
   protected readonly icons = { users: Users };
   protected readonly canManageUsers = this.auth.hasAuthority('user:manage');
@@ -74,8 +77,7 @@ export class UsersComponent {
     });
   }
 
-  createUser(): void {
-    if (this.newEmail.invalid || this.newPassword.invalid || this.newRoles.value.length === 0) {
+  createUser(): void {    if (this.newEmail.invalid || this.newPassword.invalid || this.newRoles.value.length === 0) {
       this.newEmail.markAsTouched();
       this.newPassword.markAsTouched();
       return;
@@ -101,5 +103,30 @@ export class UsersComponent {
   protected failureMessage(): string {
     const failure = this.failure();
     return failure ? userMessageFor(failure) : '';
+  }
+
+  resetPassword(user: WorkspaceUser): void {
+    if (!user.id) {
+      return;
+    }
+    const dialog = this.dialogs.open(PromptDialogComponent, {
+      width: '400px',
+      data: {
+        title: `Reset password for ${user.email ?? 'user'}?`,
+        message: 'The new password applies immediately and ends all of their sessions.',
+        label: 'New password (12+ characters)',
+        confirmLabel: 'Reset password',
+        secret: true,
+        minLength: 12,
+      },
+    });
+    dialog.afterClosed().subscribe((password) => {
+      if (typeof password === 'string' && password && user.id) {
+        this.org.resetPassword(user.id, password).subscribe({
+          next: () => this.notice.set(`Password reset for ${user.email ?? 'user'}.`),
+          error: (error: unknown) => this.failure.set(parseApiFailure(error)),
+        });
+      }
+    });
   }
 }

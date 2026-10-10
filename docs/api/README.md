@@ -6,15 +6,18 @@ the AI layer all consume it. OpenAPI is served live at `/v3/api-docs`
 
 ## Rules (apply from the first endpoint in Phase 2)
 
-- Versioning: all routes under `/api/v1/...`. Breaking changes ship as
-  `/api/v2` alongside v1, never as silent edits.
-- Errors: consistent problem envelope `{ code, message, details?, traceId }`;
-  4xx for client faults with actionable messages, never stack traces.
-- Pagination: `page/size/sort` query params, envelope
-  `{ content, page, size, totalElements, totalPages }`.
+- Versioning: all routes under `/api/v1/...`. No `/api/v2` exists yet —
+  breaking changes will ship alongside v1, never as silent edits.
+- Errors: consistent problem envelope `{ code, message, details?,
+  traceId, timestamp }`; 4xx for client faults with actionable messages,
+  never stack traces.
+- Listing: endpoints return full workspace arrays (no pagination envelope
+  yet — `page/size/sort` with `{ content, page, size, totalElements,
+  totalPages }` is the documented target, not the current behavior).
 - Money: integer minor units (`amountMinor`) plus ISO currency code.
 - Time: UTC ISO-8601 (`Instant`) everywhere; no local times cross the wire.
-- Idempotency: every mutating client request carries `Idempotency-Key`;
-  replays return the original result instead of duplicating work.
-- Frontend types are generated from `/v3/api-docs` (Phase 3); hand-written
-  DTO duplicates are a CI failure once generation lands.
+- Idempotency: creation endpoints require `Idempotency-Key` (replays
+  answer with the original result instead of duplicating work); other
+  mutations are guarded by state machines and versioned decisions.
+- Frontend types are generated from `/v3/api-docs` (Phase 3); keep
+  `api-types.gen.ts` in sync by regenerating after every API change.

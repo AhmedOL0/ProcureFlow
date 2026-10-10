@@ -38,6 +38,56 @@
       }
     </div>
 
+    @if (showFinance()) {
+      <div class="pf-kpis" role="region" aria-label="Financial pulse">
+        @for (kpi of financeKpis(); track kpi.label) {
+          <div class="pf-kpi">
+            <div class="pf-kpi__top">
+              <span class="pf-kpi__label">{{ kpi.label }}</span>
+              <lucide-angular [img]="kpi.icon" [size]="18" class="pf-kpi__icon" />
+            </div>
+            <div class="pf-kpi__value">{{ kpi.value }}</div>
+            <div class="pf-kpi__sub">{{ kpi.sub }}</div>
+          </div>
+        }
+      </div>
+    }
+    @if (financeFailed()) {
+      <p class="dashboard-note" role="status">Financial figures did not load — operational data above is unaffected.</p>
+    }
+
+    @if (approvalKpis(); as flow) {
+      <div class="dashboard-flow" role="region" aria-label="Approval flow">
+        <span class="dashboard-flow__item"><strong class="pf-data-mono">{{ flow.pending }}</strong> pending</span>
+        <span class="dashboard-flow__item"><strong class="pf-data-mono">{{ flow.decided }}</strong> decided</span>
+        <span class="dashboard-flow__item">avg lead <strong>{{ leadHours(flow.avgLeadHours) }}</strong></span>
+        <span class="dashboard-flow__item">max lead <strong>{{ leadHours(flow.maxLeadHours) }}</strong></span>
+        <a routerLink="/analytics">Analytics</a>
+      </div>
+    }
+
+    @if (trend().length > 0) {
+      <section class="pf-table-card" aria-label="Order trend">
+        <div class="dashboard-card-head">
+          <div class="pf-section-head">
+            <h2>Ordered per month</h2>
+            <a routerLink="/analytics">Full trajectory</a>
+          </div>
+        </div>
+        <ul class="dashboard-trend">
+          @for (month of trend(); track month.period) {
+            <li class="dashboard-trend__bar">
+              <div class="dashboard-track" aria-hidden="true">
+                <div class="dashboard-fill" [style.height.%]="trendWidth(month.orderedMinor)"></div>
+              </div>
+              <span class="dashboard-trend__label pf-data-mono">{{ month.period }}</span>
+              <span class="dashboard-trend__value pf-data-mono">{{ formatMinor(month.orderedMinor) }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
     <div class="dashboard-columns">
       <section class="pf-table-card" aria-label="Awaiting approval">
         <div class="dashboard-card-head">

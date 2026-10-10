@@ -67,6 +67,7 @@
           message="An order without lines cannot be received or invoiced."
         />
       } @else {
+        <div class="order-table-scroll">
         <table class="pf-table" aria-label="Order lines">
           <thead>
             <tr>
@@ -91,6 +92,7 @@
             }
           </tbody>
         </table>
+        </div>
       }
     </section>
   }
