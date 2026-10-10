@@ -1,6 +1,7 @@
 package com.procureflow.identity.application;
 
 import com.procureflow.identity.domain.User;
+import com.procureflow.identity.infrastructure.RefreshTokenRepository;
 import com.procureflow.identity.infrastructure.UserRepository;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.organization.application.TenantProvisioning;
@@ -27,6 +28,7 @@ public class UserAdminService {
     private final RoleProvisioningService roleProvisioning;
     private final TenantProvisioning tenants;
     private final PasswordEncoder encoder;
+    private final RefreshTokenRepository refreshTokens;
     private final EntityManager entities;
 
     public UserAdminService(
@@ -34,11 +36,13 @@ public class UserAdminService {
             RoleProvisioningService roleProvisioning,
             TenantProvisioning tenants,
             PasswordEncoder encoder,
+            RefreshTokenRepository refreshTokens,
             EntityManager entities) {
         this.users = users;
         this.roleProvisioning = roleProvisioning;
         this.tenants = tenants;
         this.encoder = encoder;
+        this.refreshTokens = refreshTokens;
         this.entities = entities;
     }
 
@@ -74,5 +78,44 @@ public class UserAdminService {
         user.setLastName(lastName);
         user.getRoles().addAll(roleProvisioning.resolveRoles(tenantSlug, roleNames));
         return users.save(user);
+    }
+
+    /**
+     * Updates a workspace profile. Null fields stay unchanged; email, roles
+     * and status are intentionally not editable here (identity moves through
+     * registration, roles through the admin console's next slice, and there
+     * is no deactivation concept to expose).
+     */
+    public User updateProfile(String tenantSlug, UUID userId, String firstName, String lastName) {
+        User user = get(tenantSlug, userId);
+        if (firstName != null) {
+            user.setFirstName(trimOrNull(firstName));
+        }
+        if (lastName != null) {
+            user.setLastName(trimOrNull(lastName));
+        }
+        return users.save(user);
+    }
+
+    /**
+     * Helpdesk-style reset: a workspace admin sets a new password. Every
+     * session of the target ends here — all refresh tokens are revoked so a
+     * compromised password stops working everywhere at once.
+     */
+    public void resetPassword(String tenantSlug, UUID userId, String newPassword) {
+        PasswordPolicy.requireValid(newPassword);
+        User user = get(tenantSlug, userId);
+        user.setPasswordHash(encoder.encode(newPassword));
+        users.save(user);
+        revokeAllSessions(user.getId());
+    }
+
+    private void revokeAllSessions(UUID userId) {
+        refreshTokens.findAllByUser_IdAndRevokedFalse(userId).forEach(token -> token.revoke(null));
+    }
+
+    private static String trimOrNull(String value) {
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

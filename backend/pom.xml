@@ -86,6 +86,12 @@
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
+        <!-- Outbound mail (Brevo SMTP adapter behind the MailPort; log-mode when unconfigured) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- Observability -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

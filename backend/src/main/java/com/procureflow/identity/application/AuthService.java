@@ -141,6 +141,26 @@ public class AuthService {
         refreshTokens.findByTokenHash(hash(presentedToken)).ifPresent(token -> token.revoke(null));
     }
 
+    /**
+     * Self-service password change. The current password must match (a wrong
+     * one answers 401 without saying which field failed), the replacement
+     * follows the workspace policy, and every session ends — the caller
+     * logs in again with the new password.
+     */
+    public void changePassword(UUID userId, String tenantSlug, String currentPassword, String newPassword) {
+        User user = users
+                .findDetailedById(userId)
+                .filter(candidate -> candidate.getTenant().getSlug().equals(tenantSlug))
+                .orElseThrow(() -> ApiException.unauthorized("INVALID_CREDENTIALS", "Invalid email or password"));
+        if (!encoder.matches(currentPassword, user.getPasswordHash())) {
+            throw ApiException.unauthorized("INVALID_CREDENTIALS", "Invalid email or password");
+        }
+        PasswordPolicy.requireValid(newPassword);
+        user.setPasswordHash(encoder.encode(newPassword));
+        users.save(user);
+        revokeAllActive(user.getId());
+    }
+
     @Transactional(readOnly = true)
     public User me(UUID userId) {
         return users
