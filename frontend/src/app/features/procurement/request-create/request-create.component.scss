@@ -1,0 +1,20 @@
+.request-create-card {
+  padding: var(--pf-space-lg);
+  max-width: 640px;
+}
+.request-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.request-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--pf-space-sm);
+  margin-top: var(--pf-space-md);
+}
+.request-create-error {
+  color: var(--pf-danger-text);
+  font: var(--pf-body-md);
+  margin: 4px 0 0;
+}

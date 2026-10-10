@@ -1,0 +1,40 @@
+.order-filters {
+  display: flex;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-lg);
+  border-bottom: 1px solid var(--pf-border);
+  flex-wrap: wrap;
+}
+.order-filters mat-form-field {
+  flex: 1 1 240px;
+}
+.order-filter-sm {
+  max-width: 220px;
+}
+
+.order-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--pf-space-2xl);
+}
+
+.order-table-scroll {
+  overflow-x: auto;
+}
+.order-table-scroll table.pf-table {
+  min-width: 560px;
+}
+
+.pf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 767px) {
+  .order-filters {
+    padding: var(--pf-space-md);
+  }
+}

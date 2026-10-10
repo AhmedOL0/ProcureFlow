@@ -1,0 +1,43 @@
+<div class="pf-page">
+  <pf-page-header
+    title="New request"
+    description="Start a draft — lines are added on the dossier, then it goes for approval."
+    [breadcrumbs]="[{ label: 'Requests', url: '/requests' }, { label: 'New request' }]"
+  />
+  <div class="pf-table-card request-create-card">
+    <form [formGroup]="form" class="request-create-form" (ngSubmit)="save()">
+      <mat-form-field appearance="outline">
+        <mat-label>Title</mat-label>
+        <input matInput formControlName="title" maxlength="200" placeholder="20 laptops for onboarding" />
+        @if (form.controls.title.hasError('required') && form.controls.title.touched) {
+          <mat-error>Title is required.</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Description</mat-label>
+        <textarea matInput formControlName="description" rows="3"></textarea>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Priority</mat-label>
+        <mat-select formControlName="priority">
+          @for (priority of priorities; track priority) {
+            <mat-option [value]="priority">{{ priority }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (failure()) {
+        <p class="request-create-error" role="alert">{{ failure() }}</p>
+      }
+      <div class="request-create-actions">
+        <a mat-button routerLink="/requests">Cancel</a>
+        <button mat-flat-button color="primary" type="submit" [disabled]="busy()">
+          @if (busy()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            Create draft
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

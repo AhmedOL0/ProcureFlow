@@ -1,0 +1,24 @@
+<h2 mat-dialog-title>Record receipt</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="dialog-form">
+    @for (row of rows(); track row.itemId) {
+      <mat-form-field appearance="outline">
+        <mat-label>{{ row.description }} ({{ row.outstanding }} outstanding)</mat-label>
+        <input matInput type="number" [formControl]="row.control" min="0" [max]="row.outstanding" step="1" />
+      </mat-form-field>
+    }
+    @if (failure()) {
+      <p class="dialog-error" role="alert">{{ failure() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
+    @if (busy()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Record receipt
+    }
+  </button>
+</mat-dialog-actions>

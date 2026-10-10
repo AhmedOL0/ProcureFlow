@@ -1,26 +1,26 @@
 <div class="pf-page">
   <pf-page-header
-    title="Purchase requests"
-    description="What the workspace wants to buy — draft it, add lines, submit it for approval."
-    [breadcrumbs]="[{ label: 'Requests' }]"
+    title="Purchase orders"
+    description="Supplier orders born from approved requests — send them, receive goods, close them out."
+    [breadcrumbs]="[{ label: 'Orders' }]"
   >
     <div slot="actions">
-      @if (canRequest) {
-        <a mat-flat-button color="primary" routerLink="/requests/new">
-          <lucide-angular [img]="icons.plus" [size]="16" /> New request
-        </a>
+      @if (canWrite) {
+        <button mat-flat-button color="primary" (click)="openCreate()">
+          <lucide-angular [img]="icons.plus" [size]="16" /> New order
+        </button>
       }
     </div>
   </pf-page-header>
 
   <div class="pf-table-card">
-    <div class="request-filters">
+    <div class="order-filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Search titles</mat-label>
-        <input matInput [formControl]="searchBox" placeholder="Laptops" />
+        <mat-label>Search supplier</mat-label>
+        <input matInput [formControl]="searchBox" placeholder="Acme" />
         <lucide-angular matSuffix [img]="icons.search" [size]="18" />
       </mat-form-field>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="request-filter-sm">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="order-filter-sm">
         <mat-label>Status</mat-label>
         <mat-select [formControl]="statusFilter">
           <mat-option [value]="null">All</mat-option>
@@ -31,33 +31,19 @@
       </mat-form-field>
     </div>
 
-    <div class="request-chips">
-      <mat-chip-set aria-label="Status filter">
-        <mat-chip-option [selected]="statusFilter.value === null" (click)="setStatusFilter(null)">
-          All
-        </mat-chip-option>
-        @for (status of statuses; track status) {
-          <mat-chip-option [selected]="statusFilter.value === status" (click)="setStatusFilter(status)">
-            {{ status }} ({{ counts().get(status) ?? 0 }})
-          </mat-chip-option>
-        }
-      </mat-chip-set>
-      <span class="request-count">Showing {{ pageRows().length }} of {{ filtered().length }} requests</span>
-    </div>
-
     @if (loading()) {
-      <div class="request-loading" role="status" aria-label="Loading requests">
+      <div class="order-loading" role="status" aria-label="Loading orders">
         <mat-spinner diameter="32" />
       </div>
     } @else if (failure(); as problem) {
       @if (problem.status === 403) {
         <pf-error-state
           title="Not permitted"
-          message="Your workspace role cannot view purchase requests. Ask an admin for access."
+          message="Your workspace role cannot view purchase orders. Ask an admin for access."
         />
       } @else {
         <pf-error-state
-          title="Requests did not load"
+          title="Orders did not load"
           [message]="problem.message"
           retryLabel="Retry"
           (retry)="reload()"
@@ -65,38 +51,32 @@
       }
     } @else if (filtered().length === 0) {
       <pf-empty-state
-        [icon]="icons.file"
-        title="No requests match"
-        message="Try different filters — or raise the first request with New request above."
+        [icon]="icons.truck"
+        title="No orders match"
+        message="Orders start from an approved request — approve one first, then come back."
       />
     } @else {
-      <div class="request-table-scroll">
+      <div class="order-table-scroll">
         <table
           mat-table
           [dataSource]="pageRows()"
           matSort
           (matSortChange)="onSort($event)"
           class="pf-table"
-          aria-label="Purchase requests"
+          aria-label="Purchase orders"
         >
-          <ng-container matColumnDef="title">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="title">Request</th>
-            <td mat-cell *matCellDef="let row">
-              <a class="request-title" [routerLink]="[row.id]">{{ row.title }}</a>
-            </td>
+          <ng-container matColumnDef="supplier">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="supplier">Supplier</th>
+            <td mat-cell *matCellDef="let row">{{ supplierNameFor()(row.supplierId) }}</td>
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
             <td mat-cell *matCellDef="let row"><pf-status-badge [status]="row.status" /></td>
           </ng-container>
-          <ng-container matColumnDef="priority">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="priority">Priority</th>
-            <td mat-cell *matCellDef="let row">{{ row.priority ?? '—' }}</td>
-          </ng-container>
           <ng-container matColumnDef="total">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="total" class="pf-num">Total</th>
             <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
-              {{ formatMinor(row.totalMinor) }}
+              {{ formatMinor(row.totalMinor, row.currency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
@@ -115,7 +95,7 @@
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"
         (page)="onPage($event)"
-        aria-label="Request pages"
+        aria-label="Order pages"
       />
     }
   </div>
