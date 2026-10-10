@@ -8,7 +8,6 @@ import com.procureflow.organization.domain.Tenant;
 import com.procureflow.shared.web.ApiException;
 import jakarta.persistence.EntityManager;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -16,8 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Seeds the per-tenant role skeleton on first use: TENANT_ADMIN holds every
- * permission, OFFICER covers operational writes, MEMBER holds the safe
- * defaults. Custom roles arrive with the admin console.
+ * permission, OFFICER covers operational writes, APPROVER decides with
+ * budget context, FINANCE owns pots and payables, AUDITOR reads the trail,
+ * MEMBER holds the safe defaults. Custom roles arrive with the admin console.
  */
 @Service
 public class RoleProvisioningService {
@@ -25,6 +25,9 @@ public class RoleProvisioningService {
     public static final String TENANT_ADMIN = "TENANT_ADMIN";
     public static final String OFFICER = "OFFICER";
     public static final String MEMBER = "MEMBER";
+    public static final String APPROVER = "APPROVER";
+    public static final String FINANCE = "FINANCE";
+    public static final String AUDITOR = "AUDITOR";
 
     private final RoleRepository roles;
     private final PermissionRepository permissions;
@@ -37,25 +40,41 @@ public class RoleProvisioningService {
         this.entities = entities;
     }
 
+    /**
+     * Seeds every missing default role. Additive by design: tenants created
+     * before a role existed get it on next provisioning without touching
+     * the roles (or their grants) they already have.
+     */
     @Transactional
     public void ensureDefaultRoles(UUID tenantId) {
-        List<Role> existing = roles.findAllByTenant_Id(tenantId);
-        if (!existing.isEmpty()) {
-            return;
+        Set<String> existing = new HashSet<>();
+        for (Role role : roles.findAllByTenant_Id(tenantId)) {
+            existing.add(role.getName());
         }
         Tenant tenant = entities.getReference(Tenant.class, tenantId);
-        Role admin = new Role(tenant, TENANT_ADMIN);
-        admin.setDescription("Full control over the tenant workspace");
-        admin.getPermissions().addAll(permissions.findAllByCodeIn(PermissionCodes.ALL));
-        roles.save(admin);
-        Role member = new Role(tenant, MEMBER);
-        member.setDescription("Request and read-only access");
-        member.getPermissions().addAll(permissions.findAllByCodeIn(PermissionCodes.MEMBER_DEFAULTS));
-        roles.save(member);
-        Role officer = new Role(tenant, OFFICER);
-        officer.setDescription("Procurement officers: suppliers, orders, invoices");
-        officer.getPermissions().addAll(permissions.findAllByCodeIn(PermissionCodes.OFFICER_DEFAULTS));
-        roles.save(officer);
+        seedRole(tenant, existing, TENANT_ADMIN, "Full control over the tenant workspace",
+                PermissionCodes.ALL);
+        seedRole(tenant, existing, MEMBER, "Request and read-only access",
+                PermissionCodes.MEMBER_DEFAULTS);
+        seedRole(tenant, existing, OFFICER, "Procurement officers: suppliers, orders, invoices",
+                PermissionCodes.OFFICER_DEFAULTS);
+        seedRole(tenant, existing, APPROVER, "Approvers: decide requests with budget context",
+                PermissionCodes.APPROVER_DEFAULTS);
+        seedRole(tenant, existing, FINANCE, "Finance: budgets, invoices and spend oversight",
+                PermissionCodes.FINANCE_DEFAULTS);
+        seedRole(tenant, existing, AUDITOR, "Auditors: read-only trail and analytics",
+                PermissionCodes.AUDITOR_DEFAULTS);
+    }
+
+    private void seedRole(
+            Tenant tenant, Set<String> existing, String name, String description, Set<String> permissionCodes) {
+        if (existing.contains(name)) {
+            return;
+        }
+        Role role = new Role(tenant, name);
+        role.setDescription(description);
+        role.getPermissions().addAll(permissions.findAllByCodeIn(permissionCodes));
+        roles.save(role);
     }
 
     @Transactional(readOnly = true)

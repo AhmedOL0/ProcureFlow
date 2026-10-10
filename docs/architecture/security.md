@@ -17,6 +17,21 @@
   the frontend hides UI but never enforces.
 - Tenant check runs before permission check: wrong tenant always wins
   over right role.
+- Default roles, seeded per tenant and backfilled additively (existing
+  tenants gain new roles without losing grants):
+
+  | Role | Least-privilege grants | Persona |
+  |---|---|---|
+  | `TENANT_ADMIN` | all 17 permissions | tenant admin |
+  | `APPROVER` | `procurement:request`, `procurement:approve`, `supplier:read`, `order:read`, `invoice:read`, `budget:read`, `analytics:read` | approver / manager |
+  | `FINANCE` | `budget:read`, `budget:manage`, `invoice:read`, `invoice:write`, `order:read`, `supplier:read`, `analytics:read` | finance |
+  | `OFFICER` | `supplier:read/write`, `procurement:request`, `order:read/write`, `invoice:read/write`, `budget:read`, `analytics:read` | procurement officer |
+  | `AUDITOR` | `audit:read`, `analytics:read`, `supplier:read`, `order:read`, `invoice:read`, `budget:read` | auditor (read-only) |
+  | `MEMBER` | `procurement:request`, `supplier:read`, `order:read`, `invoice:read`, `analytics:read` | requester |
+
+  `ai:use` stays `TENANT_ADMIN`-only while `AI_ENABLED=false`. Roles are
+  assigned at user creation (`POST /users roleNames[]`); no role-update
+  endpoint exists.
 
 ## Transport and headers
 

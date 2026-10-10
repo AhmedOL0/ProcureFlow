@@ -24,8 +24,10 @@ reference, authenticated shell, and the first API-backed workflow
   single-use refresh rotation with theft detection (reuse revokes chain).
 - Registration that provisions-or-joins a workspace; login with
   multi-tenant disambiguation (`409 LOGIN_AMBIGUOUS`); logout; `/me`.
-- RBAC: 17-permission catalog (V2 seed), per-tenant TENANT_ADMIN/MEMBER
-  roles, `@PreAuthorize` enforcement, tenant-before-permission.
+- RBAC: 17-permission catalog (V2 seed), per-tenant default roles
+  (TENANT_ADMIN, APPROVER, FINANCE, OFFICER, AUDITOR, MEMBER),
+  `@PreAuthorize` enforcement, tenant-before-permission. Provisioning is
+  additive: older tenants gain new roles without losing grants.
 - Tenants get/rename, department CRUD (delete refused when non-empty),
   membership add/remove — all tenant-scoped, cross-tenant reads/writes 404.
 - `TenantFilter` populates/clears `TenantContext` post-authorization.

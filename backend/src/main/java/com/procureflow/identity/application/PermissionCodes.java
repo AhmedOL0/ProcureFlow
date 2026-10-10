@@ -42,6 +42,22 @@ public final class PermissionCodes {
             ORDER_READ, ORDER_WRITE, INVOICE_READ, INVOICE_WRITE,
             BUDGET_READ, ANALYTICS_READ);
 
+    /** Approvers decide with budget context but move no money themselves. */
+    public static final Set<String> APPROVER_DEFAULTS = Set.of(
+            PROCUREMENT_REQUEST, PROCUREMENT_APPROVE,
+            SUPPLIER_READ, ORDER_READ, INVOICE_READ,
+            BUDGET_READ, ANALYTICS_READ);
+
+    /** Finance owns pots and payables plus the reads to oversee them. */
+    public static final Set<String> FINANCE_DEFAULTS = Set.of(
+            BUDGET_READ, BUDGET_MANAGE, INVOICE_READ, INVOICE_WRITE,
+            ORDER_READ, SUPPLIER_READ, ANALYTICS_READ);
+
+    /** Auditors see the trail and every read-only view, transact nothing. */
+    public static final Set<String> AUDITOR_DEFAULTS = Set.of(
+            AUDIT_READ, ANALYTICS_READ,
+            SUPPLIER_READ, ORDER_READ, INVOICE_READ, BUDGET_READ);
+
     private PermissionCodes() {
         // constants only
     }
