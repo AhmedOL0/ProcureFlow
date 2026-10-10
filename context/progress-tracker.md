@@ -170,6 +170,17 @@ review, README/portfolio overhaul, demo workspace docs.
   sheets); raw px/gap values mapped to tokens; approval inbox rebuilt on
   `pf-table-card`. Verified: `npm run build` + 28 Vitest + 19 Playwright
   green, screenshots dashboard/suppliers/users/390px in Temp.
+- Path-var 400 fix (on `feature/frontend-operations`, 2026-10-10): visiting
+  Account Settings fired `GET /api/v1/users/me` (PR #12 endpoint, not yet
+  deployed) → matched `/users/{id}` → UUID conversion of `"me"` threw
+  `MethodArgumentTypeMismatchException` → no handler → 500 + stack trace.
+  Two layers: (1) expected pre-merge gap — settings UI needs #12 merged
+  first, plan unchanged; (2) real contract bug — every UUID route 500'd on
+  non-UUID values. Fixed (2) with an explicit 400 (`INVALID_PATH_VARIABLE`)
+  in `RestExceptionHandler` + `InvalidPathVariableIT` (red before: 500 on
+  /users/me and /suppliers/not-a-uuid; green after). Full
+  `./mvnw -B verify` green (99 IT + 14 unit/arch, coverage floors met);
+  container rebuilt, live re-probe answers 400 with no stack in logs.
 
 ## Next up
 

@@ -208,7 +208,9 @@ ProcureFlow/
 10. Idempotency loser needs an isolated transaction to replay.
 11. Map-then-touch after tx ends needs `@EntityGraph` (OSIV off).
 12. Null `@AuthenticationPrincipal` on public-matched routes → explicit 401.
-13. Malformed JSON / missing header need explicit 400 handlers.
+13. Malformed JSON / missing header / path-var type mismatch need explicit
+    400 handlers — a non-UUID value on a `/{id}` route otherwise falls
+    through to 500 (`INVALID_PATH_VARIABLE` covers it).
 14. Migration column types must match entity expectations (`VARCHAR(3)`).
 15. Local Apache owns :8080 → develop backends on :8081.
 16. `spring-boot:run` serves stale classes — `compile` first.
