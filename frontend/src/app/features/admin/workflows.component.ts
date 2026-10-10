@@ -48,7 +48,6 @@ import { OrganizationService, WorkspaceUser } from './organization.service';
     ErrorStateComponent,
   ],
   templateUrl: './workflows.component.html',
-  styleUrl: './admin-cards.scss',
 })
 export class WorkflowsComponent {
   private readonly policies = inject(ApprovalPolicyService);

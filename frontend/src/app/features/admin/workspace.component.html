@@ -6,11 +6,11 @@
   />
 
   @if (notice()) {
-    <p class="admin-notice" role="status">{{ notice() }}</p>
+    <p class="pf-notice" role="status">{{ notice() }}</p>
   }
 
   @if (loading()) {
-    <div class="admin-loading" role="status" aria-label="Loading workspace">
+    <div class="pf-loading" role="status" aria-label="Loading workspace">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -21,13 +21,13 @@
       (retry)="reload()"
     />
   } @else if (tenant(); as workspace) {
-    <section class="admin-card" aria-label="Workspace">
+    <section class="pf-panel" aria-label="Workspace">
       <h2>Workspace</h2>
-      <p class="admin-line">
+      <p class="pf-muted">
         Slug <strong class="pf-data-mono">{{ workspace.slug }}</strong>
       </p>
       @if (canManageTenant) {
-        <div class="admin-row">
+        <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Workspace name</mat-label>
             <input matInput [formControl]="tenantName" />
@@ -37,7 +37,7 @@
           </button>
         </div>
       } @else {
-        <p class="admin-muted">Renaming needs tenant management rights.</p>
+        <p class="pf-muted">Renaming needs tenant management rights.</p>
       }
     </section>
   }

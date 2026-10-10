@@ -14,7 +14,7 @@
   </pf-page-header>
 
   <div class="pf-table-card">
-    <div class="notifications-chips">
+    <div class="pf-chips">
       <mat-chip-set aria-label="Read filter">
         <mat-chip-option [selected]="!unreadOnly()" (click)="showAll()">
           All ({{ inbox.items().length }})
@@ -26,7 +26,7 @@
     </div>
 
     @if (inbox.loading() && inbox.items().length === 0) {
-      <div class="notifications-loading" role="status" aria-label="Loading notifications">
+      <div class="pf-loading" role="status" aria-label="Loading notifications">
         <mat-spinner diameter="32" />
       </div>
     } @else if (inbox.failed() && inbox.items().length === 0) {
@@ -43,13 +43,13 @@
         message="Events raised for you land here — approvals, decisions and mentions."
       />
     } @else {
-      <ul class="notifications-rows">
+      <ul class="pf-rows">
         @for (item of visible(); track item.id) {
-          <li class="notifications-row" [class.notifications-row--unread]="!item.read">
-            <div class="notifications-row__main">
-              <span class="notifications-row__title">{{ item.title }}</span>
-              <span class="notifications-row__body">{{ item.body }}</span>
-              <span class="notifications-row__meta"
+          <li class="pf-row" [class.pf-row--unread]="!item.read">
+            <div class="pf-row__main">
+              <span class="pf-row__title">{{ item.title }}</span>
+              <span class="notifications-body">{{ item.body }}</span>
+              <span class="pf-row__meta"
                 >{{ item.type }} · {{ formatInstant(item.createdAt) }}</span
               >
             </div>

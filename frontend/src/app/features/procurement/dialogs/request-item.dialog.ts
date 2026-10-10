@@ -21,7 +21,6 @@ export interface RequestItemDialogData {
   selector: 'app-request-item-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './request-item.dialog.html',
-  styleUrl: './procurement-dialogs.scss',
 })
 export class RequestItemDialogComponent {
   private readonly requests = inject(ProcurementService);

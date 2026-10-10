@@ -38,7 +38,6 @@ import { Budget, BudgetsService, Reservation } from '../budgets.service';
     ErrorStateComponent,
   ],
   templateUrl: './budget-detail.component.html',
-  styleUrl: './budget-detail.component.scss',
 })
 export class BudgetDetailComponent {
   private readonly budgets = inject(BudgetsService);

@@ -37,7 +37,6 @@ import { OrganizationService, WorkspaceUser } from './organization.service';
     ErrorStateComponent,
   ],
   templateUrl: './users.component.html',
-  styleUrl: './admin-cards.scss',
 })
 export class UsersComponent {
   private readonly org = inject(OrganizationService);

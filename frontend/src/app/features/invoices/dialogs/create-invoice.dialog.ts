@@ -18,7 +18,6 @@ const INVOICABLE = ['SENT', 'PARTIALLY_RECEIVED', 'RECEIVED'];
   selector: 'app-create-invoice-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './create-invoice.dialog.html',
-  styleUrl: './invoice-dialogs.scss',
 })
 export class CreateInvoiceDialogComponent {
   private readonly invoices = inject(InvoiceService);

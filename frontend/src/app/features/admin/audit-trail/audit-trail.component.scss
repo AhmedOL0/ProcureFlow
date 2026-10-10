@@ -1,24 +1,7 @@
-.audit-filters {
-  display: flex;
-  gap: var(--pf-space-md);
-  padding: var(--pf-space-lg);
-  border-bottom: 1px solid var(--pf-border);
-  flex-wrap: wrap;
-}
-.audit-filters mat-form-field {
-  flex: 1 1 240px;
-}
-
-.audit-loading {
-  display: flex;
-  justify-content: center;
-  padding: var(--pf-space-2xl);
-}
-
-.audit-table-scroll {
-  overflow-x: auto;
-}
-.audit-table-scroll table.pf-table {
+// Audit trail: filters, loading and scroll are global pf-* primitives
+// (the 640px table floor stays local); payload diffs keep their own
+// monospace treatment.
+.pf-table-scroll table.pf-table {
   min-width: 640px;
 }
 
@@ -48,10 +31,11 @@
 .audit-payload__label {
   font: var(--pf-label-md);
   color: var(--pf-slate);
-  margin: 0 0 4px;
+  margin: 0 0 var(--pf-space-xs);
 }
 .audit-payload {
-  font: 12px/18px ui-monospace, monospace;
+  font: var(--pf-body-sm);
+  font-family: ui-monospace, monospace;
   background: var(--pf-header-bg);
   border: 1px solid var(--pf-border);
   border-radius: var(--pf-radius-sm);

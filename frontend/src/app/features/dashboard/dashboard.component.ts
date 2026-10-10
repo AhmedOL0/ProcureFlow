@@ -10,7 +10,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
-import { FileText, Inbox, Plus } from '../../shared/icons';
+import { FileText, Inbox, Plus, ShieldCheck } from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
 import { formatMinor } from '../../shared/utils/money';
 import {
@@ -64,9 +64,10 @@ export class DashboardComponent {
   private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
 
-  protected readonly icons = { plus: Plus, open: FileText, approvals: Inbox };
+  protected readonly icons = { plus: Plus, open: FileText, approvals: Inbox, shield: ShieldCheck };
   protected readonly formatMinor = formatMinor;
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
+  protected readonly canSeeAudit = this.auth.hasAuthority('audit:read');
   private readonly canSeeFinance = this.auth.hasAuthority('analytics:read');
   private readonly canSeeBudgets = this.auth.hasAuthority('budget:read');
   private readonly canSeeInvoices = this.auth.hasAuthority('invoice:read');
@@ -118,16 +119,18 @@ export class DashboardComponent {
 
   protected readonly financeKpis = computed<Kpi[]>(() => {
     const flow = this.spend();
+    const orderedDelta = this.monthDelta((month) => month.orderedMinor ?? 0);
+    const paidDelta = this.monthDelta((month) => month.paidMinor ?? 0);
     return [
       {
-        label: 'Ordered spend',
+        label: 'Ordered spend (all time)',
         value: flow ? formatMinor(flow.orderedMinor) : '—',
-        sub: 'committed to suppliers',
+        sub: orderedDelta ?? 'committed to suppliers',
       },
       {
-        label: 'Paid out',
+        label: 'Paid out (all time)',
         value: flow ? formatMinor(flow.paidMinor) : '—',
-        sub: 'settled with suppliers',
+        sub: paidDelta ?? 'settled with suppliers',
       },
       {
         label: 'Outstanding invoices',
@@ -141,6 +144,28 @@ export class DashboardComponent {
       },
     ];
   });
+
+  /**
+   * Month-over-month delta from the spend aggregates (complete monthly
+   * buckets, never sampled rows). Absent with fewer than two months —
+   * the KPI falls back to its plain subtitle instead of inventing one.
+   */
+  private monthDelta(pick: (month: SpendMonth) => number): string | null {
+    const months = [...(this.spend()?.byPeriod ?? [])]
+      .filter((month) => typeof month.period === 'string')
+      .sort((a, b) => (a.period as string).localeCompare(b.period as string));
+    if (months.length < 2) {
+      return null;
+    }
+    const current = pick(months[months.length - 1] as SpendMonth);
+    const previous = pick(months[months.length - 2] as SpendMonth);
+    if (!Number.isFinite(current) || !Number.isFinite(previous) || previous <= 0) {
+      return null;
+    }
+    const pct = ((current - previous) / previous) * 100;
+    const sign = pct > 0 ? '+' : '';
+    return `${sign}${pct.toFixed(1)}% vs ${months[months.length - 2]?.period ?? 'prior'}`;
+  }
 
   private outstandingLabel(): { value: string; sub: string } {
     if (!this.canSeeInvoices) {
@@ -175,9 +200,10 @@ export class DashboardComponent {
     const currency = [...currencies][0];
     const remaining = pots.reduce((acc, pot) => acc + (pot.remainingMinor ?? 0), 0);
     const allocated = pots.reduce((acc, pot) => acc + (pot.amountMinor ?? 0), 0);
+    const count = pots.length === 1 ? '1 pot' : `${pots.length} pots`;
     return {
       value: formatMinor(remaining, currency),
-      sub: `of ${formatMinor(allocated, currency)} across ${pots.length === 1 ? '1 pot' : `${pots.length} pots`}`,
+      sub: `${count} · cap ${formatMinor(allocated, currency)}`,
     };
   }
 
@@ -230,7 +256,7 @@ export class DashboardComponent {
   private loadFinance(): void {
     const period = this.budgets.currentPeriodUtc();
     forkJoin({
-      spend: this.canSeeFinance ? this.analytics.spend(period) : of(null),
+      spend: this.canSeeFinance ? this.analytics.spend(null) : of(null),
       approvals: this.canSeeFinance ? this.analytics.approvalKpis() : of(null),
       pots: this.canSeeBudgets ? this.budgets.list(period) : of(null),
       invoices: this.canSeeInvoices ? this.invoices.list(null) : of(null),

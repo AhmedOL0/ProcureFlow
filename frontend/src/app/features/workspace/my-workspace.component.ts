@@ -34,7 +34,6 @@ import { ProcurementService, PurchaseRequest } from '../procurement/procurement.
     ErrorStateComponent,
   ],
   templateUrl: './my-workspace.component.html',
-  styleUrl: './my-workspace.component.scss',
 })
 export class MyWorkspaceComponent {
   private readonly requests = inject(ProcurementService);

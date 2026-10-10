@@ -1,6 +1,6 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="dossier-loading" role="status" aria-label="Loading supplier file">
+    <div class="pf-loading" role="status" aria-label="Loading supplier file">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -40,24 +40,24 @@
       </div>
     </pf-page-header>
 
-    <div class="dossier-head-row">
+    <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />
       @if (scoreSummary(); as summary) {
-        <span class="dossier-stat pf-data-mono">
+        <span class="pf-stat-pill pf-data-mono">
           {{ summary.avg }}% on-time · {{ summary.periods }}
           {{ summary.periods === 1 ? 'scorecard' : 'scorecards' }}
         </span>
       }
       @if (current.email) {
-        <span class="dossier-meta">{{ current.email }}</span>
+        <span class="pf-muted">{{ current.email }}</span>
       }
       @if (current.phone) {
-        <span class="dossier-meta">{{ current.phone }}</span>
+        <span class="pf-muted">{{ current.phone }}</span>
       }
     </div>
 
-    <section class="dossier-card" aria-label="Contacts">
-      <div class="dossier-card__head">
+    <section class="pf-panel" aria-label="Contacts">
+      <div class="pf-panel__head">
         <h2>Contacts</h2>
         @if (canWrite) {
           <button mat-button (click)="openContact()">
@@ -71,11 +71,11 @@
           message="Add the people you order from — one of them can be the primary contact. Use Add contact above."
         />
       } @else {
-        <ul class="dossier-list">
+        <ul class="pf-list">
           @for (contact of contacts(); track contact.id) {
-            <li class="dossier-list__row">
-              <div class="dossier-list__main">
-                <span class="dossier-list__name">
+            <li class="pf-list__row">
+              <div class="pf-list__main">
+                <span class="pf-list__name">
                   {{ contact.name }}
                   @if (contact.primary) {
                     <span role="img" aria-label="Primary contact">
@@ -88,13 +88,13 @@
                     </span>
                   }
                 </span>
-                <span class="dossier-list__sub">
+                <span class="pf-list__sub">
                   {{ contact.title || 'No title' }} · {{ contact.email || 'no email' }} ·
                   {{ contact.phone || 'no phone' }}
                 </span>
               </div>
               @if (canWrite) {
-                <div class="dossier-list__actions">
+                <div class="pf-list__actions">
                   @if (!contact.primary) {
                     <button mat-button (click)="makePrimary(contact)">Set primary</button>
                   }
@@ -108,8 +108,8 @@
       }
     </section>
 
-    <section class="dossier-card" aria-label="Categories">
-      <div class="dossier-card__head">
+    <section class="pf-panel" aria-label="Categories">
+      <div class="pf-panel__head">
         <h2>Categories</h2>
         @if (canWrite) {
           <button mat-button (click)="manageCategories()">
@@ -118,7 +118,7 @@
         }
       </div>
       @if (categories().length === 0) {
-        <p class="dossier-muted">No categories assigned.</p>
+        <p class="pf-muted">No categories assigned.</p>
       } @else {
         <mat-chip-set aria-label="Assigned categories">
           @for (category of categories(); track category.id) {
@@ -128,8 +128,8 @@
       }
     </section>
 
-    <section class="dossier-card" aria-label="Scorecards">
-      <div class="dossier-card__head">
+    <section class="pf-panel" aria-label="Scorecards">
+      <div class="pf-panel__head">
         <h2>Scorecards</h2>
         @if (canWrite) {
           <button mat-button (click)="recordPerformance()">
@@ -138,9 +138,9 @@
         }
       </div>
       @if (performances().length === 0) {
-        <p class="dossier-muted">No scorecards recorded yet.</p>
+        <p class="pf-muted">No scorecards recorded yet.</p>
       } @else {
-        <div class="dossier-table-scroll">
+        <div class="pf-table-scroll">
           <table class="pf-table" aria-label="Scorecards">
             <thead>
               <tr>

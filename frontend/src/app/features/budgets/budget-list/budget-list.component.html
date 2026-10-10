@@ -46,19 +46,19 @@
   }
 
   <div class="pf-table-card">
-    <div class="budget-filters">
+    <div class="pf-filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Search pots</mat-label>
         <input matInput [formControl]="searchBox" placeholder="Engineering" />
         <lucide-angular matSuffix [img]="icons.search" [size]="18" />
       </mat-form-field>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="budget-filter-sm">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pf-filter-sm">
         <mat-label>Period</mat-label>
         <input matInput type="month" [formControl]="periodFilter" />
       </mat-form-field>
     </div>
 
-    <div class="budget-chips">
+    <div class="pf-chips">
       <mat-chip-set aria-label="Period filter">
         <mat-chip-option [selected]="periodFilter.value === null" (click)="setPeriod(null)">
           All periods
@@ -69,14 +69,14 @@
           </mat-chip-option>
         }
       </mat-chip-set>
-      <div class="budget-count">
+      <div class="pf-count">
         <span>Showing {{ pageRows().length }} of {{ filtered().length }} pots</span>
         <button mat-button (click)="resetFilters()">Reset filters</button>
       </div>
     </div>
 
     @if (loading()) {
-      <div class="budget-loading" role="status" aria-label="Loading budgets">
+      <div class="pf-loading" role="status" aria-label="Loading budgets">
         <mat-spinner diameter="32" />
       </div>
     } @else if (failure(); as problem) {
@@ -100,7 +100,7 @@
         message="Try a different period — or create the first pot with New pot above."
       />
     } @else {
-      <div class="budget-table-scroll">
+      <div class="pf-table-scroll">
         <table
           mat-table
           [dataSource]="pageRows()"
@@ -113,8 +113,8 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="pot">Pot</th>
             <td mat-cell *matCellDef="let row">
               <span class="budget-cell">
-                <a class="budget-name" [routerLink]="[row.id]">{{ row.name }}</a>
-                <span class="budget-period pf-data-mono">{{ row.period }}</span>
+                <a class="pf-row-link" [routerLink]="[row.id]">{{ row.name }}</a>
+                <span class="pf-muted pf-data-mono">{{ row.period }}</span>
               </span>
             </td>
           </ng-container>
@@ -131,10 +131,10 @@
               Reserved
             </th>
             <td mat-cell *matCellDef="let row" class="pf-num">
-              <span class="budget-score">
+              <span class="pf-meter-row">
                 <span class="pf-data-mono">{{ formatMinor(row.reservedMinor, row.currency) }}</span>
-                <span class="budget-bar" aria-hidden="true">
-                  <span class="budget-fill" [style.width.%]="utilization(row)"></span>
+                <span class="pf-meter" aria-hidden="true">
+                  <span class="pf-meter__fill" [style.width.%]="utilization(row)"></span>
                 </span>
               </span>
             </td>

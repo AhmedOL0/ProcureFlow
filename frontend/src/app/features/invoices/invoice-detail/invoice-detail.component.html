@@ -1,6 +1,6 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="invoice-loading" role="status" aria-label="Loading invoice file">
+    <div class="pf-loading" role="status" aria-label="Loading invoice file">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -37,16 +37,20 @@
       </div>
     </pf-page-header>
 
-    <div class="invoice-head-row">
+    <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />
-      <span class="invoice-total pf-data-mono">{{ formatMinor(current.totalMinor, current.currency) }}</span>
-      <span class="invoice-paid pf-data-mono">{{ formatMinor(current.paidMinor, current.currency) }} paid</span>
+      <span class="invoice-total pf-data-mono">{{
+        formatMinor(current.totalMinor, current.currency)
+      }}</span>
+      <span class="pf-muted pf-data-mono"
+        >{{ formatMinor(current.paidMinor, current.currency) }} paid</span
+      >
       @if (current.orderId) {
-        <a class="invoice-link" [routerLink]="['/orders', current.orderId]">Source order</a>
+        <a class="pf-row-link" [routerLink]="['/orders', current.orderId]">Source order</a>
       }
     </div>
 
-    <section class="invoice-card" aria-label="Three-way match">
+    <section class="pf-panel" aria-label="Three-way match">
       <h2>3-way match</h2>
       @if ((current.match ?? []).length === 0) {
         <pf-empty-state

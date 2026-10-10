@@ -57,15 +57,8 @@
   background: var(--pf-copper-bg);
   border: 1px solid var(--pf-copper-border);
   border-radius: var(--pf-radius-pill);
-  padding: 2px 8px;
+  padding: var(--pf-space-xs) var(--pf-space-sm);
   margin: 0 0 var(--pf-space-sm);
-}
-.pf-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
 }
 .copilot-cites {
   list-style: none;
@@ -73,7 +66,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--pf-space-xs);
 }
 .copilot-cites li {
   font: var(--pf-body-sm);
@@ -81,7 +74,7 @@
   background: var(--pf-header-bg);
   border: 1px solid var(--pf-border);
   border-radius: var(--pf-radius-sm);
-  padding: 4px 8px;
+  padding: var(--pf-space-xs) var(--pf-space-sm);
   overflow-wrap: anywhere;
 }
 .copilot-model {
@@ -106,7 +99,7 @@
   padding-left: var(--pf-space-lg);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--pf-space-xs);
   font: var(--pf-body-md);
   color: var(--pf-text);
 }

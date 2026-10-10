@@ -6,11 +6,11 @@
   />
 
   @if (notice()) {
-    <p class="admin-notice" role="status">{{ notice() }}</p>
+    <p class="pf-notice" role="status">{{ notice() }}</p>
   }
 
   @if (loading()) {
-    <div class="admin-loading" role="status" aria-label="Loading departments">
+    <div class="pf-loading" role="status" aria-label="Loading departments">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -21,7 +21,7 @@
       (retry)="reload()"
     />
   } @else {
-    <section class="admin-card" aria-label="Departments">
+    <section class="pf-panel" aria-label="Departments">
       <h2>Departments ({{ departments().length }})</h2>
       @if (departments().length === 0) {
         <pf-empty-state
@@ -30,12 +30,12 @@
           message="Create the first cost center to organize requests and memberships."
         />
       } @else {
-        <ul class="admin-list">
+        <ul class="pf-list">
           @for (department of departments(); track department.id) {
-            <li class="admin-list__row">
+            <li class="pf-list__row">
               <span>{{ department.name }}</span>
               @if (canManageDepartments) {
-                <span class="admin-list__actions">
+                <span class="pf-list__actions">
                   <button mat-button (click)="renameDepartment(department)">Rename</button>
                   <button mat-button color="warn" (click)="deleteDepartment(department)">
                     Delete
@@ -47,7 +47,7 @@
         </ul>
       }
       @if (canManageDepartments) {
-        <div class="admin-row">
+        <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>New department</mat-label>
             <input matInput [formControl]="departmentName" />
@@ -63,14 +63,14 @@
       }
     </section>
 
-    <section class="admin-card" aria-label="Memberships">
+    <section class="pf-panel" aria-label="Memberships">
       <h2>Memberships ({{ memberships().length }})</h2>
       @if (memberships().length === 0) {
-        <p class="admin-muted">Nobody assigned to departments yet.</p>
+        <p class="pf-muted">Nobody assigned to departments yet.</p>
       } @else {
-        <ul class="admin-list">
+        <ul class="pf-list">
           @for (membership of memberships(); track membership.id) {
-            <li class="admin-list__row">
+            <li class="pf-list__row">
               <span
                 >{{ userEmail(membership.userId) }} →
                 {{ departmentNameOf(membership.departmentId) }}</span
@@ -85,7 +85,7 @@
         </ul>
       }
       @if (canManageDepartments) {
-        <div class="admin-row">
+        <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>User</mat-label>
             <mat-select [formControl]="memberUser">

@@ -161,6 +161,15 @@ review, README/portfolio overhaul, demo workspace docs.
   unmerged commits → design system, emerald re-theme, governance pages,
   workspace, copilot, account settings UI, Phase 10–11 work. Next PR
   after #12 merges.
+- Design-system consolidation (uncommitted on `feature/frontend-operations`,
+  2026-10-10): every page migrated onto shared `pf-*` primitives in
+  `styles.scss` (sr-only, loading, columns, card-head, panel, list, rows,
+  row-link, muted, meter, head-row, stat-pill, form-row, notice, chips,
+  count, table-scroll, dialog rhythm); 10 dead stylesheets deleted
+  (admin-cards, workspace, order/invoice lists, budget detail, 5 dialog
+  sheets); raw px/gap values mapped to tokens; approval inbox rebuilt on
+  `pf-table-card`. Verified: `npm run build` + 28 Vitest + 19 Playwright
+  green, screenshots dashboard/suppliers/users/390px in Temp.
 
 ## Next up
 

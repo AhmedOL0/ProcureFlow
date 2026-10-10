@@ -22,7 +22,6 @@ const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
   selector: 'app-request-form-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './request-form.dialog.html',
-  styleUrl: './procurement-dialogs.scss',
 })
 export class RequestFormDialogComponent {
   private readonly requests = inject(ProcurementService);

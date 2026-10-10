@@ -39,7 +39,6 @@ const STATUSES = ['UNPAID', 'PARTIAL', 'PAID'] as const;
     LucideAngularModule, PageHeaderComponent, StatusBadgeComponent, EmptyStateComponent, ErrorStateComponent,
   ],
   templateUrl: './invoice-list.component.html',
-  styleUrl: './invoice-list.component.scss',
 })
 export class InvoiceListComponent {
   private readonly invoices = inject(InvoiceService);

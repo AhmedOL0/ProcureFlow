@@ -6,7 +6,57 @@
     [opened]="drawerOpened()"
     (closed)="drawerOpened.set(false)"
   >
-    <div class="shell__brand">ProcureFlow</div>
+    <div class="shell__brand">
+      <span class="shell__logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="28" height="28">
+          <rect width="32" height="32" rx="8" fill="#064e3b" />
+          <path
+            d="M10 16.5l5 5L22 11"
+            stroke="#ffffff"
+            stroke-width="3.5"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <span class="shell__brand-text">
+        <span class="shell__brand-name">ProcureFlow</span>
+        <span class="shell__brand-edition">Enterprise OS</span>
+      </span>
+    </div>
+    @let shellUser = auth.currentUser();
+    @if (shellUser) {
+      <button
+        class="shell__tenant"
+        [matMenuTriggerFor]="tenantMenu"
+        aria-label="Workspace options"
+      >
+        <span class="shell__tenant-dot" aria-hidden="true"></span>
+        <span class="shell__tenant-text">
+          <span class="shell__tenant-name">{{ shellUser.tenantSlug }}</span>
+          <span class="shell__tenant-user">{{ shellUser.email }}</span>
+        </span>
+        <lucide-angular [img]="icons.chevrons" [size]="16" aria-hidden="true" />
+      </button>
+      <mat-menu #tenantMenu="matMenu" class="shell__tenant-menu">
+        <div class="shell__tenant-head" mat-menu-item disabled>
+          <span class="shell__tenant-name">{{ shellUser.tenantSlug }}</span>
+          <span class="shell__tenant-user">{{ shellUser.email }}</span>
+        </div>
+        <a mat-menu-item routerLink="/register">Join another workspace</a>
+        <button mat-menu-item (click)="signOut()">Sign out</button>
+      </mat-menu>
+    }
+    @if (canSeeCopilot) {
+      <a class="shell__ai" routerLink="/copilot">
+        <lucide-angular [img]="icons.sparkles" [size]="18" aria-hidden="true" />
+        <span class="shell__ai-text">
+          <span class="shell__ai-title">ProcureAI</span>
+          <span class="shell__ai-sub">Ask about your spend</span>
+        </span>
+      </a>
+    }
     <nav class="shell__nav" aria-label="Primary">
       @for (section of visibleNav(); track section.label) {
         <div class="shell__section">{{ section.label }}</div>
@@ -26,13 +76,23 @@
         </mat-nav-list>
       }
     </nav>
-    <div class="shell__tenant">
-      @let shellUser = auth.currentUser();
-      @if (shellUser) {
-        <span class="shell__tenant-name">{{ shellUser.tenantSlug }}</span>
-        <span class="shell__tenant-user">{{ shellUser.email }}</span>
-      }
-    </div>
+    @if (shellUser) {
+      <div class="shell__me">
+        <span class="shell__avatar" aria-hidden="true">{{ avatarInitials() }}</span>
+        <span class="shell__me-text">
+          <span class="shell__me-name">{{ displayName() }}</span>
+          <span class="shell__me-role">{{ primaryRole() }}</span>
+        </span>
+        <button
+          mat-icon-button
+          (click)="signOut()"
+          aria-label="Sign out"
+          class="shell__signout"
+        >
+          <lucide-angular [img]="icons.logout" [size]="18" aria-hidden="true" />
+        </button>
+      </div>
+    }
   </mat-sidenav>
 
   <mat-sidenav-content class="shell__main">

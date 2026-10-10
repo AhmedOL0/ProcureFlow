@@ -1,7 +1,7 @@
 .auth-card {
   max-width: 420px;
   margin: 0 auto;
-  padding: 8px;
+  padding: var(--pf-space-sm);
 }
 
 .auth-title {
@@ -12,18 +12,18 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 12px;
+  gap: var(--pf-space-xs);
+  margin-top: var(--pf-space-md);
 }
 
 .auth-error {
   color: var(--pf-danger-text);
   font: var(--pf-body-md);
-  margin: 4px 0 8px;
+  margin: var(--pf-space-xs) 0 var(--pf-space-sm);
 }
 
 .auth-switch {
   font: var(--pf-body-md);
   color: var(--pf-muted-text);
-  padding: 0 16px 12px;
+  padding: 0 var(--pf-space-lg) var(--pf-space-md);
 }

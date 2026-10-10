@@ -24,7 +24,6 @@ export interface ReceiveDialogData {
     MatProgressSpinnerModule,
   ],
   templateUrl: './receive.dialog.html',
-  styleUrl: './order-dialogs.scss',
 })
 export class ReceiveDialogComponent {
   private readonly dialog = inject(MatDialogRef<ReceiveDialogComponent, ReceiveDialogResult>);

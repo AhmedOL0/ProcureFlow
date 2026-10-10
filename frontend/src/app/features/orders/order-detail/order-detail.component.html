@@ -1,6 +1,6 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="order-loading" role="status" aria-label="Loading order file">
+    <div class="pf-loading" role="status" aria-label="Loading order file">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -54,20 +54,20 @@
       </div>
     </pf-page-header>
 
-    <div class="order-head-row">
+    <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />
       <span class="order-total pf-data-mono">{{
         formatMinor(current.totalMinor, current.currency)
       }}</span>
       @if (current.requestId) {
-        <a class="order-link" [routerLink]="['/requests', current.requestId]"
+        <a class="pf-row-link" [routerLink]="['/requests', current.requestId]"
           >Originating request</a
         >
       }
     </div>
 
-    <section class="order-card" aria-label="Lines">
-      <div class="order-card__head">
+    <section class="pf-panel" aria-label="Lines">
+      <div class="pf-panel__head">
         <h2>
           Lines ({{ (current.lines ?? []).length }}) — {{ receivedTotal() }} of
           {{ orderedTotal() }} received
@@ -80,7 +80,7 @@
           message="An order without lines cannot be received or invoiced."
         />
       } @else {
-        <div class="order-table-scroll">
+        <div class="pf-table-scroll">
           <table class="pf-table" aria-label="Order lines">
             <thead>
               <tr>

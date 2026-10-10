@@ -1,4 +1,4 @@
-// Authenticated shell: spruce rail (240px, overlay below 1024px), header bar
+// Authenticated shell: light rail (264px, overlay below 1024px), header bar
 // with breadcrumbs, inbox entry and user menu. Content pages bring their
 // own .pf-page rhythm inside router-outlet.
 .shell {
@@ -7,19 +7,39 @@
 
 .shell__rail {
   width: 264px;
-  background: var(--pf-navy);
-  color: var(--pf-on-navy-dim);
+  background: var(--pf-rail-bg);
+  color: var(--pf-rail-text);
   display: flex;
   flex-direction: column;
-  border-right: none;
+  border-right: 1px solid var(--pf-rail-border);
   border-radius: 0;
 }
 
 .shell__brand {
-  font: var(--pf-headline-md);
-  color: var(--pf-on-navy);
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
+}
+.shell__logo {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.shell__brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.shell__brand-name {
+  font: 700 17px/22px var(--pf-font);
   letter-spacing: -0.01em;
-  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-sm);
+  color: var(--pf-rail-text);
+}
+.shell__brand-edition {
+  font: var(--pf-label-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pf-rail-faint);
 }
 
 .shell__nav {
@@ -30,62 +50,170 @@
   font: var(--pf-label-sm);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--pf-on-navy-faint);
+  color: var(--pf-rail-faint);
   padding: var(--pf-space-sm) var(--pf-space-lg) var(--pf-space-xs);
 }
 
+.shell__rail .mat-mdc-list {
+  padding: 0 var(--pf-space-sm);
+}
 .shell__rail .mat-mdc-list-item {
-  color: var(--pf-on-navy-dim);
+  color: var(--pf-rail-dim);
   min-height: 36px;
+  border-radius: var(--pf-radius-md);
 }
 // Material paints item text and icons with its own on-surface tokens;
-// re-assert the rail palette so labels stay legible on navy.
+// re-assert the rail palette so labels stay legible on white.
 .shell__rail .mat-mdc-list-item .mdc-list-item__primary-text,
 .shell__rail .mat-mdc-list-item .mat-icon,
 .shell__rail .mat-mdc-list-item lucide-angular {
-  color: var(--pf-on-navy-dim);
+  color: var(--pf-rail-dim);
 }
 .shell__rail .mat-mdc-list-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--pf-rail-hover);
+}
+.shell__rail .mat-mdc-list-item:hover .mdc-list-item__primary-text,
+.shell__rail .mat-mdc-list-item:hover lucide-angular {
+  color: var(--pf-rail-text);
 }
 .shell__link--active {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: var(--pf-on-navy) !important;
+  background: var(--pf-rail-active-bg) !important;
+  color: var(--pf-rail-active-text) !important;
 }
 .shell__link--active .mdc-list-item__primary-text,
 .shell__link--active .mat-icon,
 .shell__link--active lucide-angular {
-  color: var(--pf-on-navy) !important;
+  color: var(--pf-rail-active-text) !important;
 }
-.shell__link--active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--pf-rail-active);
+
+.shell__me {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-md) var(--pf-space-lg);
+  border-top: 1px solid var(--pf-rail-border);
+}
+.shell__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-navy);
+  color: var(--pf-on-navy);
+  font: 600 12px/32px var(--pf-font);
+  text-align: center;
+  flex-shrink: 0;
+}
+.shell__me-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.shell__me-name {
+  font: var(--pf-label-lg);
+  color: var(--pf-rail-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shell__me-role {
+  font: var(--pf-body-sm);
+  color: var(--pf-rail-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shell__signout {
+  color: var(--pf-rail-dim);
+  flex-shrink: 0;
+}
+.shell__signout:hover {
+  color: var(--pf-rail-text);
 }
 
 .shell__tenant {
-  margin-top: auto;
-  padding: var(--pf-space-md) var(--pf-space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-sm);
+  margin: 0 var(--pf-space-md) var(--pf-space-sm);
+  padding: var(--pf-space-sm) var(--pf-space-md);
+  background: transparent;
+  border: 1px solid var(--pf-rail-border);
+  border-radius: var(--pf-radius-md);
+  cursor: pointer;
+  text-align: left;
+  color: var(--pf-rail-text);
+  font: inherit;
+}
+.shell__tenant:hover {
+  background: var(--pf-rail-hover);
+}
+.shell__tenant-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-blue);
+  flex-shrink: 0;
+}
+.shell__tenant-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  min-width: 0;
+  flex: 1;
 }
 .shell__tenant-name {
   font: var(--pf-label-lg);
-  color: var(--pf-on-navy);
+  color: var(--pf-rail-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .shell__tenant-user {
   font: var(--pf-body-sm);
-  color: var(--pf-on-navy-faint);
+  color: var(--pf-rail-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shell__tenant-menu .shell__tenant-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-xs);
+  opacity: 1 !important;
+}
+
+.shell__ai {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-md);
+  margin: 0 var(--pf-space-md) var(--pf-space-sm);
+  padding: var(--pf-space-md);
+  border: 1px solid var(--pf-copper-border);
+  border-radius: var(--pf-radius-md);
+  background: var(--pf-copper-bg);
+  color: var(--pf-rail-text);
+  text-decoration: none;
+}
+.shell__ai:hover {
+  border-color: var(--pf-copper);
+}
+.shell__ai lucide-angular {
+  color: var(--pf-copper-text);
+  flex-shrink: 0;
+}
+.shell__ai-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.shell__ai-title {
+  font: var(--pf-label-lg);
+  color: var(--pf-copper-text);
+}
+.shell__ai-sub {
+  font: var(--pf-body-sm);
+  color: var(--pf-rail-dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -105,7 +233,7 @@
 
 .shell__crumbs {
   display: flex;
-  gap: 6px;
+  gap: var(--pf-space-sm);
   font: var(--pf-label-md);
   color: var(--pf-slate);
 }
@@ -137,7 +265,7 @@
 .shell__user {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--pf-space-xs);
   opacity: 1 !important;
 }
 .shell__user-email {

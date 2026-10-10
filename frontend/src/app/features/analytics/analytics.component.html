@@ -14,7 +14,7 @@
   </pf-page-header>
 
   @if (loading()) {
-    <div class="analytics-loading" role="status" aria-label="Loading analytics">
+      <div class="pf-loading" role="status" aria-label="Loading analytics">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -35,31 +35,31 @@
     @if (spend(); as flow) {
       <div class="pf-kpis" role="region" aria-label="Spend totals">
         <div class="pf-kpi">
-          <div class="pf-kpi__top"><span class="pf-kpi__label">Requested</span></div>
+          <span class="pf-kpi__label">Requested</span>
           <div class="pf-kpi__value">{{ formatMinor(flow.requestedMinor) }}</div>
           <div class="pf-kpi__sub">draft demand in view</div>
         </div>
         <div class="pf-kpi">
-          <div class="pf-kpi__top"><span class="pf-kpi__label">Ordered</span></div>
+          <span class="pf-kpi__label">Ordered</span>
           <div class="pf-kpi__value">{{ formatMinor(flow.orderedMinor) }}</div>
           <div class="pf-kpi__sub">committed to suppliers</div>
         </div>
         <div class="pf-kpi">
-          <div class="pf-kpi__top"><span class="pf-kpi__label">Invoiced</span></div>
+          <span class="pf-kpi__label">Invoiced</span>
           <div class="pf-kpi__value">{{ formatMinor(flow.invoicedMinor) }}</div>
           <div class="pf-kpi__sub">billed, paid or not</div>
         </div>
         <div class="pf-kpi">
-          <div class="pf-kpi__top"><span class="pf-kpi__label">Paid</span></div>
+          <span class="pf-kpi__label">Paid</span>
           <div class="pf-kpi__value">{{ formatMinor(flow.paidMinor) }}</div>
           <div class="pf-kpi__sub">settled with suppliers</div>
         </div>
       </div>
     }
 
-    <div class="analytics-columns">
+    <div class="pf-columns">
       <section class="pf-table-card" aria-label="Spend by period">
-        <div class="analytics-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head"><h2>Spend trajectory</h2></div>
         </div>
         @if (months().length === 0) {
@@ -98,7 +98,7 @@
       </section>
 
       <section class="pf-table-card" aria-label="Spend by category">
-        <div class="analytics-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head"><h2>Category allocation</h2></div>
           <div class="analytics-card-filter">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -134,9 +134,9 @@
       </section>
     </div>
 
-    <div class="analytics-columns">
+    <div class="pf-columns">
       <section class="pf-table-card" aria-label="Supplier scorecards">
-        <div class="analytics-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head"><h2>Supplier performance</h2></div>
           <div class="analytics-card-filter">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -152,7 +152,7 @@
             message="Record supplier scorecards to see on-time and quality averages here."
           />
         } @else {
-          <div class="analytics-table-scroll">
+          <div class="pf-table-scroll">
             <table mat-table [dataSource]="suppliers()" class="pf-table" aria-label="Supplier KPIs">
               <ng-container matColumnDef="supplier">
                 <th mat-header-cell *matHeaderCellDef>Supplier</th>
@@ -187,7 +187,7 @@
 
       <div class="analytics-stack">
         <section class="pf-table-card" aria-label="Approval lead times">
-          <div class="analytics-card-head">
+          <div class="pf-card-head">
             <div class="pf-section-head"><h2>Approval flow</h2></div>
           </div>
           @if (approvalKpis(); as kpis) {
@@ -219,7 +219,7 @@
         </section>
 
         <section class="pf-table-card" aria-label="AI usage">
-          <div class="analytics-card-head">
+          <div class="pf-card-head">
             <div class="pf-section-head"><h2>Copilot usage</h2></div>
           </div>
           @if (!canSeeAiUsage) {

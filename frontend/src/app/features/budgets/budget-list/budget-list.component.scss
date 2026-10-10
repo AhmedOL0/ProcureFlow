@@ -1,44 +1,7 @@
-.budget-filters {
-  display: flex;
-  gap: var(--pf-space-md);
-  padding: var(--pf-space-lg);
-  border-bottom: 1px solid var(--pf-border);
-  flex-wrap: wrap;
-}
-.budget-filters mat-form-field {
-  flex: 1 1 240px;
-}
-.budget-filter-sm {
-  max-width: 200px;
-}
-
-.budget-chips {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--pf-space-md);
-  padding: var(--pf-space-md) var(--pf-space-lg);
-  border-bottom: 1px solid var(--pf-border);
-  flex-wrap: wrap;
-}
-.budget-count {
-  display: flex;
-  align-items: center;
-  gap: var(--pf-space-sm);
-  font: var(--pf-body-sm);
-  color: var(--pf-slate);
-}
-
-.budget-loading {
-  display: flex;
-  justify-content: center;
-  padding: var(--pf-space-2xl);
-}
-
-.budget-table-scroll {
-  overflow-x: auto;
-}
-.budget-table-scroll table.pf-table {
+// Budget directory: the wide table needs a 680px floor; filters,
+// chips, loading, scroll, meters, row links and muted text are global
+// pf-* primitives.
+.pf-table-scroll table.pf-table {
   min-width: 680px;
 }
 
@@ -46,50 +9,4 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-}
-.budget-name {
-  color: var(--pf-blue);
-  font-weight: 500;
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.budget-name:hover {
-  text-decoration: underline;
-}
-.budget-period {
-  font: var(--pf-body-sm);
-  color: var(--pf-slate);
-}
-.budget-score {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.budget-bar {
-  width: 72px;
-  height: 4px;
-  border-radius: var(--pf-radius-pill);
-  background: var(--pf-neutral-bg);
-  overflow: hidden;
-}
-.budget-fill {
-  display: block;
-  height: 100%;
-  background: var(--pf-blue);
-}
-
-.pf-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-}
-
-@media (max-width: 767px) {
-  .budget-filters {
-    padding: var(--pf-space-md);
-  }
 }

@@ -26,9 +26,11 @@ import {
   Building2,
   ChartColumn,
   ClipboardList,
+  ChevronsUpDown,
   FileText,
   Inbox,
   LayoutDashboard,
+  LogOut,
   Menu,
   Receipt,
   ScrollText,
@@ -41,6 +43,7 @@ import {
   Wallet,
 } from '../../shared/icons';
 import { Breadcrumb } from '../../shared/components/page-header/page-header.component';
+import { humanizeRole, initialsFor } from '../../shared/utils/names';
 
 interface NavItem {
   label: string;
@@ -96,7 +99,28 @@ export class ShellComponent {
     dashboard: LayoutDashboard,
     truck: Truck,
     user: User,
+    chevrons: ChevronsUpDown,
+    logout: LogOut,
+    sparkles: Sparkles,
   };
+  protected readonly canSeeCopilot = this.auth.hasAuthority('ai:use');
+
+  /** Display name: profile names when set, else the email handle. */
+  protected readonly displayName = computed(() => {
+    const user = this.auth.currentUser();
+    const full = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+    if (full) {
+      return full;
+    }
+    return (user?.email ?? '?').split('@')[0] ?? '?';
+  });
+
+  protected readonly avatarInitials = computed(() => initialsFor(this.displayName()));
+
+  protected readonly primaryRole = computed(() => {
+    const user = this.auth.currentUser();
+    return humanizeRole(user?.roles?.[0]);
+  });
 
   readonly nav: NavSection[] = [
     {

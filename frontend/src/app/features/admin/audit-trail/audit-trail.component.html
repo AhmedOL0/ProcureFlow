@@ -6,7 +6,7 @@
   />
 
   <div class="pf-table-card">
-    <div class="audit-filters">
+    <div class="pf-filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Filter by action, type or id</mat-label>
         <input matInput [formControl]="entityFilter" placeholder="ORDER_SENT" />
@@ -14,7 +14,7 @@
     </div>
 
     @if (loading()) {
-      <div class="audit-loading" role="status" aria-label="Loading audit trail">
+      <div class="pf-loading" role="status" aria-label="Loading audit trail">
         <mat-spinner diameter="32" />
       </div>
     } @else if (failure(); as problem) {
@@ -38,7 +38,7 @@
         message="Sensitive actions record here as they happen."
       />
     } @else {
-      <div class="audit-table-scroll">
+      <div class="pf-table-scroll">
         <table mat-table [dataSource]="pageRows()" class="pf-table" aria-label="Audit trail">
           <ng-container matColumnDef="time">
             <th mat-header-cell *matHeaderCellDef>Time</th>

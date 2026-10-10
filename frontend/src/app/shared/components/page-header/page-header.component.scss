@@ -9,7 +9,7 @@
 .pf-head__crumbs {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--pf-space-sm);
   font: var(--pf-label-md);
   color: var(--pf-slate);
   margin-bottom: var(--pf-space-xs);

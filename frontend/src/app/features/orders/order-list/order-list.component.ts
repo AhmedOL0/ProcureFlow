@@ -42,7 +42,6 @@ const STATUSES = ['DRAFT', 'SENT', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CLOSED', '
     LucideAngularModule, PageHeaderComponent, StatusBadgeComponent, EmptyStateComponent, ErrorStateComponent,
   ],
   templateUrl: './order-list.component.html',
-  styleUrl: './order-list.component.scss',
 })
 export class OrderListComponent {
   private readonly orders = inject(OrderService);

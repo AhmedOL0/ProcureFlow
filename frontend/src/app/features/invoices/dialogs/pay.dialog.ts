@@ -18,7 +18,6 @@ export interface PayDialogData {
   selector: 'app-pay-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
   templateUrl: './pay.dialog.html',
-  styleUrl: './invoice-dialogs.scss',
 })
 export class PayDialogComponent {
   private readonly dialog = inject(MatDialogRef<PayDialogComponent, PayDialogResult>);

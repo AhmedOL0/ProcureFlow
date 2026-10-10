@@ -6,11 +6,11 @@
   />
 
   @if (notice()) {
-    <p class="admin-notice" role="status">{{ notice() }}</p>
+    <p class="pf-notice" role="status">{{ notice() }}</p>
   }
 
   @if (loading()) {
-    <div class="admin-loading" role="status" aria-label="Loading policies">
+    <div class="pf-loading" role="status" aria-label="Loading policies">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -28,7 +28,7 @@
       />
     }
   } @else {
-    <section class="admin-card" aria-label="Approval lanes">
+    <section class="pf-panel" aria-label="Approval lanes">
       <h2>Lanes ({{ lanes().length }})</h2>
       @if (lanes().length === 0) {
         <pf-empty-state
@@ -37,16 +37,16 @@
           message="Without a lane, submitted requests match no workflow and wait unassigned."
         />
       } @else {
-        <ul class="admin-list">
+        <ul class="pf-list">
           @for (lane of lanes(); track lane.id) {
-            <li class="admin-list__row">
+            <li class="pf-list__row">
               <span>
                 <button mat-button (click)="selectLane(lane)">{{ lane.name }}</button>
-                <span class="admin-muted"
+                <span class="pf-muted"
                   >{{ laneRange(lane) }} · escalates after {{ lane.escalateAfterDays ?? 3 }}d</span
                 >
               </span>
-              <span class="admin-list__actions">
+              <span class="pf-list__actions">
                 <mat-slide-toggle
                   [checked]="lane.active ?? true"
                   (change)="setLaneActive(lane, $event.checked)"
@@ -58,7 +58,7 @@
         </ul>
       }
       @if (canApprove) {
-        <div class="admin-create" [formGroup]="laneForm">
+        <div class="pf-form-row" [formGroup]="laneForm">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Lane name</mat-label>
             <input matInput formControlName="name" placeholder="Engineering under €50k" />
@@ -100,14 +100,14 @@
     </section>
 
     @if (selectedLane(); as lane) {
-      <section class="admin-card" aria-label="Lane steps">
+      <section class="pf-panel" aria-label="Lane steps">
         <h2>Steps — {{ lane.name }} ({{ steps().length }})</h2>
         @if (steps().length === 0) {
-          <p class="admin-muted">No steps yet. The first added step decides first.</p>
-        } @else {
-          <ul class="admin-list">
-            @for (step of steps(); track step.id) {
-              <li class="admin-list__row">
+        <p class="pf-muted">No steps yet. The first added step decides first.</p>
+      } @else {
+        <ul class="pf-list">
+          @for (step of steps(); track step.id) {
+            <li class="pf-list__row">
                 <span>#{{ step.stepOrder }} · {{ resolveUser(step.approverId) }}</span>
                 @if (canApprove) {
                   <button mat-button color="warn" (click)="removeStep(step)">Remove</button>
@@ -117,7 +117,7 @@
           </ul>
         }
         @if (canApprove) {
-          <div class="admin-row">
+          <div class="pf-form-row">
             @if (users().length > 0) {
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>Approver</mat-label>
@@ -141,16 +141,16 @@
       </section>
     }
 
-    <section class="admin-card" aria-label="Delegations">
+    <section class="pf-panel" aria-label="Delegations">
       <h2>Delegations ({{ delegations().length }})</h2>
       @if (delegations().length === 0) {
-        <p class="admin-muted">
+        <p class="pf-muted">
           No active delegations. Delegates decide exactly as the delegator could, until expiry.
         </p>
       } @else {
-        <ul class="admin-list">
+        <ul class="pf-list">
           @for (delegation of delegations(); track delegation.id) {
-            <li class="admin-list__row">
+            <li class="pf-list__row">
               <span
                 >{{ resolveUser(delegation.delegatorId) }} →
                 {{ resolveUser(delegation.delegateId) }} · until
@@ -166,7 +166,7 @@
         </ul>
       }
       @if (canApprove) {
-        <div class="admin-row">
+          <div class="pf-form-row">
           @if (users().length > 0) {
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Delegate</mat-label>

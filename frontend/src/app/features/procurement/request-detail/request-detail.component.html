@@ -1,6 +1,6 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="request-loading" role="status" aria-label="Loading request file">
+    <div class="pf-loading" role="status" aria-label="Loading request file">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -58,14 +58,14 @@
       </div>
     </pf-page-header>
 
-    <div class="request-head-row">
+    <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />
       <span class="request-priority">{{ current.priority ?? 'MEDIUM' }} priority</span>
       <span class="request-total pf-data-mono">{{ formatMinor(current.totalMinor) }}</span>
     </div>
 
     @if (decision(); as verdict) {
-      <section class="request-card" aria-label="Decision">
+      <section class="pf-panel" aria-label="Decision">
         <h2>Decision — {{ verdict.decision }}</h2>
         @if (verdict.comment) {
           <p class="request-note">“{{ verdict.comment }}”</p>
@@ -77,7 +77,7 @@
     }
 
     @if (lane(); as assignment) {
-      <section class="request-card" aria-label="Approval lane">
+      <section class="pf-panel" aria-label="Approval lane">
         <h2>Approval lane</h2>
         <p class="request-muted">
           Step {{ assignment.stepOrder }} awaits its approver
@@ -91,7 +91,7 @@
 
     @if (canSeeBudget) {
       @let pot = budget();
-      <section class="request-card" aria-label="Budget context">
+      <section class="pf-panel" aria-label="Budget context">
         <h2>Budget — this month</h2>
         @if (pot === null) {
           <p class="request-muted">Loading budget…</p>
@@ -112,7 +112,7 @@
       </section>
     }
 
-    <section class="request-card" aria-label="History">
+    <section class="pf-panel" aria-label="History">
       <h2>History</h2>
       <ul class="request-history">
         @for (entry of historyEntries(); track entry.label) {
@@ -124,8 +124,8 @@
       </ul>
     </section>
 
-    <section class="request-card" aria-label="Items">
-      <div class="request-card__head">
+    <section class="pf-panel" aria-label="Items">
+      <div class="pf-panel__head">
         <h2>Items ({{ (current.items ?? []).length }})</h2>
         @if (isDraft() && canEdit()) {
           <button mat-button (click)="openItem()">
@@ -140,7 +140,7 @@
           message="A request needs at least one line before it can be submitted. Use Add item above."
         />
       } @else {
-        <div class="request-table-scroll">
+        <div class="pf-table-scroll">
           <table class="pf-table" aria-label="Request items">
             <thead>
               <tr>

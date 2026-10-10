@@ -20,7 +20,6 @@ export interface CategoriesDialogData {
   selector: 'app-categories-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './categories.dialog.html',
-  styleUrl: './dialogs.scss',
 })
 export class CategoriesDialogComponent {
   private readonly suppliers = inject(SuppliersService);

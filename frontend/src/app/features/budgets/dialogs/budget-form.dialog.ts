@@ -24,7 +24,6 @@ import { parseApiFailure, userMessageFor } from '../../../shared/utils/api-error
     MatProgressSpinnerModule,
   ],
   templateUrl: './budget-form.dialog.html',
-  styleUrl: './budget-dialogs.scss',
 })
 export class BudgetFormDialogComponent {
   private readonly budgets = inject(BudgetsService);

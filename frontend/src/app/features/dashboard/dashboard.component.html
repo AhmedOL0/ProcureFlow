@@ -14,7 +14,7 @@
   </pf-page-header>
 
   @if (loading()) {
-    <div class="dashboard-loading" role="status" aria-label="Loading overview">
+    <div class="pf-loading" role="status" aria-label="Loading overview">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -76,7 +76,7 @@
 
     @if (trend().length > 0) {
       <section class="pf-table-card" aria-label="Order trend">
-        <div class="dashboard-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head">
             <h2>Ordered per month</h2>
             <a routerLink="/analytics">Full trajectory</a>
@@ -98,9 +98,9 @@
       </section>
     }
 
-    <div class="dashboard-columns">
+    <div class="pf-columns">
       <section class="pf-table-card" aria-label="Awaiting approval">
-        <div class="dashboard-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head">
             <h2>Awaiting approval</h2>
             <a routerLink="/approvals">Open inbox</a>
@@ -113,14 +113,14 @@
             message="Submitted requests land here for review."
           />
         } @else {
-          <ul class="dashboard-rows">
+          <ul class="pf-rows">
             @for (row of awaiting(); track row.id) {
-              <li class="dashboard-row">
-                <div class="dashboard-row__main">
-                  <a class="dashboard-row__title" [routerLink]="['/requests', row.id]">
+              <li class="pf-row">
+                <div class="pf-row__main">
+                  <a class="pf-row__title" [routerLink]="['/requests', row.id]">
                     {{ row.title || 'Untitled request' }}
                   </a>
-                  <span class="dashboard-row__meta">
+                  <span class="pf-row__meta">
                     {{ row.priority ?? 'No priority' }} ·
                     <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
                   </span>
@@ -133,7 +133,7 @@
       </section>
 
       <section class="pf-table-card" aria-label="Recent requests">
-        <div class="dashboard-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head">
             <h2>Recent requests</h2>
             <a routerLink="/requests">View all</a>
@@ -146,14 +146,14 @@
             message="Raise the first request to start the procure-to-pay flow."
           />
         } @else {
-          <ul class="dashboard-rows">
+          <ul class="pf-rows">
             @for (row of recent(); track row.id) {
-              <li class="dashboard-row">
-                <div class="dashboard-row__main">
-                  <a class="dashboard-row__title" [routerLink]="['/requests', row.id]">
+              <li class="pf-row">
+                <div class="pf-row__main">
+                  <a class="pf-row__title" [routerLink]="['/requests', row.id]">
                     {{ row.title || 'Untitled request' }}
                   </a>
-                  <span class="dashboard-row__meta">
+                  <span class="pf-row__meta">
                     <pf-status-badge [status]="row.status ?? ''" /> ·
                     <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
                   </span>
@@ -164,5 +164,16 @@
         }
       </section>
     </div>
+
+    @if (canSeeAudit) {
+      <div class="dashboard-audit" role="note" aria-label="Audit trail">
+        <lucide-angular [img]="icons.shield" [size]="18" aria-hidden="true" />
+        <p>
+          <strong>Audit trail active.</strong>
+          Every decision, transition and payment in this workspace is recorded —
+          <a routerLink="/admin/audit">review the trail</a>.
+        </p>
+      </div>
+    }
   }
 </div>

@@ -6,11 +6,11 @@
   />
 
   @if (notice()) {
-    <p class="settings-notice" role="status">{{ notice() }}</p>
+    <p class="pf-notice" role="status">{{ notice() }}</p>
   }
 
   @if (loading()) {
-    <div class="settings-loading" role="status" aria-label="Loading settings">
+    <div class="pf-loading" role="status" aria-label="Loading settings">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -23,14 +23,14 @@
   } @else {
     @let me = user();
     <section class="pf-table-card" aria-label="Profile">
-      <div class="settings-card-head">
+      <div class="pf-card-head">
         <div class="pf-section-head"><h2>Profile</h2></div>
       </div>
       <div class="settings-body" [formGroup]="profileForm">
-        <p class="settings-line">
+        <p class="pf-muted">
           Signed in as <strong>{{ me?.email }}</strong> in {{ me?.tenantSlug }}
         </p>
-        <div class="settings-row">
+        <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>First name</mat-label>
             <input matInput formControlName="firstName" autocomplete="given-name" maxlength="100" />
@@ -52,14 +52,14 @@
     </section>
 
     <section class="pf-table-card" aria-label="Password">
-      <div class="settings-card-head">
+      <div class="pf-card-head">
         <div class="pf-section-head"><h2>Password</h2></div>
       </div>
       <div class="settings-body" [formGroup]="passwordForm">
-        <p class="settings-muted">
+        <p class="pf-muted">
           Changing your password signs you out everywhere — you sign in again with the new one.
         </p>
-        <div class="settings-row">
+        <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Current password</mat-label>
             <input

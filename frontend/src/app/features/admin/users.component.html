@@ -6,11 +6,11 @@
   />
 
   @if (notice()) {
-    <p class="admin-notice" role="status">{{ notice() }}</p>
+    <p class="pf-notice" role="status">{{ notice() }}</p>
   }
 
   @if (loading()) {
-    <div class="admin-loading" role="status" aria-label="Loading users">
+    <div class="pf-loading" role="status" aria-label="Loading users">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -28,14 +28,14 @@
       />
     }
   } @else {
-    <section class="admin-card" aria-label="Users">
+    <section class="pf-panel" aria-label="Users">
       <h2>Users ({{ users().length }})</h2>
-      <ul class="admin-list">
+      <ul class="pf-list">
         @for (user of users(); track user.id) {
-          <li class="admin-list__row">
+          <li class="pf-list__row">
             <span>{{ user.email }}</span>
-            <span class="admin-list__actions">
-              <span class="admin-roles">{{ (user.roles ?? []).join(', ') || 'no roles' }}</span>
+            <span class="pf-list__actions">
+              <span class="pf-muted">{{ (user.roles ?? []).join(', ') || 'no roles' }}</span>
               @if (canManageUsers) {
                 <button mat-button (click)="resetPassword(user)">Reset password</button>
               }
@@ -44,7 +44,7 @@
         }
       </ul>
       @if (canManageUsers) {
-        <div class="admin-create">
+        <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Email</mat-label>
             <input matInput type="email" [formControl]="newEmail" />
@@ -63,7 +63,7 @@
           </mat-form-field>
           <button mat-flat-button color="primary" (click)="createUser()">Create user</button>
         </div>
-        <p class="admin-muted">
+        <p class="pf-muted">
           Roles assign at creation only — the contract exposes no role-update endpoint.
         </p>
       }

@@ -1,15 +1,6 @@
-.request-loading {
-  display: flex;
-  justify-content: center;
-  padding: var(--pf-space-2xl);
-}
-
-.request-head-row {
-  display: flex;
-  align-items: center;
-  gap: var(--pf-space-md);
-  flex-wrap: wrap;
-}
+// Request dossier: loading, head row, panels and table scroll are
+// global pf-* primitives; priority, totals, notes and history keep
+// their own dossier typography.
 .request-priority {
   font: var(--pf-label-md);
   text-transform: uppercase;
@@ -22,26 +13,10 @@
   margin-left: auto;
 }
 
-.request-card {
-  background: var(--pf-card);
-  border: 1px solid var(--pf-border);
-  border-radius: var(--pf-radius-lg);
-  padding: var(--pf-space-lg);
+.pf-table-scroll table.pf-table {
+  min-width: 640px;
 }
-.request-card h2 {
-  font: var(--pf-headline-sm);
-  color: var(--pf-navy);
-  margin: 0 0 var(--pf-space-md);
-}
-.request-card__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--pf-space-md);
-}
-.request-card__head h2 {
-  margin: 0;
-}
+
 .request-note {
   font: var(--pf-body-lg);
   color: var(--pf-text);
@@ -75,19 +50,4 @@
   font: var(--pf-body-md);
   color: var(--pf-slate);
   margin: 0;
-}
-
-.request-table-scroll {
-  overflow-x: auto;
-}
-.request-table-scroll table.pf-table {
-  min-width: 640px;
-}
-
-.pf-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
 }

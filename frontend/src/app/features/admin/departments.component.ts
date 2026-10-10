@@ -43,7 +43,6 @@ import { Department, Membership, OrganizationService, WorkspaceUser } from './or
     ErrorStateComponent,
   ],
   templateUrl: './departments.component.html',
-  styleUrl: './admin-cards.scss',
 })
 export class DepartmentsComponent {
   private readonly org = inject(OrganizationService);

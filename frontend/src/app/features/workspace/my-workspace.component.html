@@ -16,7 +16,7 @@
   </pf-page-header>
 
   @if (loading()) {
-    <div class="workspace-loading" role="status" aria-label="Loading workspace">
+    <div class="pf-loading" role="status" aria-label="Loading workspace">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -45,9 +45,9 @@
       </div>
     </div>
 
-    <div class="workspace-columns">
+    <div class="pf-columns">
       <section class="pf-table-card" aria-label="My latest requests">
-        <div class="workspace-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head">
             <h2>My latest requests</h2>
             <a routerLink="/requests/mine">View all mine</a>
@@ -60,14 +60,14 @@
             message="Requests you create appear here with their live status."
           />
         } @else {
-          <ul class="workspace-rows">
+          <ul class="pf-rows">
             @for (row of recentMine(); track row.id) {
-              <li class="workspace-row">
-                <div class="workspace-row__main">
-                  <a class="workspace-row__title" [routerLink]="['/requests', row.id]">
+              <li class="pf-row">
+                <div class="pf-row__main">
+                  <a class="pf-row__title" [routerLink]="['/requests', row.id]">
                     {{ row.title || 'Untitled request' }}
                   </a>
-                  <span class="workspace-row__meta">
+                  <span class="pf-row__meta">
                     <pf-status-badge [status]="row.status ?? ''" />
                   </span>
                 </div>
@@ -78,7 +78,7 @@
       </section>
 
       <section class="pf-table-card" aria-label="Unread notifications">
-        <div class="workspace-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head">
             <h2>Unread</h2>
             <a routerLink="/notifications">View all</a>
@@ -91,12 +91,12 @@
             message="New submissions and decisions land here."
           />
         } @else {
-          <ul class="workspace-rows">
+          <ul class="pf-rows">
             @for (item of latestUnread(); track item.id) {
-              <li class="workspace-row">
-                <div class="workspace-row__main">
-                  <span class="workspace-row__title">{{ item.title }}</span>
-                  <span class="workspace-row__meta">{{ formatInstant(item.createdAt) }}</span>
+              <li class="pf-row">
+                <div class="pf-row__main">
+                  <span class="pf-row__title">{{ item.title }}</span>
+                  <span class="pf-row__meta">{{ formatInstant(item.createdAt) }}</span>
                 </div>
                 @if (item.id) {
                   <button mat-button (click)="inbox.markRead(item.id ?? '')">Mark read</button>

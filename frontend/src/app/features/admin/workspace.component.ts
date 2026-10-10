@@ -24,7 +24,6 @@ import { OrganizationService, Tenant } from './organization.service';
     ErrorStateComponent,
   ],
   templateUrl: './workspace.component.html',
-  styleUrl: './admin-cards.scss',
 })
 export class WorkspaceComponent {
   private readonly org = inject(OrganizationService);

@@ -1,53 +1,7 @@
-.order-loading {
-  display: flex;
-  justify-content: center;
-  padding: var(--pf-space-2xl);
-}
-
-.order-head-row {
-  display: flex;
-  align-items: center;
-  gap: var(--pf-space-md);
-  flex-wrap: wrap;
-}
+// Order file: loading, head row, panel, scroll and row links are
+// global pf-* primitives; the order total keeps its own anchor type.
 .order-total {
   font: var(--pf-headline-sm);
   color: var(--pf-navy);
   margin-left: auto;
-}
-.order-link {
-  font: var(--pf-label-lg);
-  color: var(--pf-blue);
-  text-decoration: none;
-}
-.order-link:hover {
-  text-decoration: underline;
-}
-
-.order-card {
-  background: var(--pf-card);
-  border: 1px solid var(--pf-border);
-  border-radius: var(--pf-radius-lg);
-  padding: var(--pf-space-lg);
-}
-.order-card h2 {
-  font: var(--pf-headline-sm);
-  color: var(--pf-navy);
-  margin: 0 0 var(--pf-space-md);
-}
-.order-card__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--pf-space-md);
-}
-.order-card__head h2 {
-  margin: 0;
-}
-
-.order-table-scroll {
-  overflow-x: auto;
-}
-.order-table-scroll table.pf-table {
-  min-width: 560px;
 }

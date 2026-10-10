@@ -14,13 +14,13 @@
   </pf-page-header>
 
   <div class="pf-table-card">
-    <div class="order-filters">
+    <div class="pf-filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Search supplier</mat-label>
         <input matInput [formControl]="searchBox" placeholder="Acme" />
         <lucide-angular matSuffix [img]="icons.search" [size]="18" />
       </mat-form-field>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="order-filter-sm">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pf-filter-sm">
         <mat-label>Status</mat-label>
         <mat-select [formControl]="statusFilter">
           <mat-option [value]="null">All</mat-option>
@@ -32,7 +32,7 @@
     </div>
 
     @if (loading()) {
-      <div class="order-loading" role="status" aria-label="Loading orders">
+      <div class="pf-loading" role="status" aria-label="Loading orders">
         <mat-spinner diameter="32" />
       </div>
     } @else if (failure(); as problem) {
@@ -56,7 +56,7 @@
         message="Orders start from an approved request — approve one first, then come back."
       />
     } @else {
-      <div class="order-table-scroll">
+      <div class="pf-table-scroll">
         <table
           mat-table
           [dataSource]="pageRows()"

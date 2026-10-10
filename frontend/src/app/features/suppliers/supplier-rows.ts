@@ -2,6 +2,8 @@ import { forkJoin, map, Observable, of } from 'rxjs';
 
 import { Supplier, SupplierCategory, SupplierContact, SupplierPerformance, SuppliersService } from './suppliers.service';
 
+export { initialsFor } from '../../shared/utils/names';
+
 /** One directory row with everything the table renders, resolved up front. */
 export interface SupplierRow {
   supplier: Supplier;
@@ -10,15 +12,6 @@ export interface SupplierRow {
   /** Most recent scorecard by period, if any. */
   latestScore: SupplierPerformance | null;
   averageOnTime: number | null;
-}
-
-/** Initials avatar text, e.g. "Acme Parts" -> "AP". */
-export function initialsFor(name: string | null | undefined): string {
-  const words = (name ?? '').trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) {
-    return '?';
-  }
-  return ((words[0]?.charAt(0) ?? '') + (words.length > 1 ? (words[words.length - 1]?.charAt(0) ?? '') : '')).toUpperCase();
 }
 
 /** Mean of present on-time rates, rounded to one decimal, else null. */

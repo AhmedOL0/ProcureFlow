@@ -55,10 +55,18 @@ html {
   --pf-text: #0f172a; // obsidian primary text
   --pf-slate: #475569; // secondary text, labels, timestamps
   --pf-muted-text: #475569; // alias: muted text keeps 4.6:1 on white
-  --pf-on-navy: #ffffff; // text on spruce surfaces
+  --pf-on-navy: #ffffff; // text on spruce surfaces (avatars, brand marks)
   --pf-on-navy-dim: #c7ddd3; // secondary text on spruce
   --pf-on-navy-faint: #a7c4b8; // timestamps on spruce (4.5:1+)
-  --pf-rail-active: #6ee7b7; // active rail marker on spruce
+  // --- Light rail (reference sidebar): white surface, ink text ---------
+  --pf-rail-bg: #ffffff;
+  --pf-rail-text: #0f172a;
+  --pf-rail-dim: #475569; // secondary rail text (4.6:1 on white)
+  --pf-rail-faint: #64748b; // section labels (4.8:1 on white)
+  --pf-rail-hover: #f1f5f9;
+  --pf-rail-border: #e2e8f0;
+  --pf-rail-active-bg: #064e3b; // active entry pill
+  --pf-rail-active-text: #ffffff;
   --pf-border: #e2e8f0; // grid rows, panel borders, inputs
   --pf-border-strong: #cbd5e1;
   --pf-header-bg: #f8fafc; // table headers
@@ -318,6 +326,7 @@ table.pf-table th.pf-num {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  container-type: inline-size;
 }
 .pf-kpi__label {
   font: var(--pf-label-md);
@@ -329,9 +338,13 @@ table.pf-table th.pf-num {
   white-space: nowrap;
 }
 .pf-kpi__value {
-  font: var(--pf-headline-lg);
-  color: var(--pf-navy);
+  font-family: var(--pf-font);
+  font-weight: 700;
+  // Long money figures shrink with the card instead of ellipsizing.
+  font-size: clamp(18px, 9cqw, 24px);
+  line-height: 1.25;
   letter-spacing: -0.01em;
+  color: var(--pf-navy);
   margin-top: var(--pf-space-md);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -404,6 +417,320 @@ table.pf-table th.pf-num {
 }
 .pf-filters .pf-filter-sm {
   flex: 0 1 200px;
+}
+@media (max-width: 767px) {
+  .pf-filters {
+    padding: var(--pf-space-md);
+  }
+}
+
+// Chip row under the filters: quick filters left, result count right.
+.pf-chips {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-md) var(--pf-space-lg);
+  border-bottom: 1px solid var(--pf-border);
+  flex-wrap: wrap;
+}
+.pf-count {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-sm);
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+}
+
+// Centered spinner row shared by every loading state.
+.pf-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-2xl);
+}
+
+// Horizontally scrolling table wrapper; narrow tables keep their own
+// min-width override (one line) where the default 560px does not fit.
+.pf-table-scroll {
+  overflow-x: auto;
+}
+.pf-table-scroll table.pf-table {
+  min-width: 560px;
+}
+
+// Two-column content grid: side-by-side panels desktop, stacked ≤1024px.
+.pf-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--pf-space-md);
+  align-items: start;
+}
+@media (max-width: 1023px) {
+  .pf-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Card head: section title + action link inside a table card.
+.pf-card-head {
+  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
+  border-bottom: 1px solid var(--pf-border);
+}
+
+// Padded content panel for dossiers, detail sections and admin cards.
+.pf-panel {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  box-shadow: var(--pf-shadow-1);
+  padding: var(--pf-space-lg);
+}
+.pf-panel h2 {
+  font: var(--pf-headline-sm);
+  color: var(--pf-navy);
+  margin: 0 0 var(--pf-space-md);
+}
+.pf-panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--pf-space-md);
+  margin-bottom: var(--pf-space-md);
+  flex-wrap: wrap;
+}
+.pf-panel__head h2 {
+  margin: 0;
+}
+
+// Key-value rows inside a panel (contacts, history, members).
+.pf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pf-list__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-md) 0;
+  border-bottom: 1px solid var(--pf-row-border);
+  flex-wrap: wrap;
+}
+.pf-list__row:last-child {
+  border-bottom: none;
+}
+.pf-list__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-xs);
+  min-width: 0;
+}
+.pf-list__name {
+  font: var(--pf-label-lg);
+  color: var(--pf-text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pf-space-sm);
+}
+.pf-list__sub {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+}
+.pf-list__actions {
+  display: flex;
+  gap: var(--pf-space-xs);
+  flex-wrap: wrap;
+}
+
+// Full-bleed rows with hover (dashboard, workspace, notifications).
+.pf-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pf-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-md) var(--pf-space-lg);
+  border-bottom: 1px solid var(--pf-row-border);
+}
+.pf-row:last-child {
+  border-bottom: none;
+}
+.pf-row:hover {
+  background: var(--pf-row-hover);
+}
+.pf-row--unread {
+  background: var(--pf-info-bg);
+}
+.pf-row--unread:hover {
+  background: var(--pf-info-bg);
+}
+.pf-row--unread .pf-row__title {
+  font-weight: 700;
+}
+.pf-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-xs);
+  min-width: 0;
+}
+.pf-row__title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.pf-row__title:hover {
+  text-decoration: underline;
+}
+.pf-row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-sm);
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+}
+
+// Row links: obsidian-ink titles that resolve to interactive viridian.
+.pf-row-link {
+  color: var(--pf-blue);
+  font-weight: 500;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-row-link:hover {
+  text-decoration: underline;
+}
+
+// Muted secondary text.
+.pf-muted {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+}
+p.pf-muted {
+  margin: 0;
+}
+
+// Horizontal meter: list score bars and utilization fills.
+.pf-meter {
+  width: 72px;
+  height: 4px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-neutral-bg);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.pf-meter__fill {
+  display: block;
+  height: 100%;
+  background: var(--pf-blue);
+  border-radius: var(--pf-radius-pill);
+}
+
+// Meter row: numeric value beside its bar (supplier on-time, budget use).
+.pf-meter-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pf-space-sm);
+}
+
+// Dossier head row: status badge, stat pill and meta on one wrap line.
+.pf-head-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-md);
+  flex-wrap: wrap;
+}
+.pf-stat-pill {
+  font: var(--pf-label-md);
+  color: var(--pf-blue);
+  background: var(--pf-info-bg);
+  border: 1px solid var(--pf-info-border);
+  border-radius: var(--pf-radius-pill);
+  padding: var(--pf-space-xs) var(--pf-space-sm);
+}
+
+// Form row: wrapping fields with a trailing action.
+.pf-form-row {
+  display: flex;
+  gap: var(--pf-space-md);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pf-form-row mat-form-field {
+  flex: 1 1 220px;
+}
+
+// Success notice banner (settings, admin).
+.pf-notice {
+  background: var(--pf-success-bg);
+  border: 1px solid var(--pf-success-border);
+  color: var(--pf-success-text);
+  border-radius: var(--pf-radius-md);
+  padding: var(--pf-space-md);
+  font: var(--pf-body-md);
+  margin: 0;
+}
+
+// Dialog rhythm: stacked fields, inline rows, hints and API errors.
+// One definition — feature dialog stylesheets must not redeclare it.
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-xs);
+  padding-top: var(--pf-space-sm);
+  min-width: min(420px, 70vw);
+}
+.dialog-section {
+  display: contents;
+}
+.dialog-section > legend {
+  font: var(--pf-label-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-slate);
+  padding: 0;
+  margin: var(--pf-space-sm) 0 var(--pf-space-xs);
+}
+.dialog-row {
+  display: flex;
+  gap: var(--pf-space-md);
+  flex-wrap: wrap;
+}
+.dialog-row mat-form-field {
+  flex: 1 1 auto;
+}
+.dialog-narrow {
+  max-width: 120px;
+}
+.dialog-hint {
+  font: var(--pf-body-md);
+  color: var(--pf-slate);
+  margin: 0 0 var(--pf-space-xs);
+}
+.dialog-error {
+  color: var(--pf-danger-text);
+  font: var(--pf-body-md);
+  margin: var(--pf-space-xs) 0 0;
+}
+
+// Visually hidden but screen-reader reachable (single definition —
+// feature styles must not redeclare it).
+.pf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 // Auth masthead: navy wordmark above the sign-in/register card.

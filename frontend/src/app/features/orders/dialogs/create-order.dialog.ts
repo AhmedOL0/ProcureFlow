@@ -19,7 +19,6 @@ import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-error
   selector: 'app-create-order-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './create-order.dialog.html',
-  styleUrl: './order-dialogs.scss',
 })
 export class CreateOrderDialogComponent {
   private readonly orders = inject(OrderService);
