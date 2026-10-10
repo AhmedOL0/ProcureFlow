@@ -152,8 +152,8 @@ every push):
   on regression.
 - Frontend unit: `cd frontend && npm test` (Vitest, 24 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-  (18 tests: auth states, guarded routes, and 10 stubbed critical journeys —
-  request-to-approval, budget, order, invoice, admin, analytics, copilot
+  (19 tests: auth states, guarded routes, and 11 stubbed critical journeys —
+  request-to-approval, unsaved-draft guard, budget, order, invoice, admin, analytics, copilot
   success/failure, notifications, settings, session expiry)
 - API types: regenerate after any API change and commit the result.
 
