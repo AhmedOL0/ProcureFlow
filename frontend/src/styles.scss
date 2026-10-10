@@ -313,17 +313,11 @@ table.pf-table th.pf-num {
   border: 1px solid var(--pf-border);
   border-radius: var(--pf-radius-lg);
   box-shadow: var(--pf-shadow-1);
-  padding: var(--pf-space-lg);
+  padding: var(--pf-space-xl);
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-}
-.pf-kpi__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--pf-space-sm);
 }
 .pf-kpi__label {
   font: var(--pf-label-md);
@@ -334,15 +328,11 @@ table.pf-table th.pf-num {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pf-kpi__icon {
-  color: var(--pf-blue);
-  flex-shrink: 0;
-}
 .pf-kpi__value {
   font: var(--pf-headline-lg);
   color: var(--pf-navy);
   letter-spacing: -0.01em;
-  margin-top: var(--pf-space-sm);
+  margin-top: var(--pf-space-md);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

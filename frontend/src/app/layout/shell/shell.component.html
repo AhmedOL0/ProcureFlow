@@ -19,7 +19,7 @@
               [routerLinkActiveOptions]="{ exact: item.exact ?? item.url === '/dashboard' }"
               (click)="closeOnNavigate()"
             >
-              <lucide-angular matListItemIcon [img]="item.icon" [size]="18" />
+              <lucide-angular matListItemIcon [img]="item.icon" [size]="18" aria-hidden="true" />
               <span matListItemTitle>{{ item.label }}</span>
             </a>
           }

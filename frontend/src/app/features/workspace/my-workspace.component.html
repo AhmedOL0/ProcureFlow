@@ -29,26 +29,17 @@
   } @else {
     <div class="pf-kpis" role="region" aria-label="My summary">
       <div class="pf-kpi">
-        <div class="pf-kpi__top">
-          <span class="pf-kpi__label">My open requests</span>
-          <lucide-angular [img]="icons.file" [size]="18" class="pf-kpi__icon" />
-        </div>
+        <span class="pf-kpi__label">My open requests</span>
         <div class="pf-kpi__value">{{ openMine().length }}</div>
         <div class="pf-kpi__sub">{{ mine().length }} raised in total</div>
       </div>
       <div class="pf-kpi">
-        <div class="pf-kpi__top">
-          <span class="pf-kpi__label">Unread notifications</span>
-          <lucide-angular [img]="icons.bell" [size]="18" class="pf-kpi__icon" />
-        </div>
+        <span class="pf-kpi__label">Unread notifications</span>
         <div class="pf-kpi__value">{{ inbox.unread() }}</div>
         <div class="pf-kpi__sub">events addressed to me</div>
       </div>
       <div class="pf-kpi">
-        <div class="pf-kpi__top">
-          <span class="pf-kpi__label">My roles</span>
-          <lucide-angular [img]="icons.inbox" [size]="18" class="pf-kpi__icon" />
-        </div>
+        <span class="pf-kpi__label">My roles</span>
         <div class="pf-kpi__value">{{ (me?.roles ?? []).length }}</div>
         <div class="pf-kpi__sub">{{ (me?.roles ?? []).join(', ') || 'no roles assigned' }}</div>
       </div>

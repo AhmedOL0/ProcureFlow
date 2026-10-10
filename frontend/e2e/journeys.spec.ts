@@ -154,6 +154,26 @@ function baseStubs(state: {
 }
 
 test.describe('critical journeys', () => {
+  test('request draft warns on unsaved loss', async ({ page }) => {
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
+        departments: [], users: [], notifications: [],
+      }),
+    ]);
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password').fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    await page.goto('/requests/new');
+    await page.getByLabel(/title/i).fill('Unsaved idea');
+    await page.getByRole('link', { name: 'Cancel' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Discard draft' }).click();
+    await expect(page).toHaveURL(/\/requests$/);
+  });
+
   test('expired session returns to login', async ({ page }) => {
     await stubApi(page, [
       {

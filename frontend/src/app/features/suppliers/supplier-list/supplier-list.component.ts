@@ -19,18 +19,21 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { Building2, CircleCheck, Plus, Search, TriangleAlert, Truck } from '../../../shared/icons';
+import { Plus, Search, Truck } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
 import { enrichSuppliers, initialsFor, SupplierRow } from '../supplier-rows';
 import { Supplier, SupplierCategory, SuppliersService } from '../suppliers.service';
-import { SupplierFormDialogComponent, SupplierFormData, SupplierFormResult } from '../dialogs/supplier-form.dialog';
+import {
+  SupplierFormDialogComponent,
+  SupplierFormData,
+  SupplierFormResult,
+} from '../dialogs/supplier-form.dialog';
 
 interface Kpi {
   label: string;
   value: string;
   sub: string;
   bar: number | null;
-  icon: typeof Truck;
 }
 
 /**
@@ -44,9 +47,22 @@ interface Kpi {
 @Component({
   selector: 'app-supplier-list',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatChipsModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTableModule, MatSortModule, MatPaginatorModule, MatProgressSpinnerModule,
-    LucideAngularModule, PageHeaderComponent, StatusBadgeComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatChipsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './supplier-list.component.html',
   styleUrl: './supplier-list.component.scss',
@@ -73,9 +89,7 @@ export class SupplierListComponent {
 
   protected readonly filtered = computed(() => {
     const category = this.categoryFilter.value;
-    return this.rows().filter(
-      (row) => !category || row.categories.some((c) => c.id === category),
-    );
+    return this.rows().filter((row) => !category || row.categories.some((c) => c.id === category));
   });
 
   protected readonly counts = computed(() => {
@@ -99,28 +113,24 @@ export class SupplierListComponent {
         value: `${all.length}`,
         sub: `${this.counts().active} active`,
         bar: all.length > 0 ? (this.counts().active / all.length) * 100 : null,
-        icon: Truck,
       },
       {
         label: 'Avg on-time delivery',
         value: avg === null ? '—' : `${avg.toFixed(1)}%`,
         sub: `${withScores} with scorecards`,
         bar: avg,
-        icon: CircleCheck,
       },
       {
         label: 'Suspended',
         value: `${this.counts().suspended}`,
         sub: this.counts().suspended === 1 ? 'needs review' : 'need review',
         bar: null,
-        icon: TriangleAlert,
       },
       {
         label: 'Categories in use',
         value: `${this.catalog().length}`,
         sub: 'workspace catalog',
         bar: null,
-        icon: Building2,
       },
     ];
   });
@@ -133,7 +143,9 @@ export class SupplierListComponent {
 
   constructor() {
     this.reload();
-    this.searchBox.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.reload());
+    this.searchBox.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.reload());
     this.statusFilter.valueChanges.subscribe(() => this.reload());
     // Category filters client-side: nudge paging so the computed rows re-run.
     this.categoryFilter.valueChanges.subscribe(() => {
@@ -185,10 +197,11 @@ export class SupplierListComponent {
   }
 
   openCreate(): void {
-    const dialog = this.dialogs.open<SupplierFormDialogComponent, SupplierFormData, SupplierFormResult>(
+    const dialog = this.dialogs.open<
       SupplierFormDialogComponent,
-      { width: '480px', data: { mode: 'create' } },
-    );
+      SupplierFormData,
+      SupplierFormResult
+    >(SupplierFormDialogComponent, { width: '480px', data: { mode: 'create' } });
     dialog.afterClosed().subscribe((saved) => {
       if (saved) {
         this.reload();

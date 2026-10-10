@@ -16,18 +16,12 @@
   @if (!loading() && !failure()) {
     <div class="pf-kpis" role="region" aria-label="Budget summary">
       <div class="pf-kpi">
-        <div class="pf-kpi__top">
-          <span class="pf-kpi__label">Pots in view</span>
-          <lucide-angular [img]="icons.wallet" [size]="18" class="pf-kpi__icon" />
-        </div>
+        <span class="pf-kpi__label">Pots in view</span>
         <div class="pf-kpi__value">{{ totals().pots }}</div>
         <div class="pf-kpi__sub">{{ totals().committed }} fully committed</div>
       </div>
       <div class="pf-kpi">
-        <div class="pf-kpi__top">
-          <span class="pf-kpi__label">Allocated</span>
-          <lucide-angular [img]="icons.wallet" [size]="18" class="pf-kpi__icon" />
-        </div>
+        <span class="pf-kpi__label">Allocated</span>
         <div class="pf-kpi__value">
           @if (totals().singleCurrency) {
             {{ formatMinor(totals().allocated, totals().singleCurrency ?? 'MAD') }}
@@ -38,10 +32,7 @@
         <div class="pf-kpi__sub">across pots in view</div>
       </div>
       <div class="pf-kpi">
-        <div class="pf-kpi__top">
-          <span class="pf-kpi__label">Reserved</span>
-          <lucide-angular [img]="icons.wallet" [size]="18" class="pf-kpi__icon" />
-        </div>
+        <span class="pf-kpi__label">Reserved</span>
         <div class="pf-kpi__value">
           @if (totals().singleCurrency) {
             {{ formatMinor(totals().reserved, totals().singleCurrency ?? 'MAD') }}

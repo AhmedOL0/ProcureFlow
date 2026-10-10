@@ -10,7 +10,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
-import { ClipboardList, FileText, Inbox, Plus, Receipt, Truck, Wallet } from '../../shared/icons';
+import { FileText, Inbox, Plus } from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
 import { formatMinor } from '../../shared/utils/money';
 import {
@@ -29,7 +29,6 @@ interface Kpi {
   label: string;
   value: string;
   sub: string;
-  icon: typeof Truck;
 }
 
 /**
@@ -65,15 +64,7 @@ export class DashboardComponent {
   private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
 
-  protected readonly icons = {
-    plus: Plus,
-    open: FileText,
-    approvals: Inbox,
-    suppliers: Truck,
-    orders: ClipboardList,
-    money: Receipt,
-    wallet: Wallet,
-  };
+  protected readonly icons = { plus: Plus, open: FileText, approvals: Inbox };
   protected readonly formatMinor = formatMinor;
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
   private readonly canSeeFinance = this.auth.hasAuthority('analytics:read');
@@ -102,25 +93,21 @@ export class DashboardComponent {
         label: 'Open requests',
         value: `${open}`,
         sub: `${this.submitted().length} awaiting approval`,
-        icon: FileText,
       },
       {
         label: 'Pending approvals',
         value: `${this.submitted().length}`,
         sub: open === 0 ? 'queue is clear' : 'in the approval queue',
-        icon: Inbox,
       },
       {
         label: 'Active suppliers',
         value: this.activeSuppliers() === null ? '—' : `${this.activeSuppliers()}`,
         sub: 'vendors you can buy from',
-        icon: Truck,
       },
       {
         label: 'Open orders',
         value: this.openOrders() === null ? '—' : `${this.openOrders()}`,
         sub: 'sent or partially received',
-        icon: ClipboardList,
       },
     ];
   });
@@ -136,25 +123,21 @@ export class DashboardComponent {
         label: 'Ordered spend',
         value: flow ? formatMinor(flow.orderedMinor) : '—',
         sub: 'committed to suppliers',
-        icon: Receipt,
       },
       {
         label: 'Paid out',
         value: flow ? formatMinor(flow.paidMinor) : '—',
         sub: 'settled with suppliers',
-        icon: Receipt,
       },
       {
         label: 'Outstanding invoices',
         value: this.outstandingLabel().value,
         sub: this.outstandingLabel().sub,
-        icon: Receipt,
       },
       {
         label: 'Budget left (month)',
         value: this.budgetLabel().value,
         sub: this.budgetLabel().sub,
-        icon: Wallet,
       },
     ];
   });

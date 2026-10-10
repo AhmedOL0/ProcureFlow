@@ -28,10 +28,7 @@
     <div class="pf-kpis" role="region" aria-label="Workspace summary">
       @for (kpi of kpis(); track kpi.label) {
         <div class="pf-kpi">
-          <div class="pf-kpi__top">
-            <span class="pf-kpi__label">{{ kpi.label }}</span>
-            <lucide-angular [img]="kpi.icon" [size]="18" class="pf-kpi__icon" />
-          </div>
+          <span class="pf-kpi__label">{{ kpi.label }}</span>
           <div class="pf-kpi__value">{{ kpi.value }}</div>
           <div class="pf-kpi__sub">{{ kpi.sub }}</div>
         </div>
@@ -42,10 +39,7 @@
       <div class="pf-kpis" role="region" aria-label="Financial pulse">
         @for (kpi of financeKpis(); track kpi.label) {
           <div class="pf-kpi">
-            <div class="pf-kpi__top">
-              <span class="pf-kpi__label">{{ kpi.label }}</span>
-              <lucide-angular [img]="kpi.icon" [size]="18" class="pf-kpi__icon" />
-            </div>
+            <span class="pf-kpi__label">{{ kpi.label }}</span>
             <div class="pf-kpi__value">{{ kpi.value }}</div>
             <div class="pf-kpi__sub">{{ kpi.sub }}</div>
           </div>
@@ -60,18 +54,22 @@
 
     @if (approvalKpis(); as flow) {
       <div class="dashboard-flow" role="region" aria-label="Approval flow">
-        <span class="dashboard-flow__item"
-          ><strong class="pf-data-mono">{{ flow.pending }}</strong> pending</span
-        >
-        <span class="dashboard-flow__item"
-          ><strong class="pf-data-mono">{{ flow.decided }}</strong> decided</span
-        >
-        <span class="dashboard-flow__item"
-          >avg lead <strong>{{ leadHours(flow.avgLeadHours) }}</strong></span
-        >
-        <span class="dashboard-flow__item"
-          >max lead <strong>{{ leadHours(flow.maxLeadHours) }}</strong></span
-        >
+        <div class="dashboard-flow__stat">
+          <span class="dashboard-flow__value pf-data-mono">{{ flow.pending }}</span>
+          <span class="dashboard-flow__label">pending</span>
+        </div>
+        <div class="dashboard-flow__stat">
+          <span class="dashboard-flow__value pf-data-mono">{{ flow.decided }}</span>
+          <span class="dashboard-flow__label">decided</span>
+        </div>
+        <div class="dashboard-flow__stat">
+          <span class="dashboard-flow__value">{{ leadHours(flow.avgLeadHours) }}</span>
+          <span class="dashboard-flow__label">avg lead</span>
+        </div>
+        <div class="dashboard-flow__stat">
+          <span class="dashboard-flow__value">{{ leadHours(flow.maxLeadHours) }}</span>
+          <span class="dashboard-flow__label">max lead</span>
+        </div>
         <a routerLink="/analytics">Analytics</a>
       </div>
     }

@@ -62,7 +62,9 @@ export class AuthService {
       const payload = JSON.parse(atob(padded)) as {
         authorities?: unknown;
       };
-      return Array.isArray(payload.authorities) && (payload.authorities as unknown[]).includes(code);
+      return (
+        Array.isArray(payload.authorities) && (payload.authorities as unknown[]).includes(code)
+      );
     } catch {
       return false;
     }
@@ -76,7 +78,12 @@ export class AuthService {
     );
   }
 
-  register(email: string, password: string, tenantSlug: string, tenantName?: string): Observable<UserResponse> {
+  register(
+    email: string,
+    password: string,
+    tenantSlug: string,
+    tenantName?: string,
+  ): Observable<UserResponse> {
     const body: RegisterRequest = {
       email,
       password,
@@ -125,9 +132,9 @@ export class AuthService {
 
   /** Refreshes the profile from the workspace record (GET /users/me). */
   refreshProfile(): Observable<UserResponse> {
-    return this.http.get<UserResponse>(`${this.api}/api/v1/users/me`).pipe(
-      tap((user) => this.currentUser.set(user)),
-    );
+    return this.http
+      .get<UserResponse>(`${this.api}/api/v1/users/me`)
+      .pipe(tap((user) => this.currentUser.set(user)));
   }
 
   /** Updates the caller's own profile (first/last names only, per contract). */
@@ -161,7 +168,9 @@ export class AuthService {
   logout(navigate = true): void {
     const refreshToken = this.tokens()?.refreshToken;
     if (refreshToken) {
-      this.http.post(`${this.api}/api/v1/auth/logout`, { refreshToken }).subscribe({ error: () => undefined });
+      this.http
+        .post(`${this.api}/api/v1/auth/logout`, { refreshToken })
+        .subscribe({ error: () => undefined });
     }
     this.clear();
     if (navigate) {

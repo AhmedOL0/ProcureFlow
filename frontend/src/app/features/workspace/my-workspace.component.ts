@@ -10,7 +10,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
-import { Bell, FileText, Inbox, Plus } from '../../shared/icons';
+import { Bell, FileText, Plus } from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
 import { formatInstant } from '../../shared/utils/time';
 import { ProcurementService, PurchaseRequest } from '../procurement/procurement.service';
@@ -41,7 +41,7 @@ export class MyWorkspaceComponent {
   private readonly auth = inject(AuthService);
   protected readonly inbox = inject(NotificationCenterService);
 
-  protected readonly icons = { plus: Plus, file: FileText, bell: Bell, inbox: Inbox };
+  protected readonly icons = { plus: Plus, file: FileText, bell: Bell };
   protected readonly formatInstant = formatInstant;
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
   protected readonly user = this.auth.currentUser;

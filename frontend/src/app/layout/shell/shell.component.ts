@@ -122,7 +122,7 @@ export class ShellComponent {
       label: 'Intelligence',
       items: [
         {
-          label: 'Analytics & Reports',
+          label: 'Analytics',
           url: '/analytics',
           icon: ChartColumn,
           authorities: ['analytics:read'],

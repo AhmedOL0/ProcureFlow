@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
 
@@ -6,10 +6,11 @@ import { LucideAngularModule, LucideIconData } from 'lucide-angular';
 @Component({
   selector: 'pf-empty-state',
   imports: [MatButtonModule, LucideAngularModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="pf-state">
       @if (icon()) {
-        <lucide-angular [img]="icon()" [size]="28" class="pf-state__icon" />
+        <lucide-angular [img]="icon()" [size]="28" class="pf-state__icon" aria-hidden="true" />
       }
       <p class="pf-state__title">{{ title() }}</p>
       <p class="pf-state__message">{{ message() }}</p>

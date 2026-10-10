@@ -14,17 +14,14 @@
   </pf-page-header>
 
   @if (!loading() && !failure()) {
-    <div class="supplier-kpis" role="region" aria-label="Supplier summary">
+    <div class="pf-kpis" role="region" aria-label="Supplier summary">
       @for (kpi of kpis(); track kpi.label) {
-        <div class="supplier-kpi">
-          <div class="supplier-kpi__top">
-            <span class="supplier-kpi__label">{{ kpi.label }}</span>
-            <lucide-angular [img]="kpi.icon" [size]="18" class="supplier-kpi__icon" />
-          </div>
-          <div class="supplier-kpi__value">{{ kpi.value }}</div>
-          <div class="supplier-kpi__sub">{{ kpi.sub }}</div>
-          <div class="supplier-kpi__bar" aria-hidden="true">
-            <div class="supplier-kpi__fill" [style.width.%]="kpi.bar ?? 0"></div>
+        <div class="pf-kpi">
+          <span class="pf-kpi__label">{{ kpi.label }}</span>
+          <div class="pf-kpi__value">{{ kpi.value }}</div>
+          <div class="pf-kpi__sub">{{ kpi.sub }}</div>
+          <div class="pf-kpi__bar" aria-hidden="true">
+            <div class="pf-kpi__fill" [style.width.%]="kpi.bar ?? 0"></div>
           </div>
         </div>
       }
@@ -63,13 +60,22 @@
         <mat-chip-option [selected]="statusFilter.value === null" (click)="setStatusFilter(null)">
           All ({{ counts().all }})
         </mat-chip-option>
-        <mat-chip-option [selected]="statusFilter.value === 'ACTIVE'" (click)="setStatusFilter('ACTIVE')">
+        <mat-chip-option
+          [selected]="statusFilter.value === 'ACTIVE'"
+          (click)="setStatusFilter('ACTIVE')"
+        >
           Active ({{ counts().active }})
         </mat-chip-option>
-        <mat-chip-option [selected]="statusFilter.value === 'INACTIVE'" (click)="setStatusFilter('INACTIVE')">
+        <mat-chip-option
+          [selected]="statusFilter.value === 'INACTIVE'"
+          (click)="setStatusFilter('INACTIVE')"
+        >
           Inactive ({{ counts().inactive }})
         </mat-chip-option>
-        <mat-chip-option [selected]="statusFilter.value === 'SUSPENDED'" (click)="setStatusFilter('SUSPENDED')">
+        <mat-chip-option
+          [selected]="statusFilter.value === 'SUSPENDED'"
+          (click)="setStatusFilter('SUSPENDED')"
+        >
           Suspended ({{ counts().suspended }})
         </mat-chip-option>
       </mat-chip-set>
@@ -117,9 +123,13 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="supplier">Supplier</th>
             <td mat-cell *matCellDef="let row">
               <span class="supplier-cell">
-                <span class="supplier-avatar" aria-hidden="true">{{ icons.initials(row.supplier.name) }}</span>
+                <span class="supplier-avatar" aria-hidden="true">{{
+                  icons.initials(row.supplier.name)
+                }}</span>
                 <span class="supplier-id">
-                  <a class="supplier-name" [routerLink]="[row.supplier.id]">{{ row.supplier.name }}</a>
+                  <a class="supplier-name" [routerLink]="[row.supplier.id]">{{
+                    row.supplier.name
+                  }}</a>
                   <span class="supplier-tax">{{ row.supplier.taxId || 'No tax ID' }}</span>
                 </span>
               </span>
@@ -154,7 +164,9 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="performance">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="performance" class="pf-num">On-time</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="performance" class="pf-num">
+              On-time
+            </th>
             <td mat-cell *matCellDef="let row" class="pf-num">
               @if (row.averageOnTime === null) {
                 <span class="supplier-muted">—</span>
@@ -170,7 +182,9 @@
           </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
-            <td mat-cell *matCellDef="let row"><pf-status-badge [status]="row.supplier.status" /></td>
+            <td mat-cell *matCellDef="let row">
+              <pf-status-badge [status]="row.supplier.status" />
+            </td>
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">Actions</span></th>

@@ -12,19 +12,37 @@
 
 .dashboard-flow {
   display: flex;
-  align-items: center;
-  gap: var(--pf-space-lg);
-  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0;
   background: var(--pf-card);
   border: 1px solid var(--pf-border);
   border-radius: var(--pf-radius-lg);
   box-shadow: var(--pf-shadow-1);
   padding: var(--pf-space-md) var(--pf-space-lg);
-  font: var(--pf-body-md);
-  color: var(--pf-slate);
+  overflow-x: auto;
 }
-.dashboard-flow__item strong {
-  color: var(--pf-text);
+.dashboard-flow__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--pf-space-lg);
+  min-width: max-content;
+}
+.dashboard-flow__stat:first-child {
+  padding-left: 0;
+}
+.dashboard-flow__stat + .dashboard-flow__stat {
+  border-left: 1px solid var(--pf-border);
+}
+.dashboard-flow__value {
+  font: var(--pf-headline-md);
+  color: var(--pf-navy);
+}
+.dashboard-flow__label {
+  font: var(--pf-label-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-slate);
 }
 .dashboard-flow a {
   margin-left: auto;
