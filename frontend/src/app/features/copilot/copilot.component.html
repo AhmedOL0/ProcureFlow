@@ -1,0 +1,261 @@
+<div class="pf-page">
+  <pf-page-header
+    title="ProcureAI copilot"
+    description="KPI-cited answers over your workspace data. Every answer shows its sources and model — nothing is generated from thin air."
+    [breadcrumbs]="[{ label: 'Copilot' }]"
+  />
+
+  <div class="copilot-modes" aria-label="Copilot workflows">
+    <mat-chip-set>
+      @for (entry of modes; track entry.id) {
+        <mat-chip-option [selected]="mode() === entry.id" (click)="setMode(entry.id)">
+          {{ entry.label }}
+        </mat-chip-option>
+      }
+    </mat-chip-set>
+  </div>
+
+  @if (mode() === 'chat') {
+    <section class="pf-table-card" aria-label="Ask the copilot">
+      <div class="copilot-ask">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Ask about your procurement data</mat-label>
+          <input
+            matInput
+            [formControl]="questionBox"
+            placeholder="Where is spend accelerating this month?"
+            (keyup.enter)="ask()"
+          />
+          @if (questionBox.hasError('required') && questionBox.touched) {
+            <mat-error>Type a question first.</mat-error>
+          }
+        </mat-form-field>
+        <button mat-flat-button color="primary" (click)="ask()" [disabled]="busy()">Ask</button>
+      </div>
+      <div class="copilot-result">
+        @if (busy()) {
+          <div class="copilot-loading" role="status" aria-label="Thinking">
+            <mat-spinner diameter="28" />
+            <span class="copilot-thinking">Reading your KPIs…</span>
+          </div>
+        } @else if (failure(); as problem) {
+          <pf-error-state
+            title="The copilot could not answer"
+            [message]="failureMessage()"
+            retryLabel="Retry"
+            (retry)="ask()"
+          />
+        } @else if (answer(); as result) {
+          <article class="copilot-answer">
+            <p class="copilot-answer__text">{{ result.answer }}</p>
+            @if ((result.citations ?? []).length > 0) {
+              <ul class="copilot-cites">
+                @for (cite of result.citations ?? []; track cite) {
+                  <li>{{ cite }}</li>
+                }
+              </ul>
+            }
+            @if (result.model) {
+              <p class="copilot-model pf-data-mono">{{ result.model }}</p>
+            }
+          </article>
+        } @else {
+          <pf-empty-state
+            [icon]="icons.sparkles"
+            title="Ask anything grounded"
+            message="Answers cite the analytics endpoints behind them — try spend, approvals or suppliers."
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (mode() === 'explain') {
+    <section class="pf-table-card" aria-label="Explain spend">
+      <div class="copilot-ask">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="copilot-period">
+          <mat-label>Period (blank = overall)</mat-label>
+          <input matInput type="month" [formControl]="periodBox" />
+        </mat-form-field>
+        <button mat-flat-button color="primary" (click)="explain()" [disabled]="busy()">Explain</button>
+      </div>
+      <div class="copilot-result">
+        @if (busy()) {
+          <div class="copilot-loading" role="status" aria-label="Explaining">
+            <mat-spinner diameter="28" />
+            <span class="copilot-thinking">Aggregating spend…</span>
+          </div>
+        } @else if (failure(); as problem) {
+          <pf-error-state
+            title="The explanation failed"
+            [message]="failureMessage()"
+            retryLabel="Retry"
+            (retry)="explain()"
+          />
+        } @else if (answer(); as result) {
+          <article class="copilot-answer">
+            <p class="copilot-answer__text">{{ result.answer }}</p>
+            @if ((result.citations ?? []).length > 0) {
+              <ul class="copilot-cites">
+                @for (cite of result.citations ?? []; track cite) {
+                  <li>{{ cite }}</li>
+                }
+              </ul>
+            }
+            @if (result.model) {
+              <p class="copilot-model pf-data-mono">{{ result.model }}</p>
+            }
+          </article>
+        } @else {
+          <pf-empty-state
+            [icon]="icons.sparkles"
+            title="Spend, narrated"
+            message="The copilot reads the spend and approval aggregates and explains the movement."
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (mode() === 'extract') {
+    <section class="pf-table-card" aria-label="Draft from words">
+      <div class="copilot-ask copilot-ask--column">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Describe what you need, in your own words</mat-label>
+          <textarea
+            matInput
+            rows="3"
+            [formControl]="narrativeBox"
+            placeholder="25 ergonomic chairs for the Berlin office, high priority, around €300 each"
+          ></textarea>
+          @if (narrativeBox.hasError('required') && narrativeBox.touched) {
+            <mat-error>Describe the need first.</mat-error>
+          }
+          @if (narrativeBox.hasError('minlength') && narrativeBox.touched) {
+            <mat-error>A sentence or two helps the model structure the draft.</mat-error>
+          }
+        </mat-form-field>
+        <div>
+          <button mat-flat-button color="primary" (click)="extract()" [disabled]="busy()">
+            Structure it
+          </button>
+        </div>
+      </div>
+      <div class="copilot-result">
+        @if (busy()) {
+          <div class="copilot-loading" role="status" aria-label="Structuring">
+            <mat-spinner diameter="28" />
+            <span class="copilot-thinking">Structuring the draft…</span>
+          </div>
+        } @else if (failure(); as problem) {
+          <pf-error-state
+            title="The draft failed"
+            [message]="failureMessage()"
+            retryLabel="Retry"
+            (retry)="extract()"
+          />
+        } @else if (draft(); as result) {
+          <article class="copilot-draft">
+            <h3>{{ result.title || 'Untitled draft' }}</h3>
+            <p class="copilot-muted">Priority: {{ result.priority || 'default' }}</p>
+            @if ((result.items ?? []).length > 0) {
+              <ul class="copilot-items">
+                @for (item of result.items ?? []; track item.description) {
+                  <li>
+                    {{ item.description }} · {{ item.quantity }} ×
+                    <span class="pf-data-mono">{{ formatMinor(item.unitPriceMinor) }}</span>
+                  </li>
+                }
+              </ul>
+              <p class="copilot-muted">
+                Items stay listed for transcription — supplier links need workspace
+                validation the model cannot provide.
+              </p>
+            }
+            @if (canRequest && !draftSaved()) {
+              <button mat-flat-button color="primary" (click)="saveDraft()" [disabled]="busy()">
+                Create draft request
+              </button>
+            }
+          </article>
+        } @else {
+          <pf-empty-state
+            [icon]="icons.sparkles"
+            title="Words in, structure out"
+            message="The copilot turns prose into a titled, prioritized draft with line items."
+          />
+        }
+      </div>
+    </section>
+  }
+
+  @if (mode() === 'compare') {
+    <section class="pf-table-card" aria-label="Compare quotations">
+      <div class="copilot-quotes">
+        @for (row of quoteRows.controls; track row; let i = $index) {
+          <div class="copilot-quote-row" [formGroup]="row">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Supplier {{ i + 1 }}</mat-label>
+              <input matInput formControlName="supplier" placeholder="Bechtle" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="copilot-amount">
+              <mat-label>Amount</mat-label>
+              <input matInput formControlName="amount" inputmode="decimal" placeholder="12500.00" />
+            </mat-form-field>
+            <button
+              mat-icon-button
+              (click)="removeQuote(i)"
+              [disabled]="quoteRows.length <= 2"
+              [attr.aria-label]="'Remove quote ' + (i + 1)"
+            >
+              <lucide-angular [img]="icons.trash" [size]="18" />
+            </button>
+          </div>
+        }
+        <div class="copilot-quote-actions">
+          <button mat-button (click)="addQuote()" [disabled]="quoteRows.length >= 10">
+            <lucide-angular [img]="icons.plus" [size]="16" /> Add quote (up to 10)
+          </button>
+          <button mat-flat-button color="primary" (click)="compare()" [disabled]="busy()">
+            Compare
+          </button>
+        </div>
+      </div>
+      <div class="copilot-result">
+        @if (busy()) {
+          <div class="copilot-loading" role="status" aria-label="Comparing">
+            <mat-spinner diameter="28" />
+            <span class="copilot-thinking">Weighing the quotes…</span>
+          </div>
+        } @else if (failure(); as problem) {
+          <pf-error-state
+            title="The comparison failed"
+            [message]="failureMessage()"
+            retryLabel="Retry"
+            (retry)="compare()"
+          />
+        } @else if (answer(); as result) {
+          <article class="copilot-answer">
+            <p class="copilot-answer__text">{{ result.answer }}</p>
+            @if ((result.citations ?? []).length > 0) {
+              <ul class="copilot-cites">
+                @for (cite of result.citations ?? []; track cite) {
+                  <li>{{ cite }}</li>
+                }
+              </ul>
+            }
+            @if (result.model) {
+              <p class="copilot-model pf-data-mono">{{ result.model }}</p>
+            }
+          </article>
+        } @else {
+          <pf-empty-state
+            [icon]="icons.sparkles"
+            title="Two quotes minimum"
+            message="Add supplier quotes above — the copilot explains the trade-offs, you decide."
+          />
+        }
+      </div>
+    </section>
+  }
+</div>

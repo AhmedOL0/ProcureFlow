@@ -19,6 +19,7 @@ export {
   Search,
   Settings,
   ShieldCheck,
+  Sparkles,
   Star,
   Tags,
   Trash2,

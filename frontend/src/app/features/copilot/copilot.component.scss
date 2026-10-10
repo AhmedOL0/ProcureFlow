@@ -1,0 +1,119 @@
+.copilot-modes {
+  padding: var(--pf-space-md) var(--pf-space-lg);
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  box-shadow: var(--pf-shadow-1);
+}
+
+.copilot-ask {
+  display: flex;
+  gap: var(--pf-space-md);
+  align-items: center;
+  padding: var(--pf-space-lg);
+  border-bottom: 1px solid var(--pf-border);
+  flex-wrap: wrap;
+}
+.copilot-ask mat-form-field {
+  flex: 1 1 280px;
+}
+.copilot-ask--column {
+  flex-direction: column;
+  align-items: stretch;
+}
+.copilot-period {
+  max-width: 220px;
+}
+
+.copilot-result {
+  padding: var(--pf-space-lg);
+}
+
+.copilot-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-md);
+  justify-content: center;
+  padding: var(--pf-space-2xl);
+}
+.copilot-thinking {
+  font: var(--pf-body-md);
+  color: var(--pf-slate);
+}
+
+.copilot-answer__text {
+  font: var(--pf-body-lg);
+  color: var(--pf-text);
+  margin: 0 0 var(--pf-space-md);
+  max-width: 70ch;
+  white-space: pre-wrap;
+}
+.copilot-cites {
+  list-style: none;
+  margin: 0 0 var(--pf-space-md);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.copilot-cites li {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+  background: var(--pf-header-bg);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-sm);
+  padding: 4px 8px;
+  overflow-wrap: anywhere;
+}
+.copilot-model {
+  font: var(--pf-body-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--pf-slate);
+  margin: 0;
+}
+
+.copilot-draft h3 {
+  font: var(--pf-headline-md);
+  color: var(--pf-navy);
+  margin: 0 0 var(--pf-space-xs);
+}
+.copilot-muted {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+  margin: var(--pf-space-xs) 0 var(--pf-space-md);
+}
+.copilot-items {
+  margin: 0 0 var(--pf-space-md);
+  padding-left: var(--pf-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font: var(--pf-body-md);
+  color: var(--pf-text);
+}
+
+.copilot-quotes {
+  padding: var(--pf-space-lg);
+  border-bottom: 1px solid var(--pf-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-md);
+}
+.copilot-quote-row {
+  display: flex;
+  gap: var(--pf-space-md);
+  align-items: center;
+}
+.copilot-quote-row mat-form-field {
+  flex: 1 1 auto;
+}
+.copilot-amount {
+  max-width: 200px;
+}
+.copilot-quote-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--pf-space-md);
+}

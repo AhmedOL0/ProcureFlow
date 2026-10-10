@@ -14,7 +14,7 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
-import { Bell, Building2, ChartColumn, ClipboardList, FileText, Inbox, LayoutDashboard, Menu, Receipt, ScrollText, Settings, ShieldCheck, Truck, User, Users, Wallet } from '../../shared/icons';
+import { Bell, Building2, ChartColumn, ClipboardList, FileText, Inbox, LayoutDashboard, Menu, Receipt, ScrollText, Settings, ShieldCheck, Sparkles, Truck, User, Users, Wallet } from '../../shared/icons';
 import { Breadcrumb } from '../../shared/components/page-header/page-header.component';
 
 interface NavItem {
@@ -83,6 +83,7 @@ export class ShellComponent {
       label: 'Intelligence',
       items: [
         { label: 'Analytics & Reports', url: '/analytics', icon: ChartColumn, authorities: ['analytics:read'] },
+        { label: 'ProcureAI Copilot', url: '/copilot', icon: Sparkles, authorities: ['ai:use'] },
       ],
     },
     {

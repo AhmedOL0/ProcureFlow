@@ -153,11 +153,12 @@ contracts and verified live. Awaiting the next phase.
   APPROVER/FINANCE/AUDITOR defaults, additive provisioning, 4× new IT,
   full backend verify green.
 - Governance pages (same frontend branch): Budgets & Spend, Analytics &
-  Reports (+AI usage metering), Notifications page, admin split into
-  Workspace/Users/Departments/Policies, My Requests, My Workspace,
-  page-map rail with permission-aware entries. All live-verified with
-  screenshots, including MEMBER vs APPROVER rail matrices and the 403
-  behind hidden entries.
+  Reports (+AI usage metering), ProcureAI Copilot (chat/explain/extract/
+  compare, live on Groq `openai/gpt-oss-120b`), Notifications page, admin
+  split into Workspace/Users/Departments/Policies, My Requests,
+  My Workspace, page-map rail with permission-aware entries. All
+  live-verified with screenshots, including MEMBER vs APPROVER rail
+  matrices and the 403 behind hidden entries.
 
 ## Next up (Phase 9+)
 

@@ -73,6 +73,12 @@ export const routes: Routes = [
         data: { breadcrumb: 'Analytics' },
       },
       {
+        path: 'copilot',
+        loadComponent: () =>
+          import('./features/copilot/copilot.component').then((m) => m.CopilotComponent),
+        data: { breadcrumb: 'Copilot' },
+      },
+      {
         path: 'notifications',
         loadComponent: () =>
           import('./features/notifications/notifications.component').then(

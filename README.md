@@ -51,7 +51,7 @@ boundaries in CI.
 | Frontend | Angular 21, TypeScript, Signals, RxJS, Reactive Forms, Vitest, Playwright |
 | Backend | Java 21, Spring Boot 3.5, Security, Data JPA, Flyway, ArchUnit |
 | Data | PostgreSQL 16 (Flyway migrations, no `ddl-auto=create` in prod), Redis 7, RabbitMQ 3 |
-| AI | Groq behind an `AiProvider` port (backend only; 503 while `AI_ENABLED=false`) |
+| AI | Groq behind an `AiProvider` port (backend only; needs `GROQ_API_KEY` + `AI_ENABLED=true`) |
 | Infra | Docker Compose, GitHub Actions, Prometheus + Grafana, Terraform skeleton |
 
 ## Local development
@@ -93,7 +93,7 @@ live contract (`cd frontend && npm run gen:api`, checked in at
 | Analytics | `/analytics/...` | Spend, supplier and approval KPIs (read-only) |
 | AI copilot | `/ai/...` | KPI-cited chat, spend explanations, request extraction, quotation comparison (metered, `ai:use`) |
 | Frontend auth | `/login`, `/register`, `/dashboard` | Angular Material session shell (guard + refresh interceptor) |
-| Frontend workflows | `/dashboard`, `/workspace`, `/suppliers`, `/requests`, `/requests/mine`, `/approvals`, `/orders`, `/invoices`, `/budgets`, `/analytics`, `/notifications`, `/admin`, `/admin/users`, `/admin/departments`, `/admin/workflows`, `/admin/audit` | Directory + dossier screens with lifecycle actions, all API-backed |
+| Frontend workflows | `/dashboard`, `/workspace`, `/suppliers`, `/requests`, `/requests/mine`, `/approvals`, `/orders`, `/invoices`, `/budgets`, `/analytics`, `/copilot`, `/notifications`, `/admin`, `/admin/users`, `/admin/departments`, `/admin/workflows`, `/admin/audit` | Directory + dossier screens with lifecycle actions, all API-backed |
 
 ## Testing strategy
 
@@ -116,7 +116,8 @@ every push):
 
 Angular never calls Groq. Flow: Angular → Spring Boot → `ai` module
 (prompts, validation, auth, usage metering) → Groq API. The `GroqAiProvider`
-is live behind `AI_ENABLED` (503 per use case while disabled); prompts are
+is live behind `AI_ENABLED` (default model `openai/gpt-oss-120b`, 503 per
+use case while disabled); prompts are
 versioned (`Prompts.VERSION`, metered per call), outputs are validated, and
 prompts carry KPI aggregates only — no user identities or secrets. Use
 cases: KPI-cited chat, spend explanations, request extraction, quotation
