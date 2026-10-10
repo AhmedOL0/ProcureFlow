@@ -143,8 +143,10 @@ contracts and verified live. Awaiting the next phase.
 
 ## In progress
 
-- Phase 8 PR (`feature/frontend-procurement` → `main`): assembled, gates
-  green, awaiting PR creation.
+- Phase 8 PR (`feature/frontend-operations` → `main`, PR #10): assembled,
+  gates green. A design-system pass on the same branch follows the stitch
+  reference: hardened tokens, grouped navy rail, real-data overview
+  dashboard, auth mastheads, zero raw hex/undefined tokens.
 
 ## Next up (Phase 9+)
 

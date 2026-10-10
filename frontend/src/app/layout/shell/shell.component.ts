@@ -23,10 +23,15 @@ interface NavItem {
   icon: typeof Truck;
 }
 
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
 /**
  * Authenticated shell: navy rail, header with breadcrumbs, notification
- * inbox entry and user menu. The rail lists only shipped modules —
- * dashboard and suppliers — never stubs.
+ * inbox entry and user menu. The rail lists only shipped modules, grouped
+ * by job (overview / procurement / fulfillment / workspace) — never stubs.
  */
 @Component({
   selector: 'app-shell',
@@ -47,15 +52,30 @@ export class ShellComponent {
 
   protected readonly icons = { bell: Bell, menu: Menu, dashboard: LayoutDashboard, truck: Truck, user: User };
 
-  readonly nav: NavItem[] = [
-    { label: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-    { label: 'Suppliers', url: '/suppliers', icon: Truck },
-    { label: 'Requests', url: '/requests', icon: FileText },
-    { label: 'Approvals', url: '/approvals', icon: Inbox },
-    { label: 'Orders', url: '/orders', icon: ClipboardList },
-    { label: 'Invoices', url: '/invoices', icon: Receipt },
-    { label: 'Admin', url: '/admin', icon: Users },
-    { label: 'Audit', url: '/admin/audit', icon: ScrollText },
+  readonly nav: NavSection[] = [
+    { label: 'Overview', items: [{ label: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }] },
+    {
+      label: 'Procurement',
+      items: [
+        { label: 'Requests', url: '/requests', icon: FileText },
+        { label: 'Approvals', url: '/approvals', icon: Inbox },
+        { label: 'Suppliers', url: '/suppliers', icon: Truck },
+      ],
+    },
+    {
+      label: 'Fulfillment',
+      items: [
+        { label: 'Orders', url: '/orders', icon: ClipboardList },
+        { label: 'Invoices', url: '/invoices', icon: Receipt },
+      ],
+    },
+    {
+      label: 'Workspace',
+      items: [
+        { label: 'Admin', url: '/admin', icon: Users },
+        { label: 'Audit', url: '/admin/audit', icon: ScrollText },
+      ],
+    },
   ];
 
   private readonly handset = toSignal(

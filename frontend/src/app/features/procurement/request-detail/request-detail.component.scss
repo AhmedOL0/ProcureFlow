@@ -44,7 +44,7 @@
 }
 .request-note {
   font: var(--pf-body-lg);
-  color: #191c1e;
+  color: var(--pf-text);
   margin: 0 0 var(--pf-space-sm);
 }
 .request-budget {
@@ -52,7 +52,7 @@
   justify-content: space-between;
   gap: var(--pf-space-md);
   font: var(--pf-body-lg);
-  color: #191c1e;
+  color: var(--pf-text);
   margin: 0 0 var(--pf-space-sm);
   flex-wrap: wrap;
 }
