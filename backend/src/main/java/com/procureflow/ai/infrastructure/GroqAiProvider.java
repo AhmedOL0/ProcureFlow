@@ -35,7 +35,7 @@ public class GroqAiProvider implements AiProvider {
 
     public GroqAiProvider(
             @Value("${app.ai.groq.api-key:}") String apiKey,
-            @Value("${app.ai.groq.model:llama-3.3-70b-versatile}") String model,
+            @Value("${app.ai.groq.model:openai/gpt-oss-120b}") String model,
             ObjectMapper json) {
         this.apiKey = apiKey == null ? "" : apiKey;
         this.model = model;
