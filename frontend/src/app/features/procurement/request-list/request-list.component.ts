@@ -9,7 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
@@ -27,8 +27,11 @@ const STATUSES = ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'ORDERED', 'CANC
 
 /**
  * Purchase-request directory: server status filter, client title search,
- * sort and paging (the contract filters by status only). Rows open dossiers
- * where the request → approval → order story continues.
+ * sort and paging (the contract filters by status only). Route data
+ * `mode: 'mine'` narrows to requests raised by the caller — matched on
+ * requesterId against both session shapes (/login returns id, /me returns
+ * userId). Rows open dossiers where the request → approval → order story
+ * continues.
  */
 @Component({
   selector: 'app-request-list',
@@ -43,10 +46,13 @@ const STATUSES = ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'ORDERED', 'CANC
 export class RequestListComponent {
   private readonly requests = inject(ProcurementService);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly icons = { plus: Plus, search: Search, file: FileText };
   protected readonly formatMinor = formatMinor;
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
+  /** 'mine' shows only requests raised by the caller; anything else shows all. */
+  protected readonly mineOnly = this.route.snapshot.data['mode'] === 'mine';
 
   readonly searchBox = new FormControl('', { nonNullable: true });
   readonly statusFilter = new FormControl<string | null>(null);
@@ -62,9 +68,18 @@ export class RequestListComponent {
 
   protected readonly filtered = computed(() => {
     const query = this.searchBox.value.trim().toLowerCase();
+    const mine = this.myUserId();
     return this.rows().filter(
-      (row) => !query || (row.title ?? '').toLowerCase().includes(query),
+      (row) =>
+        (!this.mineOnly || (row.requesterId ?? '') === mine) &&
+        (!query || (row.title ?? '').toLowerCase().includes(query)),
     );
+  });
+
+  /** Caller id across both session shapes (login/register vs /me restore). */
+  private readonly myUserId = computed(() => {
+    const user = this.auth.currentUser() as { id?: string; userId?: string } | null;
+    return user?.id ?? user?.userId ?? '';
   });
 
   protected readonly counts = computed(() => {

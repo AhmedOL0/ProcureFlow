@@ -1,0 +1,87 @@
+<div class="pf-page">
+  @if (loading()) {
+    <div class="budget-loading" role="status" aria-label="Loading budget">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    <pf-error-state
+      title="Budget did not load"
+      [message]="problem.message"
+      retryLabel="Back to budgets"
+      (retry)="backToList()"
+    />
+  } @else if (pot(); as row) {
+    <pf-page-header
+      [title]="row.name ?? 'Budget pot'"
+      [description]="'Period ' + (row.period ?? '—') + ' · allocations, holds and remainder.'"
+      [breadcrumbs]="[{ label: 'Budgets', url: '/budgets' }, { label: row.name ?? 'Pot' }]"
+    >
+      <div slot="actions">
+        @if (canManage) {
+          <button mat-stroked-button color="warn" (click)="confirmDelete()" [disabled]="deleting()">
+            <lucide-angular [img]="icons.trash" [size]="16" /> Delete
+          </button>
+        }
+      </div>
+    </pf-page-header>
+
+    <div class="pf-kpis" role="region" aria-label="Pot figures">
+      <div class="pf-kpi">
+        <div class="pf-kpi__top"><span class="pf-kpi__label">Allocated</span></div>
+        <div class="pf-kpi__value">{{ formatMinor(row.amountMinor, row.currency) }}</div>
+        <div class="pf-kpi__sub">pot ceiling for {{ row.period }}</div>
+      </div>
+      <div class="pf-kpi">
+        <div class="pf-kpi__top"><span class="pf-kpi__label">Reserved</span></div>
+        <div class="pf-kpi__value">{{ formatMinor(row.reservedMinor, row.currency) }}</div>
+        <div class="pf-kpi__sub">held by approved requests</div>
+        <div class="pf-kpi__bar" aria-hidden="true">
+          <div class="pf-kpi__fill" [style.width.%]="utilization()"></div>
+        </div>
+      </div>
+      <div class="pf-kpi">
+        <div class="pf-kpi__top"><span class="pf-kpi__label">Remaining</span></div>
+        <div class="pf-kpi__value">{{ formatMinor(row.remainingMinor, row.currency) }}</div>
+        <div class="pf-kpi__sub">left to spend</div>
+      </div>
+    </div>
+
+    <section class="pf-table-card" aria-label="Reservations">
+      <div class="budget-card-head">
+        <div class="pf-section-head">
+          <h2>Holds on this pot ({{ holds().length }})</h2>
+        </div>
+      </div>
+      @if (holds().length === 0) {
+        <pf-empty-state
+          [icon]="icons.wallet"
+          title="No holds"
+          message="Approved requests reserve here automatically; nothing holds on this pot yet."
+        />
+      } @else {
+        <div class="budget-table-scroll">
+          <table mat-table [dataSource]="holds()" class="pf-table" aria-label="Reservations">
+            <ng-container matColumnDef="request">
+              <th mat-header-cell *matHeaderCellDef>Request</th>
+              <td mat-cell *matCellDef="let hold">
+                <a [routerLink]="['/requests', hold.requestId]">Open request</a>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef class="pf-num">Amount</th>
+              <td mat-cell *matCellDef="let hold" class="pf-num pf-data-mono">
+                {{ formatMinor(hold.amountMinor, row.currency) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="held">
+              <th mat-header-cell *matHeaderCellDef>Held since</th>
+              <td mat-cell *matCellDef="let hold">{{ formatInstant(hold.createdAt) }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="holdColumns"></tr>
+            <tr mat-row *matRowDef="let hold; columns: holdColumns"></tr>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>

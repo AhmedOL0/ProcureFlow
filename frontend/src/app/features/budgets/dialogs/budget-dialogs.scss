@@ -1,0 +1,24 @@
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  min-width: min(420px, 70vw);
+}
+
+.dialog-row {
+  display: flex;
+  gap: var(--pf-space-md);
+}
+.dialog-row mat-form-field {
+  flex: 1 1 auto;
+}
+.dialog-narrow {
+  max-width: 120px;
+}
+
+.dialog-error {
+  color: var(--pf-danger-text);
+  font: var(--pf-body-md);
+  margin: 4px 0 0;
+}

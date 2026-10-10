@@ -147,6 +147,13 @@ contracts and verified live. Awaiting the next phase.
   gates green. A design-system pass on the same branch follows the stitch
   reference: hardened tokens, grouped navy rail, real-data overview
   dashboard, auth mastheads, zero raw hex/undefined tokens.
+- RBAC persona roles (`feature/rbac-persona-roles` → `main`, PR #11):
+  APPROVER/FINANCE/AUDITOR defaults, additive provisioning, 4× new IT,
+  full backend verify green.
+- Governance pages (same frontend branch): Budgets & Spend, Analytics &
+  Reports (+AI usage metering), Notifications page, admin split into
+  Workspace/Users/Departments/Policies, My Requests, page-map rail with
+  permission-aware entries. All live-verified with screenshots.
 
 ## Next up (Phase 9+)
 

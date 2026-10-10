@@ -93,7 +93,7 @@ live contract (`cd frontend && npm run gen:api`, checked in at
 | Analytics | `/analytics/...` | Spend, supplier and approval KPIs (read-only) |
 | AI copilot | `/ai/...` | KPI-cited chat, spend explanations, request extraction, quotation comparison (metered, `ai:use`) |
 | Frontend auth | `/login`, `/register`, `/dashboard` | Angular Material session shell (guard + refresh interceptor) |
-| Frontend workflows | `/suppliers`, `/requests`, `/approvals`, `/orders`, `/invoices`, `/admin`, `/admin/audit` | Directory + dossier screens with lifecycle actions, all API-backed |
+| Frontend workflows | `/suppliers`, `/requests`, `/requests/mine`, `/approvals`, `/orders`, `/invoices`, `/budgets`, `/analytics`, `/notifications`, `/admin`, `/admin/users`, `/admin/departments`, `/admin/workflows`, `/admin/audit` | Directory + dossier screens with lifecycle actions, all API-backed |
 
 ## Testing strategy
 
@@ -106,9 +106,9 @@ every push):
   budgets (incl. reservation race), orders, invoices, notifications, audit,
   analytics, copilot, metrics. JaCoCo floors (line 0.70 / branch 0.40) fail
   the build on regression.
-- Frontend unit: `cd frontend && npm test` (Vitest, 19 tests)
+- Frontend unit: `cd frontend && npm test` (Vitest, 24 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-  (8 tests: guarded shell, auth states, route redirects incl. operations screens)
+  (8 tests: guarded shell incl. budgets/analytics/notifications/admin splits, auth states, route redirects)
 - API types: boot the backend, then `cd frontend && npm run gen:api` after
   any API change, and commit the result.
 

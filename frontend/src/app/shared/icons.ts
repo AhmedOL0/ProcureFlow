@@ -3,6 +3,7 @@
 export {
   Bell,
   Building2,
+  ChartColumn,
   ChevronRight,
   CircleAlert,
   CircleCheck,
@@ -16,6 +17,8 @@ export {
   Receipt,
   ScrollText,
   Search,
+  Settings,
+  ShieldCheck,
   Star,
   Tags,
   Trash2,

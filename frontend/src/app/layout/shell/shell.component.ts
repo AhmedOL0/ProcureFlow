@@ -14,7 +14,7 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
-import { Bell, ClipboardList, FileText, Inbox, LayoutDashboard, Menu, Receipt, ScrollText, Truck, User, Users } from '../../shared/icons';
+import { Bell, Building2, ChartColumn, ClipboardList, FileText, Inbox, LayoutDashboard, Menu, Receipt, ScrollText, Settings, ShieldCheck, Truck, User, Users, Wallet } from '../../shared/icons';
 import { Breadcrumb } from '../../shared/components/page-header/page-header.component';
 
 interface NavItem {
@@ -23,6 +23,8 @@ interface NavItem {
   icon: typeof Truck;
   /** Any-of authorities required to see the entry; absent means visible. */
   authorities?: string[];
+  /** Exact URL match; needed for section roots with children (/requests, /admin). */
+  exact?: boolean;
 }
 
 interface NavSection {
@@ -62,23 +64,45 @@ export class ShellComponent {
     {
       label: 'Procurement',
       items: [
-        { label: 'Requests', url: '/requests', icon: FileText },
+        { label: 'My Requests', url: '/requests/mine', icon: FileText },
+        { label: 'Purchase Requests', url: '/requests', icon: ClipboardList, exact: true },
         { label: 'Approvals', url: '/approvals', icon: Inbox },
-        { label: 'Suppliers', url: '/suppliers', icon: Truck },
-        { label: 'Orders', url: '/orders', icon: ClipboardList },
+        { label: 'Suppliers', url: '/suppliers', icon: Building2 },
+        { label: 'Orders', url: '/orders', icon: Truck },
         { label: 'Invoices', url: '/invoices', icon: Receipt },
+        { label: 'Budgets & Spend', url: '/budgets', icon: Wallet, authorities: ['budget:read'] },
+      ],
+    },
+    {
+      label: 'Intelligence',
+      items: [
+        { label: 'Analytics & Reports', url: '/analytics', icon: ChartColumn, authorities: ['analytics:read'] },
       ],
     },
     {
       label: 'Administration',
       items: [
         {
-          label: 'Admin',
+          label: 'Workspace',
           url: '/admin',
-          icon: Users,
+          icon: Settings,
+          exact: true,
           authorities: ['tenant:manage', 'department:manage', 'user:manage'],
         },
-        { label: 'Audit', url: '/admin/audit', icon: ScrollText, authorities: ['audit:read'] },
+        { label: 'Users & Roles', url: '/admin/users', icon: Users, authorities: ['user:manage'] },
+        {
+          label: 'Departments',
+          url: '/admin/departments',
+          icon: Building2,
+          authorities: ['department:manage'],
+        },
+        {
+          label: 'Approval Policies',
+          url: '/admin/workflows',
+          icon: ScrollText,
+          authorities: ['procurement:approve'],
+        },
+        { label: 'Audit Logs', url: '/admin/audit', icon: ShieldCheck, authorities: ['audit:read'] },
       ],
     },
   ];

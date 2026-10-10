@@ -1,0 +1,221 @@
+<div class="pf-page">
+  <pf-page-header
+    title="Analytics & reports"
+    description="Server-computed spend, supplier and approval aggregates. Figures are read-only rollups, never ledger edits."
+    [breadcrumbs]="[{ label: 'Analytics' }]"
+  >
+    <div slot="actions">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="analytics-period">
+        <mat-label>Period</mat-label>
+        <input matInput type="month" [formControl]="periodBox" (change)="reload()" />
+      </mat-form-field>
+      <button mat-button (click)="clearPeriod()">All time</button>
+    </div>
+  </pf-page-header>
+
+  @if (loading()) {
+    <div class="analytics-loading" role="status" aria-label="Loading analytics">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    @if (problem.status === 403) {
+      <pf-error-state
+        title="Not permitted"
+        message="Your workspace role cannot view analytics. Ask an admin for access."
+      />
+    } @else {
+      <pf-error-state
+        title="Analytics did not load"
+        [message]="problem.message"
+        retryLabel="Retry"
+        (retry)="reload()"
+      />
+    }
+  } @else {
+    @if (spend(); as flow) {
+      <div class="pf-kpis" role="region" aria-label="Spend totals">
+        <div class="pf-kpi">
+          <div class="pf-kpi__top"><span class="pf-kpi__label">Requested</span></div>
+          <div class="pf-kpi__value">{{ formatMinor(flow.requestedMinor) }}</div>
+          <div class="pf-kpi__sub">draft demand in view</div>
+        </div>
+        <div class="pf-kpi">
+          <div class="pf-kpi__top"><span class="pf-kpi__label">Ordered</span></div>
+          <div class="pf-kpi__value">{{ formatMinor(flow.orderedMinor) }}</div>
+          <div class="pf-kpi__sub">committed to suppliers</div>
+        </div>
+        <div class="pf-kpi">
+          <div class="pf-kpi__top"><span class="pf-kpi__label">Invoiced</span></div>
+          <div class="pf-kpi__value">{{ formatMinor(flow.invoicedMinor) }}</div>
+          <div class="pf-kpi__sub">billed, paid or not</div>
+        </div>
+        <div class="pf-kpi">
+          <div class="pf-kpi__top"><span class="pf-kpi__label">Paid</span></div>
+          <div class="pf-kpi__value">{{ formatMinor(flow.paidMinor) }}</div>
+          <div class="pf-kpi__sub">settled with suppliers</div>
+        </div>
+      </div>
+    }
+
+    <div class="analytics-columns">
+      <section class="pf-table-card" aria-label="Spend by period">
+        <div class="analytics-card-head">
+          <div class="pf-section-head"><h2>Spend trajectory</h2></div>
+        </div>
+        @if (months().length === 0) {
+          <pf-empty-state
+            [icon]="icons.wallet"
+            title="No monthly movement"
+            message="Ordered, invoiced and paid totals appear here once purchasing moves."
+          />
+        } @else {
+          <ul class="analytics-bars">
+            @for (month of months(); track month.period) {
+              <li class="analytics-bar-row">
+                <div class="analytics-bar-meta">
+                  <span class="pf-data-mono">{{ month.period }}</span>
+                  <span class="pf-data-mono">{{ formatMinor(month.orderedMinor) }}</span>
+                </div>
+                <div class="analytics-track" aria-hidden="true">
+                  <div class="analytics-fill" [style.width.%]="barWidth(month.orderedMinor ?? 0, monthMax())"></div>
+                </div>
+                <div class="analytics-bar-sub">
+                  <span>Invoiced <span class="pf-data-mono">{{ formatMinor(month.invoicedMinor) }}</span></span>
+                  <span>Paid <span class="pf-data-mono">{{ formatMinor(month.paidMinor) }}</span></span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="pf-table-card" aria-label="Spend by category">
+        <div class="analytics-card-head">
+          <div class="pf-section-head"><h2>Category allocation</h2></div>
+        </div>
+        @if (categories().length === 0) {
+          <pf-empty-state
+            [icon]="icons.wallet"
+            title="No categorized spend"
+            message="Category totals appear once ordered lines carry categories."
+          />
+        } @else {
+          <ul class="analytics-bars">
+            @for (row of categories(); track row.category) {
+              <li class="analytics-bar-row">
+                <div class="analytics-bar-meta">
+                  <span>{{ row.category }}</span>
+                  <span class="pf-data-mono">{{ formatMinor(row.amountMinor) }}</span>
+                </div>
+                <div class="analytics-track" aria-hidden="true">
+                  <div class="analytics-fill" [style.width.%]="barWidth(row.amountMinor, categoryMax())"></div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <div class="analytics-columns">
+      <section class="pf-table-card" aria-label="Supplier scorecards">
+        <div class="analytics-card-head">
+          <div class="pf-section-head"><h2>Supplier performance</h2></div>
+        </div>
+        @if (supplierKpis().length === 0) {
+          <pf-empty-state
+            [icon]="icons.truck"
+            title="No scorecard data"
+            message="Record supplier scorecards to see on-time and quality averages here."
+          />
+        } @else {
+          <div class="analytics-table-scroll">
+            <table mat-table [dataSource]="supplierKpis()" class="pf-table" aria-label="Supplier KPIs">
+              <ng-container matColumnDef="supplier">
+                <th mat-header-cell *matHeaderCellDef>Supplier</th>
+                <td mat-cell *matCellDef="let row">
+                  <a [routerLink]="['/suppliers', row.supplierId]">{{ row.supplierName }}</a>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="periods">
+                <th mat-header-cell *matHeaderCellDef class="pf-num">Periods</th>
+                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">{{ row.periods }}</td>
+              </ng-container>
+              <ng-container matColumnDef="onTime">
+                <th mat-header-cell *matHeaderCellDef class="pf-num">On-time %</th>
+                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
+                  {{ row.avgOnTime ?? '—' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="quality">
+                <th mat-header-cell *matHeaderCellDef class="pf-num">Quality</th>
+                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
+                  {{ row.avgQuality ?? '—' }}
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="supplierColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: supplierColumns"></tr>
+            </table>
+          </div>
+        }
+      </section>
+
+      <div class="analytics-stack">
+        <section class="pf-table-card" aria-label="Approval lead times">
+          <div class="analytics-card-head">
+            <div class="pf-section-head"><h2>Approval flow</h2></div>
+          </div>
+          @if (approvalKpis(); as kpis) {
+            <dl class="analytics-facts">
+              <div><dt>Pending</dt><dd class="pf-data-mono">{{ kpis.pending }}</dd></div>
+              <div><dt>Decided</dt><dd class="pf-data-mono">{{ kpis.decided }}</dd></div>
+              <div><dt>Avg lead</dt><dd>{{ hours(kpis.avgLeadHours) }}</dd></div>
+              <div><dt>Max lead</dt><dd>{{ hours(kpis.maxLeadHours) }}</dd></div>
+            </dl>
+          } @else {
+            <pf-empty-state
+              [icon]="icons.inbox"
+              title="No approval data"
+              message="Lead-time aggregates appear once decisions are recorded."
+            />
+          }
+        </section>
+
+        <section class="pf-table-card" aria-label="AI usage">
+          <div class="analytics-card-head">
+            <div class="pf-section-head"><h2>Copilot usage</h2></div>
+          </div>
+          @if (!canSeeAiUsage) {
+            <pf-empty-state
+              [icon]="icons.inbox"
+              title="Restricted"
+              message="AI metering is visible to workspaces with copilot access."
+            />
+          } @else if (aiUsage(); as usage) {
+            <dl class="analytics-facts">
+              <div><dt>Calls</dt><dd class="pf-data-mono">{{ usage.calls }}</dd></div>
+              <div><dt>Prompt tokens</dt><dd class="pf-data-mono">{{ usage.promptTokens }}</dd></div>
+              <div><dt>Completion tokens</dt><dd class="pf-data-mono">{{ usage.completionTokens }}</dd></div>
+            </dl>
+            @if ((usage.byFeature ?? []).length > 0) {
+              <ul class="analytics-bars analytics-bars--flush">
+                @for (feature of usage.byFeature ?? []; track feature.feature) {
+                  <li class="analytics-bar-row">
+                    <div class="analytics-bar-meta">
+                      <span>{{ feature.feature }}</span>
+                      <span class="pf-data-mono">{{ feature.calls }} calls</span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+            <p class="analytics-note">
+              Copilot answers are disabled in this workspace (AI_ENABLED=false) —
+              this panel meters usage only.
+            </p>
+          }
+        </section>
+      </div>
+    </div>
+  }
+</div>

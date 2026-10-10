@@ -1,0 +1,42 @@
+<div class="pf-page">
+  <pf-page-header
+    title="Workspace settings"
+    description="Your tenant: identity and naming. Departments, users and approval lanes live on their own screens."
+    [breadcrumbs]="[{ label: 'Workspace' }]"
+  />
+
+  @if (notice()) {
+    <p class="admin-notice" role="status">{{ notice() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="admin-loading" role="status" aria-label="Loading workspace">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    <pf-error-state
+      title="Workspace did not load"
+      [message]="failureMessage()"
+      retryLabel="Retry"
+      (retry)="reload()"
+    />
+  } @else if (tenant(); as workspace) {
+    <section class="admin-card" aria-label="Workspace">
+      <h2>Workspace</h2>
+      <p class="admin-line">Slug <strong class="pf-data-mono">{{ workspace.slug }}</strong></p>
+      @if (canManageTenant) {
+        <div class="admin-row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Workspace name</mat-label>
+            <input matInput [formControl]="tenantName" />
+          </mat-form-field>
+          <button mat-stroked-button (click)="renameTenant()" [disabled]="!tenantName.value.trim()">
+            Rename
+          </button>
+        </div>
+      } @else {
+        <p class="admin-muted">Renaming needs tenant management rights.</p>
+      }
+    </section>
+  }
+</div>

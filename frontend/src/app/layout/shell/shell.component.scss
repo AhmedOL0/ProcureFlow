@@ -19,12 +19,11 @@
   font: var(--pf-headline-md);
   color: var(--pf-on-navy);
   letter-spacing: -0.01em;
-  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
+  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-sm);
 }
 
 .shell__nav {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 0 auto;
 }
 
 .shell__section {
@@ -32,11 +31,12 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--pf-on-navy-faint);
-  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-xs);
+  padding: var(--pf-space-sm) var(--pf-space-lg) var(--pf-space-xs);
 }
 
 .shell__rail .mat-mdc-list-item {
   color: var(--pf-on-navy-dim);
+  min-height: 36px;
 }
 // Material paints item text and icons with its own on-surface tokens;
 // re-assert the rail palette so labels stay legible on navy.
@@ -70,7 +70,7 @@
 
 .shell__tenant {
   margin-top: auto;
-  padding: var(--pf-space-lg);
+  padding: var(--pf-space-md) var(--pf-space-lg);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -172,6 +172,10 @@
   font: var(--pf-body-sm);
   color: var(--pf-slate);
   opacity: 1 !important;
+}
+.shell__inbox-all {
+  font: var(--pf-label-lg);
+  color: var(--pf-blue);
 }
 
 .shell__content {

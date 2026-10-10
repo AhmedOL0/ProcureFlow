@@ -1,0 +1,62 @@
+<div class="pf-page">
+  <pf-page-header
+    title="Notifications"
+    description="Workspace events addressed to you — submissions, decisions and mentions."
+    [breadcrumbs]="[{ label: 'Notifications' }]"
+  >
+    <div slot="actions">
+      @if (inbox.unread() > 0) {
+        <button mat-stroked-button (click)="inbox.markAllRead()" [disabled]="inbox.loading()">
+          Mark all read ({{ inbox.unread() }})
+        </button>
+      }
+    </div>
+  </pf-page-header>
+
+  <div class="pf-table-card">
+    <div class="notifications-chips">
+      <mat-chip-set aria-label="Read filter">
+        <mat-chip-option [selected]="!unreadOnly()" (click)="showAll()">
+          All ({{ inbox.items().length }})
+        </mat-chip-option>
+        <mat-chip-option [selected]="unreadOnly()" (click)="showUnread()">
+          Unread ({{ inbox.unread() }})
+        </mat-chip-option>
+      </mat-chip-set>
+    </div>
+
+    @if (inbox.loading() && inbox.items().length === 0) {
+      <div class="notifications-loading" role="status" aria-label="Loading notifications">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (inbox.failed() && inbox.items().length === 0) {
+      <pf-error-state
+        title="Notifications did not load"
+        message="The inbox could not be reached. Check your connection and try again."
+        retryLabel="Retry"
+        (retry)="inbox.refresh()"
+      />
+    } @else if (visible().length === 0) {
+      <pf-empty-state
+        [icon]="icons.bell"
+        title="Nothing here"
+        message="Events raised for you land here — approvals, decisions and mentions."
+      />
+    } @else {
+      <ul class="notifications-rows">
+        @for (item of visible(); track item.id) {
+          <li class="notifications-row" [class.notifications-row--unread]="!item.read">
+            <div class="notifications-row__main">
+              <span class="notifications-row__title">{{ item.title }}</span>
+              <span class="notifications-row__body">{{ item.body }}</span>
+              <span class="notifications-row__meta">{{ item.type }} · {{ formatInstant(item.createdAt) }}</span>
+            </div>
+            @if (!item.read && item.id) {
+              <button mat-button (click)="inbox.markRead(item.id ?? '')">Mark read</button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>
