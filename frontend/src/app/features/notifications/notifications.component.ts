@@ -20,8 +20,13 @@ import { formatInstant } from '../../shared/utils/time';
 @Component({
   selector: 'app-notifications',
   imports: [
-    MatButtonModule, MatChipsModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
+    MatButtonModule,
+    MatChipsModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss',

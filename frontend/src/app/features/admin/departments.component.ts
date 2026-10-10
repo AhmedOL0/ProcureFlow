@@ -10,7 +10,10 @@ import { LucideAngularModule } from 'lucide-angular';
 import { forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
@@ -28,9 +31,16 @@ import { Department, Membership, OrganizationService, WorkspaceUser } from './or
 @Component({
   selector: 'app-departments',
   imports: [
-    ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './departments.component.html',
   styleUrl: './admin-cards.scss',
@@ -51,9 +61,18 @@ export class DepartmentsComponent {
   protected readonly users = signal<WorkspaceUser[]>([]);
   protected readonly notice = signal<string | null>(null);
 
-  readonly departmentName = new FormControl('', { nonNullable: true, validators: [Validators.required] });
-  readonly memberUser = new FormControl<string>('', { nonNullable: true, validators: [Validators.required] });
-  readonly memberDepartment = new FormControl<string>('', { nonNullable: true, validators: [Validators.required] });
+  readonly departmentName = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  readonly memberUser = new FormControl<string>('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  readonly memberDepartment = new FormControl<string>('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
 
   constructor() {
     this.reload();
@@ -118,7 +137,11 @@ export class DepartmentsComponent {
     }
     const dialog = this.dialogs.open(PromptDialogComponent, {
       width: '400px',
-      data: { title: 'Rename department', label: 'Department name', initial: department.name ?? '' },
+      data: {
+        title: 'Rename department',
+        label: 'Department name',
+        initial: department.name ?? '',
+      },
     });
     dialog.afterClosed().subscribe((name) => {
       if (typeof name === 'string' && name.trim() && department.id) {
@@ -134,14 +157,17 @@ export class DepartmentsComponent {
     if (!department.id) {
       return;
     }
-    const dialog = this.dialogs.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
-      width: '400px',
-      data: {
-        title: `Delete ${department.name ?? 'department'}?`,
-        message: 'Only empty departments can be deleted — the backend refuses the rest.',
-        confirmLabel: 'Delete department',
+    const dialog = this.dialogs.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
+      ConfirmDialogComponent,
+      {
+        width: '400px',
+        data: {
+          title: `Delete ${department.name ?? 'department'}?`,
+          message: 'Only empty departments can be deleted — the backend refuses the rest.',
+          confirmLabel: 'Delete department',
+        },
       },
-    });
+    );
     dialog.afterClosed().subscribe((confirmed) => {
       if (confirmed === true && department.id) {
         this.org.deleteDepartment(department.id).subscribe({
@@ -169,9 +195,25 @@ export class DepartmentsComponent {
     if (!membership.id) {
       return;
     }
-    this.org.removeMembership(membership.id).subscribe({
-      next: () => this.reload(),
-      error: (error: unknown) => this.failure.set(parseApiFailure(error)),
+    const dialog = this.dialogs.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
+      ConfirmDialogComponent,
+      {
+        width: '400px',
+        data: {
+          title: `Remove ${this.userEmail(membership.userId)} from ${this.departmentNameOf(membership.departmentId)}?`,
+          message:
+            'The person keeps their workspace account — only the department assignment ends.',
+          confirmLabel: 'Remove assignment',
+        },
+      },
+    );
+    dialog.afterClosed().subscribe((confirmed) => {
+      if (confirmed === true && membership.id) {
+        this.org.removeMembership(membership.id).subscribe({
+          next: () => this.reload(),
+          error: (error: unknown) => this.failure.set(parseApiFailure(error)),
+        });
+      }
     });
   }
 

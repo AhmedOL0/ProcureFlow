@@ -10,18 +10,15 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
-import {
-  ClipboardList,
-  FileText,
-  Inbox,
-  Plus,
-  Receipt,
-  Truck,
-  Wallet,
-} from '../../shared/icons';
+import { ClipboardList, FileText, Inbox, Plus, Receipt, Truck, Wallet } from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
 import { formatMinor } from '../../shared/utils/money';
-import { AnalyticsService, ApprovalKpi, SpendMonth, SpendResponse } from '../analytics/analytics.service';
+import {
+  AnalyticsService,
+  ApprovalKpi,
+  SpendMonth,
+  SpendResponse,
+} from '../analytics/analytics.service';
 import { Budget, BudgetsService } from '../budgets/budgets.service';
 import { Invoice, InvoiceService } from '../invoices/invoices.service';
 import { OrderService } from '../orders/orders.service';
@@ -47,8 +44,14 @@ interface Kpi {
 @Component({
   selector: 'app-dashboard',
   imports: [
-    RouterLink, MatButtonModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, StatusBadgeComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -63,8 +66,13 @@ export class DashboardComponent {
   private readonly auth = inject(AuthService);
 
   protected readonly icons = {
-    plus: Plus, open: FileText, approvals: Inbox, suppliers: Truck, orders: ClipboardList,
-    money: Receipt, wallet: Wallet,
+    plus: Plus,
+    open: FileText,
+    approvals: Inbox,
+    suppliers: Truck,
+    orders: ClipboardList,
+    money: Receipt,
+    wallet: Wallet,
   };
   protected readonly formatMinor = formatMinor;
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
@@ -86,7 +94,9 @@ export class DashboardComponent {
   protected readonly financeFailed = signal(false);
 
   protected readonly kpis = computed<Kpi[]>(() => {
-    const open = this.allRequests().filter((r) => r.status === 'DRAFT' || r.status === 'SUBMITTED').length;
+    const open = this.allRequests().filter(
+      (r) => r.status === 'DRAFT' || r.status === 'SUBMITTED',
+    ).length;
     return [
       {
         label: 'Open requests',
@@ -153,7 +163,9 @@ export class DashboardComponent {
     if (!this.canSeeInvoices) {
       return { value: '—', sub: 'no invoice access' };
     }
-    const open = this.invoiceRows().filter((row) => row.status === 'UNPAID' || row.status === 'PARTIAL');
+    const open = this.invoiceRows().filter(
+      (row) => row.status === 'UNPAID' || row.status === 'PARTIAL',
+    );
     if (open.length === 0) {
       return { value: formatMinor(0), sub: 'nothing outstanding' };
     }
@@ -219,7 +231,8 @@ export class DashboardComponent {
         this.submitted.set(submitted ?? []);
         this.activeSuppliers.set((found ?? []).length);
         this.openOrders.set(
-          (orderRows ?? []).filter((o) => o.status === 'SENT' || o.status === 'PARTIALLY_RECEIVED').length,
+          (orderRows ?? []).filter((o) => o.status === 'SENT' || o.status === 'PARTIALLY_RECEIVED')
+            .length,
         );
         this.loading.set(false);
         this.loadFinance();

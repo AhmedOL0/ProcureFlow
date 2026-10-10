@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { pendingChangesGuard } from '../../core/guards/pending-changes.guard';
+
 /** Purchase requests: directory, creation and dossiers, lazy under the shell. */
 export const PROCUREMENT_ROUTES: Routes = [
   {
@@ -18,6 +20,7 @@ export const PROCUREMENT_ROUTES: Routes = [
     path: 'new',
     loadComponent: () =>
       import('./request-create/request-create.component').then((m) => m.RequestCreateComponent),
+    canDeactivate: [pendingChangesGuard],
     data: { breadcrumb: 'New request' },
   },
   {

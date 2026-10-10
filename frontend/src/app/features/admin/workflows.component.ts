@@ -17,7 +17,12 @@ import { ScrollText } from '../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
 import { formatMinor } from '../../shared/utils/money';
 import { formatInstant } from '../../shared/utils/time';
-import { ApprovalPolicyService, Delegation, Workflow, WorkflowStep } from '../procurement/approval-policy.service';
+import {
+  ApprovalPolicyService,
+  Delegation,
+  Workflow,
+  WorkflowStep,
+} from '../procurement/approval-policy.service';
 import { OrganizationService, WorkspaceUser } from './organization.service';
 
 /**
@@ -30,9 +35,17 @@ import { OrganizationService, WorkspaceUser } from './organization.service';
 @Component({
   selector: 'app-workflows',
   imports: [
-    ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatSlideToggleModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatSlideToggleModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './workflows.component.html',
   styleUrl: './admin-cards.scss',
@@ -59,20 +72,35 @@ export class WorkflowsComponent {
   protected readonly busy = signal(false);
 
   readonly laneForm = new FormGroup({
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(200)] }),
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
     minAmount: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/^\d+(\.\d{1,2})?$/)],
     }),
-    maxAmount: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^\d+(\.\d{1,2})?$/)] }),
+    maxAmount: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.pattern(/^\d+(\.\d{1,2})?$/)],
+    }),
     escalateAfterDays: new FormControl('3', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/^\d+$/)],
     }),
   });
-  readonly stepApprover = new FormControl('', { nonNullable: true, validators: [Validators.required] });
-  readonly delegateId = new FormControl('', { nonNullable: true, validators: [Validators.required] });
-  readonly delegateUntil = new FormControl('', { nonNullable: true, validators: [Validators.required] });
+  readonly stepApprover = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  readonly delegateId = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  readonly delegateUntil = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
 
   constructor() {
     this.reload();
@@ -117,7 +145,8 @@ export class WorkflowsComponent {
 
   loadSteps(laneId: string): void {
     this.policies.steps(laneId).subscribe({
-      next: (rows) => this.steps.set((rows ?? []).sort((a, b) => (a.stepOrder ?? 0) - (b.stepOrder ?? 0))),
+      next: (rows) =>
+        this.steps.set((rows ?? []).sort((a, b) => (a.stepOrder ?? 0) - (b.stepOrder ?? 0))),
       error: (error: unknown) => this.failure.set(parseApiFailure(error)),
     });
   }

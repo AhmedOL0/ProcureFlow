@@ -15,7 +15,14 @@ export interface ReceiveDialogData {
 /** Record goods receipt per line; quantities beyond the remainder are rejected server-side. */
 @Component({
   selector: 'app-receive-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './receive.dialog.html',
   styleUrl: './order-dialogs.scss',
 })
@@ -47,7 +54,12 @@ export class ReceiveDialogComponent {
   readonly busy = signal(false);
   readonly failure = signal<string | null>(null);
 
-  protected rows(): { itemId: string; description: string; outstanding: number; control: FormControl<number> }[] {
+  protected rows(): {
+    itemId: string;
+    description: string;
+    outstanding: number;
+    control: FormControl<number>;
+  }[] {
     return this.data.lines.map((line, index) => ({
       itemId: line.id ?? '',
       description: line.description ?? '?',
@@ -66,7 +78,10 @@ export class ReceiveDialogComponent {
     }
     const lines = this.rows()
       .filter((row) => row.control.value > 0 && row.outstanding > 0)
-      .map((row) => ({ itemId: row.itemId, quantity: Math.min(row.control.value, row.outstanding) }));
+      .map((row) => ({
+        itemId: row.itemId,
+        quantity: Math.min(row.control.value, row.outstanding),
+      }));
     if (lines.length === 0) {
       this.failure.set('Enter a received quantity for at least one outstanding line.');
       return;

@@ -7,6 +7,18 @@
   min-width: min(420px, 70vw);
 }
 
+.dialog-section {
+  display: contents;
+}
+.dialog-section > legend {
+  font: var(--pf-label-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-slate);
+  padding: 0;
+  margin: var(--pf-space-sm) 0 var(--pf-space-xs);
+}
+
 .dialog-error {
   color: var(--pf-danger-text);
   font: var(--pf-body-md);

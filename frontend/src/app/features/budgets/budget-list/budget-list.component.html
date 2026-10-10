@@ -128,13 +128,17 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="allocated">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="allocated" class="pf-num">Allocated</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="allocated" class="pf-num">
+              Allocated
+            </th>
             <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
               {{ formatMinor(row.amountMinor, row.currency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="reserved">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="reserved" class="pf-num">Reserved</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="reserved" class="pf-num">
+              Reserved
+            </th>
             <td mat-cell *matCellDef="let row" class="pf-num">
               <span class="budget-score">
                 <span class="pf-data-mono">{{ formatMinor(row.reservedMinor, row.currency) }}</span>
@@ -145,7 +149,9 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="remaining">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="remaining" class="pf-num">Remaining</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="remaining" class="pf-num">
+              Remaining
+            </th>
             <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
               {{ formatMinor(row.remainingMinor, row.currency) }}
             </td>

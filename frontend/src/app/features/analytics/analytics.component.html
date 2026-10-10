@@ -77,11 +77,19 @@
                   <span class="pf-data-mono">{{ formatMinor(month.orderedMinor) }}</span>
                 </div>
                 <div class="analytics-track" aria-hidden="true">
-                  <div class="analytics-fill" [style.width.%]="barWidth(month.orderedMinor ?? 0, monthMax())"></div>
+                  <div
+                    class="analytics-fill"
+                    [style.width.%]="barWidth(month.orderedMinor ?? 0, monthMax())"
+                  ></div>
                 </div>
                 <div class="analytics-bar-sub">
-                  <span>Invoiced <span class="pf-data-mono">{{ formatMinor(month.invoicedMinor) }}</span></span>
-                  <span>Paid <span class="pf-data-mono">{{ formatMinor(month.paidMinor) }}</span></span>
+                  <span
+                    >Invoiced
+                    <span class="pf-data-mono">{{ formatMinor(month.invoicedMinor) }}</span></span
+                  >
+                  <span
+                    >Paid <span class="pf-data-mono">{{ formatMinor(month.paidMinor) }}</span></span
+                  >
                 </div>
               </li>
             }
@@ -114,7 +122,10 @@
                   <span class="pf-data-mono">{{ formatMinor(row.amountMinor) }}</span>
                 </div>
                 <div class="analytics-track" aria-hidden="true">
-                  <div class="analytics-fill" [style.width.%]="barWidth(row.amountMinor, categoryMax())"></div>
+                  <div
+                    class="analytics-fill"
+                    [style.width.%]="barWidth(row.amountMinor, categoryMax())"
+                  ></div>
                 </div>
               </li>
             }
@@ -151,7 +162,9 @@
               </ng-container>
               <ng-container matColumnDef="periods">
                 <th mat-header-cell *matHeaderCellDef class="pf-num">Periods</th>
-                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">{{ row.periods }}</td>
+                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
+                  {{ row.periods }}
+                </td>
               </ng-container>
               <ng-container matColumnDef="onTime">
                 <th mat-header-cell *matHeaderCellDef class="pf-num">On-time %</th>
@@ -179,10 +192,22 @@
           </div>
           @if (approvalKpis(); as kpis) {
             <dl class="analytics-facts">
-              <div><dt>Pending</dt><dd class="pf-data-mono">{{ kpis.pending }}</dd></div>
-              <div><dt>Decided</dt><dd class="pf-data-mono">{{ kpis.decided }}</dd></div>
-              <div><dt>Avg lead</dt><dd>{{ hours(kpis.avgLeadHours) }}</dd></div>
-              <div><dt>Max lead</dt><dd>{{ hours(kpis.maxLeadHours) }}</dd></div>
+              <div>
+                <dt>Pending</dt>
+                <dd class="pf-data-mono">{{ kpis.pending }}</dd>
+              </div>
+              <div>
+                <dt>Decided</dt>
+                <dd class="pf-data-mono">{{ kpis.decided }}</dd>
+              </div>
+              <div>
+                <dt>Avg lead</dt>
+                <dd>{{ hours(kpis.avgLeadHours) }}</dd>
+              </div>
+              <div>
+                <dt>Max lead</dt>
+                <dd>{{ hours(kpis.maxLeadHours) }}</dd>
+              </div>
             </dl>
           } @else {
             <pf-empty-state
@@ -205,9 +230,18 @@
             />
           } @else if (aiUsage(); as usage) {
             <dl class="analytics-facts">
-              <div><dt>Calls</dt><dd class="pf-data-mono">{{ usage.calls }}</dd></div>
-              <div><dt>Prompt tokens</dt><dd class="pf-data-mono">{{ usage.promptTokens }}</dd></div>
-              <div><dt>Completion tokens</dt><dd class="pf-data-mono">{{ usage.completionTokens }}</dd></div>
+              <div>
+                <dt>Calls</dt>
+                <dd class="pf-data-mono">{{ usage.calls }}</dd>
+              </div>
+              <div>
+                <dt>Prompt tokens</dt>
+                <dd class="pf-data-mono">{{ usage.promptTokens }}</dd>
+              </div>
+              <div>
+                <dt>Completion tokens</dt>
+                <dd class="pf-data-mono">{{ usage.completionTokens }}</dd>
+              </div>
             </dl>
             @if ((usage.byFeature ?? []).length > 0) {
               <ul class="analytics-bars analytics-bars--flush">
@@ -222,8 +256,8 @@
               </ul>
             }
             <p class="analytics-note">
-              Copilot answers are disabled in this workspace (AI_ENABLED=false) —
-              this panel meters usage only.
+              Copilot answers are disabled in this workspace (AI_ENABLED=false) — this panel meters
+              usage only.
             </p>
           }
         </section>

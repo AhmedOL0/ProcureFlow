@@ -36,9 +36,22 @@ const STATUSES = ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'ORDERED', 'CANC
 @Component({
   selector: 'app-request-list',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatChipsModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTableModule, MatSortModule, MatPaginatorModule, MatProgressSpinnerModule,
-    LucideAngularModule, PageHeaderComponent, StatusBadgeComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatChipsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './request-list.component.html',
   styleUrl: './request-list.component.scss',
@@ -145,8 +158,12 @@ function compareRequests(sort: Sort): (a: PurchaseRequest, b: PurchaseRequest) =
     if (sort.active === 'total') {
       return ((a.totalMinor ?? 0) - (b.totalMinor ?? 0)) * direction;
     }
-    const left = ((a[sort.active as keyof PurchaseRequest] ?? '') as string).toString().toLowerCase();
-    const right = ((b[sort.active as keyof PurchaseRequest] ?? '') as string).toString().toLowerCase();
+    const left = ((a[sort.active as keyof PurchaseRequest] ?? '') as string)
+      .toString()
+      .toLowerCase();
+    const right = ((b[sort.active as keyof PurchaseRequest] ?? '') as string)
+      .toString()
+      .toLowerCase();
     return left.localeCompare(right) * direction;
   };
 }

@@ -27,7 +27,9 @@
         <div class="pf-section-head"><h2>Profile</h2></div>
       </div>
       <div class="settings-body" [formGroup]="profileForm">
-        <p class="settings-line">Signed in as <strong>{{ me?.email }}</strong> in {{ me?.tenantSlug }}</p>
+        <p class="settings-line">
+          Signed in as <strong>{{ me?.email }}</strong> in {{ me?.tenantSlug }}
+        </p>
         <div class="settings-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>First name</mat-label>
@@ -37,7 +39,12 @@
             <mat-label>Last name</mat-label>
             <input matInput formControlName="lastName" autocomplete="family-name" maxlength="100" />
           </mat-form-field>
-          <button mat-flat-button color="primary" (click)="saveProfile()" [disabled]="savingProfile()">
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="saveProfile()"
+            [disabled]="savingProfile()"
+          >
             Save profile
           </button>
         </div>
@@ -49,7 +56,9 @@
         <div class="pf-section-head"><h2>Password</h2></div>
       </div>
       <div class="settings-body" [formGroup]="passwordForm">
-        <p class="settings-muted">Changing your password signs you out everywhere — you sign in again with the new one.</p>
+        <p class="settings-muted">
+          Changing your password signs you out everywhere — you sign in again with the new one.
+        </p>
         <div class="settings-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Current password</mat-label>
@@ -68,7 +77,10 @@
             >
               <lucide-angular [img]="showCurrent() ? icons.hide : icons.show" [size]="18" />
             </button>
-            @if (passwordForm.controls.currentPassword.hasError('required') && passwordForm.controls.currentPassword.touched) {
+            @if (
+              passwordForm.controls.currentPassword.hasError('required') &&
+              passwordForm.controls.currentPassword.touched
+            ) {
               <mat-error>Enter your current password.</mat-error>
             }
           </mat-form-field>
@@ -89,21 +101,37 @@
             >
               <lucide-angular [img]="showNew() ? icons.hide : icons.show" [size]="18" />
             </button>
-            @if (passwordForm.controls.newPassword.hasError('required') && passwordForm.controls.newPassword.touched) {
+            @if (
+              passwordForm.controls.newPassword.hasError('required') &&
+              passwordForm.controls.newPassword.touched
+            ) {
               <mat-error>Enter a new password.</mat-error>
             }
-            @if (passwordForm.controls.newPassword.hasError('minlength') && passwordForm.controls.newPassword.touched) {
+            @if (
+              passwordForm.controls.newPassword.hasError('minlength') &&
+              passwordForm.controls.newPassword.touched
+            ) {
               <mat-error>At least 12 characters.</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Confirm new password</mat-label>
-            <input matInput formControlName="confirmPassword" autocomplete="new-password" type="password" />
+            <input
+              matInput
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              type="password"
+            />
             @if (passwordForm.controls.confirmPassword.hasError('mismatch')) {
               <mat-error>The two passwords do not match.</mat-error>
             }
           </mat-form-field>
-          <button mat-flat-button color="primary" (click)="changePassword()" [disabled]="changingPassword()">
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="changePassword()"
+            [disabled]="changingPassword()"
+          >
             Change password
           </button>
         </div>

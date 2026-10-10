@@ -12,13 +12,14 @@
 @use '@angular/material' as mat;
 
 // Self-hosted Inter (variable, latin) so rendering is identical online,
-// offline and in CI screenshots.
+// offline and in CI screenshots. The file lives in public/fonts (served
+// at /fonts in dev and copied to dist in prod).
 @font-face {
   font-family: 'Inter';
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url('/assets/fonts/inter-latin.woff2') format('woff2');
+  src: url('/fonts/inter-latin.woff2') format('woff2');
 }
 
 html {
@@ -88,7 +89,8 @@ html {
   --pf-radius-sm: 4px;
   --pf-radius-md: 6px;
   --pf-radius-lg: 8px;
-  --pf-radius-pill: 9999px;  --pf-space-xs: 4px;
+  --pf-radius-pill: 9999px;
+  --pf-space-xs: 4px;
   --pf-space-sm: 8px;
   --pf-space-md: 12px;
   --pf-space-lg: 16px;
@@ -370,7 +372,9 @@ table.pf-table th.pf-num {
 .pf-ai-banner {
   background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
   border: 1px solid var(--pf-copper-border);
-  box-shadow: 0 0 0 1px rgb(217 119 6 / 0.15), var(--pf-shadow-1);
+  box-shadow:
+    0 0 0 1px rgb(217 119 6 / 0.15),
+    var(--pf-shadow-1);
   color: var(--pf-text);
   border-radius: var(--pf-radius-lg);
   padding: var(--pf-space-lg);
@@ -419,4 +423,17 @@ table.pf-table th.pf-num {
   letter-spacing: -0.01em;
   text-align: center;
   margin: 10vh auto var(--pf-space-lg);
+}
+
+// Motion is functional only: honor reduced-motion everywhere, including
+// Material's built-in dialog/menu transitions.
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

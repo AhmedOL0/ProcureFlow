@@ -49,7 +49,9 @@
             <div class="notifications-row__main">
               <span class="notifications-row__title">{{ item.title }}</span>
               <span class="notifications-row__body">{{ item.body }}</span>
-              <span class="notifications-row__meta">{{ item.type }} · {{ formatInstant(item.createdAt) }}</span>
+              <span class="notifications-row__meta"
+                >{{ item.type }} · {{ formatInstant(item.createdAt) }}</span
+              >
             </div>
             @if (!item.read && item.id) {
               <button mat-button (click)="inbox.markRead(item.id ?? '')">Mark read</button>

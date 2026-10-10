@@ -26,9 +26,15 @@ import { OrganizationService, WorkspaceUser } from './organization.service';
 @Component({
   selector: 'app-users',
   imports: [
-    ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, ErrorStateComponent,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './users.component.html',
   styleUrl: './admin-cards.scss',
@@ -77,7 +83,8 @@ export class UsersComponent {
     });
   }
 
-  createUser(): void {    if (this.newEmail.invalid || this.newPassword.invalid || this.newRoles.value.length === 0) {
+  createUser(): void {
+    if (this.newEmail.invalid || this.newPassword.invalid || this.newRoles.value.length === 0) {
       this.newEmail.markAsTouched();
       this.newPassword.markAsTouched();
       return;

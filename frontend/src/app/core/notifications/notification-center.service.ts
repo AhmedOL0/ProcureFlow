@@ -37,11 +37,13 @@ export class NotificationCenterService {
   }
 
   markRead(id: string): void {
-    this.http.patch<NotificationResponse>(`${this.api}/api/v1/notifications/${id}/read`, {}).subscribe({
-      next: (updated) => {
-        this.items.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
-      },
-    });
+    this.http
+      .patch<NotificationResponse>(`${this.api}/api/v1/notifications/${id}/read`, {})
+      .subscribe({
+        next: (updated) => {
+          this.items.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+        },
+      });
   }
 
   /**
@@ -74,4 +76,3 @@ export class NotificationCenterService {
       });
   }
 }
-

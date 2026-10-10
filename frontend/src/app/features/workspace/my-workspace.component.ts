@@ -24,8 +24,14 @@ import { ProcurementService, PurchaseRequest } from '../procurement/procurement.
 @Component({
   selector: 'app-my-workspace',
   imports: [
-    RouterLink, MatButtonModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, StatusBadgeComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './my-workspace.component.html',
   styleUrl: './my-workspace.component.scss',
@@ -65,7 +71,10 @@ export class MyWorkspaceComponent {
   );
 
   protected readonly latestUnread = computed(() =>
-    this.inbox.items().filter((item) => !item.read).slice(0, 5),
+    this.inbox
+      .items()
+      .filter((item) => !item.read)
+      .slice(0, 5),
   );
 
   constructor() {

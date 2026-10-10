@@ -24,9 +24,16 @@ import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/
 @Component({
   selector: 'app-settings',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule,
-    MatInputModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, ErrorStateComponent,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
@@ -64,8 +71,10 @@ export class SettingsComponent {
     // Clear a stale mismatch as soon as the two fields agree again.
     this.passwordForm.valueChanges.subscribe(() => {
       const confirm = this.passwordForm.controls.confirmPassword;
-      if (confirm.hasError('mismatch')
-        && this.passwordForm.controls.newPassword.value === confirm.value) {
+      if (
+        confirm.hasError('mismatch') &&
+        this.passwordForm.controls.newPassword.value === confirm.value
+      ) {
         confirm.setErrors(null);
       }
     });
@@ -76,7 +85,10 @@ export class SettingsComponent {
     this.failure.set(null);
     this.auth.refreshProfile().subscribe({
       next: (user) => {
-        this.profileForm.setValue({ firstName: user.firstName ?? '', lastName: user.lastName ?? '' });
+        this.profileForm.setValue({
+          firstName: user.firstName ?? '',
+          lastName: user.lastName ?? '',
+        });
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -94,16 +106,18 @@ export class SettingsComponent {
     this.savingProfile.set(true);
     this.notice.set(null);
     const value = this.profileForm.getRawValue();
-    this.auth.updateOwnProfile(value.firstName.trim() || null, value.lastName.trim() || null).subscribe({
-      next: () => {
-        this.savingProfile.set(false);
-        this.notice.set('Profile saved.');
-      },
-      error: (error: unknown) => {
-        this.savingProfile.set(false);
-        this.failure.set(parseApiFailure(error));
-      },
-    });
+    this.auth
+      .updateOwnProfile(value.firstName.trim() || null, value.lastName.trim() || null)
+      .subscribe({
+        next: () => {
+          this.savingProfile.set(false);
+          this.notice.set('Profile saved.');
+        },
+        error: (error: unknown) => {
+          this.savingProfile.set(false);
+          this.failure.set(parseApiFailure(error));
+        },
+      });
   }
 
   changePassword(): void {

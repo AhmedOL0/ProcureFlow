@@ -36,9 +36,17 @@ import {
 @Component({
   selector: 'app-analytics',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatTableModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.scss',
@@ -88,7 +96,8 @@ export class AnalyticsComponent {
   );
   protected readonly monthMax = computed(() =>
     this.months().reduce(
-      (max, row) => Math.max(max, row.orderedMinor ?? 0, row.invoicedMinor ?? 0, row.paidMinor ?? 0),
+      (max, row) =>
+        Math.max(max, row.orderedMinor ?? 0, row.invoicedMinor ?? 0, row.paidMinor ?? 0),
       0,
     ),
   );

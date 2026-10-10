@@ -37,7 +37,9 @@
               @if (canManageDepartments) {
                 <span class="admin-list__actions">
                   <button mat-button (click)="renameDepartment(department)">Rename</button>
-                  <button mat-button color="warn" (click)="deleteDepartment(department)">Delete</button>
+                  <button mat-button color="warn" (click)="deleteDepartment(department)">
+                    Delete
+                  </button>
                 </span>
               }
             </li>
@@ -50,7 +52,11 @@
             <mat-label>New department</mat-label>
             <input matInput [formControl]="departmentName" />
           </mat-form-field>
-          <button mat-stroked-button (click)="createDepartment()" [disabled]="!departmentName.value.trim()">
+          <button
+            mat-stroked-button
+            (click)="createDepartment()"
+            [disabled]="!departmentName.value.trim()"
+          >
             Add
           </button>
         </div>
@@ -65,9 +71,14 @@
         <ul class="admin-list">
           @for (membership of memberships(); track membership.id) {
             <li class="admin-list__row">
-              <span>{{ userEmail(membership.userId) }} → {{ departmentNameOf(membership.departmentId) }}</span>
+              <span
+                >{{ userEmail(membership.userId) }} →
+                {{ departmentNameOf(membership.departmentId) }}</span
+              >
               @if (canManageDepartments) {
-                <button mat-button color="warn" (click)="removeMembership(membership)">Remove</button>
+                <button mat-button color="warn" (click)="removeMembership(membership)">
+                  Remove
+                </button>
               }
             </li>
           }

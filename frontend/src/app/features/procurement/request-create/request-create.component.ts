@@ -10,6 +10,7 @@ import { Router, RouterLink } from '@angular/router';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { ProcurementService } from '../procurement.service';
 import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-errors';
+import { SavableDraft } from '../../../core/guards/pending-changes.guard';
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 
@@ -19,13 +20,23 @@ const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
  */
 @Component({
   selector: 'app-request-create',
-  imports: [RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, PageHeaderComponent],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    PageHeaderComponent,
+  ],
   templateUrl: './request-create.component.html',
   styleUrl: './request-create.component.scss',
 })
-export class RequestCreateComponent {
+export class RequestCreateComponent implements SavableDraft {
   private readonly requests = inject(ProcurementService);
   private readonly router = inject(Router);
+  private saved = false;
 
   readonly priorities = PRIORITIES;
   readonly form = new FormGroup({
@@ -38,6 +49,11 @@ export class RequestCreateComponent {
   });
   readonly busy = signal(false);
   readonly failure = signal<string | null>(null);
+
+  /** The guard asks this before leaving an untouched-or-saved form alone. */
+  hasUnsavedDraft(): boolean {
+    return !this.saved && this.form.dirty;
+  }
 
   save(): void {
     if (this.form.invalid || this.busy()) {
@@ -63,6 +79,7 @@ export class RequestCreateComponent {
       .subscribe({
         next: (saved) => {
           if (saved.id) {
+            this.saved = true;
             void this.router.navigate(['/requests', saved.id]);
           }
         },

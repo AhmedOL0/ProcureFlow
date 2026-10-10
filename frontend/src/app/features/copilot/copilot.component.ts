@@ -41,9 +41,19 @@ const MODES: { id: CopilotMode; label: string }[] = [
 @Component({
   selector: 'app-copilot',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatChipsModule, MatFormFieldModule,
-    MatInputModule, MatSelectModule, MatTableModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatChipsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatTableModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './copilot.component.html',
   styleUrl: './copilot.component.scss',
@@ -67,7 +77,10 @@ export class CopilotComponent {
   protected readonly draftSaved = signal(false);
   private running: Subscription | null = null;
 
-  readonly questionBox = new FormControl('', { nonNullable: true, validators: [Validators.required] });
+  readonly questionBox = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
   readonly periodBox = new FormControl('', { nonNullable: true });
   readonly narrativeBox = new FormControl('', {
     nonNullable: true,

@@ -14,7 +14,8 @@ export const routes: Routes = [
   },
   {
     path: 'register',
-    loadComponent: () => import('./features/auth/register.component').then((m) => m.RegisterComponent),
+    loadComponent: () =>
+      import('./features/auth/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: 'forgot-password',
@@ -63,8 +64,7 @@ export const routes: Routes = [
       },
       {
         path: 'orders',
-        loadChildren: () =>
-          import('./features/orders/orders.routes').then((m) => m.ORDER_ROUTES),
+        loadChildren: () => import('./features/orders/orders.routes').then((m) => m.ORDER_ROUTES),
       },
       {
         path: 'invoices',
@@ -104,8 +104,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
-        loadChildren: () =>
-          import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
       },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

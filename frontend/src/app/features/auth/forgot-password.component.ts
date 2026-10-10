@@ -18,8 +18,13 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'app-forgot-password',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule,
-    MatInputModule, MatProgressSpinnerModule,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
   ],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss',
@@ -50,7 +55,9 @@ export class ForgotPasswordComponent {
     this.auth.forgotPassword(value.email.trim(), value.tenantSlug).subscribe({
       next: (response) => {
         this.busy.set(false);
-        this.sentMessage.set(response.message ?? 'If an account exists for that address, a reset link is on its way.');
+        this.sentMessage.set(
+          response.message ?? 'If an account exists for that address, a reset link is on its way.',
+        );
       },
       error: () => {
         this.busy.set(false);

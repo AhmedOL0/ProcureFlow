@@ -25,7 +25,7 @@
   } @else if (supplier(); as current) {
     <pf-page-header
       [title]="current.name ?? 'Supplier'"
-      [description]="(current.taxId ? 'Tax ID ' + current.taxId : 'No tax ID on file')"
+      [description]="current.taxId ? 'Tax ID ' + current.taxId : 'No tax ID on file'"
       [breadcrumbs]="[{ label: 'Suppliers', url: '/suppliers' }, { label: current.name ?? 'File' }]"
     >
       <div slot="actions">
@@ -79,7 +79,12 @@
                   {{ contact.name }}
                   @if (contact.primary) {
                     <span role="img" aria-label="Primary contact">
-                      <lucide-angular [img]="icons.star" [size]="14" class="dossier-primary" aria-hidden="true" />
+                      <lucide-angular
+                        [img]="icons.star"
+                        [size]="14"
+                        class="dossier-primary"
+                        aria-hidden="true"
+                      />
                     </span>
                   }
                 </span>
@@ -136,26 +141,26 @@
         <p class="dossier-muted">No scorecards recorded yet.</p>
       } @else {
         <div class="dossier-table-scroll">
-        <table class="pf-table" aria-label="Scorecards">
-          <thead>
-            <tr>
-              <th scope="col">Period</th>
-              <th scope="col" class="pf-num">On-time %</th>
-              <th scope="col" class="pf-num">Quality</th>
-              <th scope="col">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (score of performances(); track score.id) {
+          <table class="pf-table" aria-label="Scorecards">
+            <thead>
               <tr>
-                <td>{{ score.period }}</td>
-                <td class="pf-num pf-data-mono">{{ score.onTimeRate ?? '—' }}</td>
-                <td class="pf-num pf-data-mono">{{ score.qualityScore ?? '—' }}</td>
-                <td>{{ score.notes || '—' }}</td>
+                <th scope="col">Period</th>
+                <th scope="col" class="pf-num">On-time %</th>
+                <th scope="col" class="pf-num">Quality</th>
+                <th scope="col">Notes</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (score of performances(); track score.id) {
+                <tr>
+                  <td>{{ score.period }}</td>
+                  <td class="pf-num pf-data-mono">{{ score.onTimeRate ?? '—' }}</td>
+                  <td class="pf-num pf-data-mono">{{ score.qualityScore ?? '—' }}</td>
+                  <td>{{ score.notes || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
     </section>

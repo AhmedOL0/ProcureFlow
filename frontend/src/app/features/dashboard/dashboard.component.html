@@ -53,15 +53,25 @@
       </div>
     }
     @if (financeFailed()) {
-      <p class="dashboard-note" role="status">Financial figures did not load — operational data above is unaffected.</p>
+      <p class="dashboard-note" role="status">
+        Financial figures did not load — operational data above is unaffected.
+      </p>
     }
 
     @if (approvalKpis(); as flow) {
       <div class="dashboard-flow" role="region" aria-label="Approval flow">
-        <span class="dashboard-flow__item"><strong class="pf-data-mono">{{ flow.pending }}</strong> pending</span>
-        <span class="dashboard-flow__item"><strong class="pf-data-mono">{{ flow.decided }}</strong> decided</span>
-        <span class="dashboard-flow__item">avg lead <strong>{{ leadHours(flow.avgLeadHours) }}</strong></span>
-        <span class="dashboard-flow__item">max lead <strong>{{ leadHours(flow.maxLeadHours) }}</strong></span>
+        <span class="dashboard-flow__item"
+          ><strong class="pf-data-mono">{{ flow.pending }}</strong> pending</span
+        >
+        <span class="dashboard-flow__item"
+          ><strong class="pf-data-mono">{{ flow.decided }}</strong> decided</span
+        >
+        <span class="dashboard-flow__item"
+          >avg lead <strong>{{ leadHours(flow.avgLeadHours) }}</strong></span
+        >
+        <span class="dashboard-flow__item"
+          >max lead <strong>{{ leadHours(flow.maxLeadHours) }}</strong></span
+        >
         <a routerLink="/analytics">Analytics</a>
       </div>
     }
@@ -81,7 +91,9 @@
                 <div class="dashboard-fill" [style.height.%]="trendWidth(month.orderedMinor)"></div>
               </div>
               <span class="dashboard-trend__label pf-data-mono">{{ month.period }}</span>
-              <span class="dashboard-trend__value pf-data-mono">{{ formatMinor(month.orderedMinor) }}</span>
+              <span class="dashboard-trend__value pf-data-mono">{{
+                formatMinor(month.orderedMinor)
+              }}</span>
             </li>
           }
         </ul>

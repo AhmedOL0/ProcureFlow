@@ -48,5 +48,7 @@
   display: flex;
   gap: var(--pf-space-sm);
   align-items: center;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }

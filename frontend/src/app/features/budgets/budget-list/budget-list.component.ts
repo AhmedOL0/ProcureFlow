@@ -33,9 +33,20 @@ import { BudgetFormDialogComponent } from '../dialogs/budget-form.dialog';
 @Component({
   selector: 'app-budget-list',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatChipsModule, MatFormFieldModule,
-    MatInputModule, MatTableModule, MatSortModule, MatPaginatorModule, MatProgressSpinnerModule,
-    LucideAngularModule, PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatChipsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './budget-list.component.html',
   styleUrl: './budget-list.component.scss',
@@ -173,7 +184,10 @@ function compareBudgets(sort: Sort): (a: Budget, b: Budget) => number {
       return 0;
     }
     if (sort.active === 'pot') {
-      return `${a.period ?? ''} ${a.name ?? ''}`.localeCompare(`${b.period ?? ''} ${b.name ?? ''}`) * direction;
+      return (
+        `${a.period ?? ''} ${a.name ?? ''}`.localeCompare(`${b.period ?? ''} ${b.name ?? ''}`) *
+        direction
+      );
     }
     return (numeric(a, sort.active) - numeric(b, sort.active)) * direction;
   };

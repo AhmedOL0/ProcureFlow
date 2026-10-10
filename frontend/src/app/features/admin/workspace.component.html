@@ -23,7 +23,9 @@
   } @else if (tenant(); as workspace) {
     <section class="admin-card" aria-label="Workspace">
       <h2>Workspace</h2>
-      <p class="admin-line">Slug <strong class="pf-data-mono">{{ workspace.slug }}</strong></p>
+      <p class="admin-line">
+        Slug <strong class="pf-data-mono">{{ workspace.slug }}</strong>
+      </p>
       @if (canManageTenant) {
         <div class="admin-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">

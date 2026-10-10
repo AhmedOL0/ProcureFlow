@@ -20,7 +20,13 @@ export interface PromptDialogData {
 /** Single labeled text input with confirm/cancel. Labeled, focusable, testable. */
 @Component({
   selector: 'pf-prompt-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+  ],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <mat-dialog-content>
@@ -29,7 +35,12 @@ export interface PromptDialogData {
       }
       <mat-form-field appearance="outline" class="pf-prompt__field">
         <mat-label>{{ data.label }}</mat-label>
-        <input matInput [formControl]="value" [type]="data.secret ? 'password' : 'text'" cdkFocusInitial />
+        <input
+          matInput
+          [formControl]="value"
+          [type]="data.secret ? 'password' : 'text'"
+          cdkFocusInitial
+        />
         @if (value.hasError('required') && value.touched) {
           <mat-error>A value is required.</mat-error>
         }

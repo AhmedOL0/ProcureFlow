@@ -31,7 +31,9 @@
       <div slot="actions">
         @if (canWrite) {
           @if (canSend()) {
-            <button mat-flat-button color="primary" (click)="send()" [disabled]="acting()">Send order</button>
+            <button mat-flat-button color="primary" (click)="send()" [disabled]="acting()">
+              Send order
+            </button>
           }
           @if (canReceive()) {
             <button mat-flat-button color="primary" (click)="openReceive()" [disabled]="acting()">
@@ -39,10 +41,14 @@
             </button>
           }
           @if (canClose()) {
-            <button mat-flat-button color="primary" (click)="close()" [disabled]="acting()">Close order</button>
+            <button mat-flat-button color="primary" (click)="close()" [disabled]="acting()">
+              Close order
+            </button>
           }
           @if (canCancel()) {
-            <button mat-stroked-button color="warn" (click)="cancel()" [disabled]="acting()">Cancel</button>
+            <button mat-stroked-button color="warn" (click)="cancel()" [disabled]="acting()">
+              Cancel
+            </button>
           }
         }
       </div>
@@ -50,15 +56,22 @@
 
     <div class="order-head-row">
       <pf-status-badge [status]="current.status" />
-      <span class="order-total pf-data-mono">{{ formatMinor(current.totalMinor, current.currency) }}</span>
+      <span class="order-total pf-data-mono">{{
+        formatMinor(current.totalMinor, current.currency)
+      }}</span>
       @if (current.requestId) {
-        <a class="order-link" [routerLink]="['/requests', current.requestId]">Originating request</a>
+        <a class="order-link" [routerLink]="['/requests', current.requestId]"
+          >Originating request</a
+        >
       }
     </div>
 
     <section class="order-card" aria-label="Lines">
       <div class="order-card__head">
-        <h2>Lines ({{ (current.lines ?? []).length }}) — {{ receivedTotal() }} of {{ orderedTotal() }} received</h2>
+        <h2>
+          Lines ({{ (current.lines ?? []).length }}) — {{ receivedTotal() }} of
+          {{ orderedTotal() }} received
+        </h2>
       </div>
       @if ((current.lines ?? []).length === 0) {
         <pf-empty-state
@@ -68,30 +81,34 @@
         />
       } @else {
         <div class="order-table-scroll">
-        <table class="pf-table" aria-label="Order lines">
-          <thead>
-            <tr>
-              <th scope="col">Description</th>
-              <th scope="col" class="pf-num">Ordered</th>
-              <th scope="col" class="pf-num">Received</th>
-              <th scope="col" class="pf-num">Unit price</th>
-              <th scope="col" class="pf-num">Line total</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (line of current.lines ?? []; track line.id) {
+          <table class="pf-table" aria-label="Order lines">
+            <thead>
               <tr>
-                <td>{{ line.description }}</td>
-                <td class="pf-num pf-data-mono">{{ line.quantity }}</td>
-                <td class="pf-num pf-data-mono">{{ line.receivedQty ?? 0 }}</td>
-                <td class="pf-num pf-data-mono">{{ formatMinor(line.unitPriceMinor, line.currency) }}</td>
-                <td class="pf-num pf-data-mono">
-                  {{ formatMinor((line.quantity ?? 0) * (line.unitPriceMinor ?? 0), line.currency) }}
-                </td>
+                <th scope="col">Description</th>
+                <th scope="col" class="pf-num">Ordered</th>
+                <th scope="col" class="pf-num">Received</th>
+                <th scope="col" class="pf-num">Unit price</th>
+                <th scope="col" class="pf-num">Line total</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (line of current.lines ?? []; track line.id) {
+                <tr>
+                  <td>{{ line.description }}</td>
+                  <td class="pf-num pf-data-mono">{{ line.quantity }}</td>
+                  <td class="pf-num pf-data-mono">{{ line.receivedQty ?? 0 }}</td>
+                  <td class="pf-num pf-data-mono">
+                    {{ formatMinor(line.unitPriceMinor, line.currency) }}
+                  </td>
+                  <td class="pf-num pf-data-mono">
+                    {{
+                      formatMinor((line.quantity ?? 0) * (line.unitPriceMinor ?? 0), line.currency)
+                    }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
     </section>

@@ -41,12 +41,17 @@
           All
         </mat-chip-option>
         @for (status of statuses; track status) {
-          <mat-chip-option [selected]="statusFilter.value === status" (click)="setStatusFilter(status)">
+          <mat-chip-option
+            [selected]="statusFilter.value === status"
+            (click)="setStatusFilter(status)"
+          >
             {{ status }} ({{ counts().get(status) ?? 0 }})
           </mat-chip-option>
         }
       </mat-chip-set>
-      <span class="request-count">Showing {{ pageRows().length }} of {{ filtered().length }} requests</span>
+      <span class="request-count"
+        >Showing {{ pageRows().length }} of {{ filtered().length }} requests</span
+      >
     </div>
 
     @if (loading()) {

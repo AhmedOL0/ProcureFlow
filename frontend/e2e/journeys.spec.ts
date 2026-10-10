@@ -8,21 +8,38 @@ import { expect, Page, test } from '@playwright/test';
  */
 
 const ALL_AUTHORITIES = [
-  'tenant:admin', 'tenant:manage', 'user:manage', 'department:manage',
-  'supplier:read', 'supplier:write', 'procurement:request', 'procurement:approve',
-  'budget:read', 'budget:manage', 'order:read', 'order:write',
-  'invoice:read', 'invoice:write', 'analytics:read', 'ai:use', 'audit:read',
+  'tenant:admin',
+  'tenant:manage',
+  'user:manage',
+  'department:manage',
+  'supplier:read',
+  'supplier:write',
+  'procurement:request',
+  'procurement:approve',
+  'budget:read',
+  'budget:manage',
+  'order:read',
+  'order:write',
+  'invoice:read',
+  'invoice:write',
+  'analytics:read',
+  'ai:use',
+  'audit:read',
 ];
 
 function fakeJwt(): string {
-  const b64 = (value: object): string =>
-    Buffer.from(JSON.stringify(value)).toString('base64url');
+  const b64 = (value: object): string => Buffer.from(JSON.stringify(value)).toString('base64url');
   return `${b64({ alg: 'HS512' })}.${b64({ authorities: ALL_AUTHORITIES })}.sig`;
 }
 
 const ME = {
-  id: 'u-admin', email: 'boss@acme.test', firstName: '', lastName: '',
-  status: 'ACTIVE', tenantSlug: 'acme', roles: ['TENANT_ADMIN'],
+  id: 'u-admin',
+  email: 'boss@acme.test',
+  firstName: '',
+  lastName: '',
+  status: 'ACTIVE',
+  tenantSlug: 'acme',
+  roles: ['TENANT_ADMIN'],
 };
 
 interface Stub {
@@ -75,24 +92,41 @@ function baseStubs(state: {
 }): Stub[] {
   const token = fakeJwt();
   return [
-    { method: 'POST', match: '/auth/login', body: { accessToken: token, refreshToken: 'r', expiresInSeconds: 900, user: ME } },
+    {
+      method: 'POST',
+      match: '/auth/login',
+      body: { accessToken: token, refreshToken: 'r', expiresInSeconds: 900, user: ME },
+    },
     { method: 'GET', match: '/auth/me', body: ME },
-    { method: 'POST', match: '/auth/refresh', status: 401, body: { code: 'INVALID_REFRESH_TOKEN', message: 'x' } },
-    { method: 'POST', match: '/auth/forgot-password', body: { message: 'If an account exists for that address, a reset link is on its way.' } },
+    {
+      method: 'POST',
+      match: '/auth/refresh',
+      status: 401,
+      body: { code: 'INVALID_REFRESH_TOKEN', message: 'x' },
+    },
+    {
+      method: 'POST',
+      match: '/auth/forgot-password',
+      body: { message: 'If an account exists for that address, a reset link is on its way.' },
+    },
     { method: 'POST', match: '/auth/reset-password', status: 204, body: {} },
     { method: 'POST', match: '/auth/change-password', status: 204, body: {} },
     { method: 'GET', match: '/suppliers', body: state.suppliers },
     { method: 'GET', match: '/orders', body: state.orders },
     { method: 'GET', match: '/supplier-categories', body: [] },
     {
-      method: 'GET', match: '/users/me', body: ME,
+      method: 'GET',
+      match: '/users/me',
+      body: ME,
     },
     {
-      method: 'PATCH', match: '/users/me',
+      method: 'PATCH',
+      match: '/users/me',
       handle: (_url, payload) => ({ status: 200, body: { ...ME, ...payload } }),
     },
     {
-      method: 'GET', match: '/purchase-requests',
+      method: 'GET',
+      match: '/purchase-requests',
       handle: (url) => {
         const status = new URL(url).searchParams.get('status');
         const rows = status ? state.requests.filter((r) => r['status'] === status) : state.requests;
@@ -100,11 +134,17 @@ function baseStubs(state: {
       },
     },
     {
-      method: 'POST', match: '/purchase-requests',
+      method: 'POST',
+      match: '/purchase-requests',
       handle: (_url, payload) => {
         const created = {
-          id: `r-${state.requests.length + 1}`, status: 'DRAFT', totalMinor: 0,
-          requesterId: 'u-admin', createdAt: '2026-10-10T10:00:00Z', items: [], ...payload,
+          id: `r-${state.requests.length + 1}`,
+          status: 'DRAFT',
+          totalMinor: 0,
+          requesterId: 'u-admin',
+          createdAt: '2026-10-10T10:00:00Z',
+          items: [],
+          ...payload,
         };
         state.requests.push(created);
         return { status: 201, body: created };
@@ -116,7 +156,12 @@ function baseStubs(state: {
 test.describe('critical journeys', () => {
   test('expired session returns to login', async ({ page }) => {
     await stubApi(page, [
-      { method: 'GET', match: '/auth/me', status: 401, body: { code: 'UNAUTHENTICATED', message: 'x' } },
+      {
+        method: 'GET',
+        match: '/auth/me',
+        status: 401,
+        body: { code: 'UNAUTHENTICATED', message: 'x' },
+      },
       { method: 'POST', match: '/auth/refresh', status: 401, body: { code: 'x', message: 'x' } },
     ]);
     await page.goto('/dashboard');
@@ -124,10 +169,19 @@ test.describe('critical journeys', () => {
   });
 
   test('sign in lands on the overview', async ({ page }) => {
-    await stubApi(page, baseStubs({
-      suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
-      departments: [], users: [], notifications: [],
-    }));
+    await stubApi(
+      page,
+      baseStubs({
+        suppliers: [],
+        requests: [],
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
+      }),
+    );
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
     await page.getByLabel('Password').fill('correct-horse-123');
@@ -140,14 +194,21 @@ test.describe('critical journeys', () => {
     const suppliers: Record<string, unknown>[] = [];
     await stubApi(page, [
       ...baseStubs({
-        suppliers, requests: [], budgets: [], orders: [], invoices: [],
-        departments: [], users: [], notifications: [],
+        suppliers,
+        requests: [],
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
       }),
       { method: 'GET', match: '/suppliers', body: suppliers },
       { method: 'GET', match: '/contacts', body: [] },
       { method: 'GET', match: '/performances', body: [] },
       {
-        method: 'POST', match: '/suppliers',
+        method: 'POST',
+        match: '/suppliers',
         handle: (_url, payload) => {
           const created = { id: 's-1', status: 'ACTIVE', ...payload };
           suppliers.push(created);
@@ -174,29 +235,45 @@ test.describe('critical journeys', () => {
     let decision: Record<string, unknown> | null = null;
     await stubApi(page, [
       ...baseStubs({
-        suppliers: [], requests, budgets: [], orders: [], invoices: [],
-        departments: [], users: [], notifications: [],
+        suppliers: [],
+        requests,
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
       }),
       {
-        method: 'POST', match: '/purchase-requests/r-1/submit',
+        method: 'POST',
+        match: '/purchase-requests/r-1/submit',
         handle: () => {
           requests[0]['status'] = 'SUBMITTED';
           return { status: 200, body: requests[0] };
         },
       },
       {
-        method: 'GET', match: '/purchase-requests/r-1',
+        method: 'GET',
+        match: '/purchase-requests/r-1',
         handle: () => ({ status: 200, body: requests[0] }),
       },
       {
-        method: 'GET', match: '/approvals/decisions',
+        method: 'GET',
+        match: '/approvals/decisions',
         handle: () => (decision ? { status: 200, body: decision } : { status: 404, body: {} }),
       },
       { method: 'GET', match: '/approvals/state', status: 404, body: {} },
       {
-        method: 'POST', match: '/approvals/decisions',
+        method: 'POST',
+        match: '/approvals/decisions',
         handle: (_url, payload) => {
-          decision = { id: 'd-1', requestId: 'r-1', deciderId: 'u-admin', createdAt: '2026-10-10T11:00:00Z', ...payload };
+          decision = {
+            id: 'd-1',
+            requestId: 'r-1',
+            deciderId: 'u-admin',
+            createdAt: '2026-10-10T11:00:00Z',
+            ...payload,
+          };
           requests[0]['status'] = 'APPROVED';
           return { status: 201, body: decision };
         },
@@ -217,26 +294,41 @@ test.describe('critical journeys', () => {
     await expect(page).toHaveURL(/\/requests\/r-1/);
 
     await page.getByRole('button', { name: 'Submit for approval' }).click();
-    await expect(page.locator('pf-status-badge', { hasText: 'Submitted' }).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('pf-status-badge', { hasText: 'Submitted' }).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     await page.getByRole('button', { name: 'Approve' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Approve' }).click();
-    await expect(page.locator('pf-status-badge', { hasText: 'Approved' }).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('pf-status-badge', { hasText: 'Approved' }).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('budget pot creation lists the pot', async ({ page }) => {
     const budgets: Record<string, unknown>[] = [];
     await stubApi(page, [
       ...baseStubs({
-        suppliers: [], requests: [], budgets, orders: [], invoices: [],
-        departments: [], users: [], notifications: [],
+        suppliers: [],
+        requests: [],
+        budgets,
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
       }),
       { method: 'GET', match: '/budgets', body: budgets },
       {
-        method: 'POST', match: '/budgets',
+        method: 'POST',
+        match: '/budgets',
         handle: (_url, payload) => {
           const created = {
-            id: 'b-1', reservedMinor: 0, remainingMinor: payload['amountMinor'], currency: 'MAD', ...payload,
+            id: 'b-1',
+            reservedMinor: 0,
+            remainingMinor: payload['amountMinor'],
+            currency: 'MAD',
+            ...payload,
           };
           budgets.push(created);
           return { status: 201, body: created };
@@ -260,26 +352,52 @@ test.describe('critical journeys', () => {
 
   test('order send and invoice payment tracking', async ({ page }) => {
     const order: Record<string, unknown> = {
-      id: 'o-1', requestId: 'r-1', supplierId: 's-1', status: 'DRAFT',
-      currency: 'MAD', totalMinor: 300000,
-      lines: [{ id: 'l-1', description: 'Laptop', quantity: 2, receivedQty: 0, unitPriceMinor: 150000, currency: 'MAD' }],
+      id: 'o-1',
+      requestId: 'r-1',
+      supplierId: 's-1',
+      status: 'DRAFT',
+      currency: 'MAD',
+      totalMinor: 300000,
+      lines: [
+        {
+          id: 'l-1',
+          description: 'Laptop',
+          quantity: 2,
+          receivedQty: 0,
+          unitPriceMinor: 150000,
+          currency: 'MAD',
+        },
+      ],
     };
     const invoice: Record<string, unknown> = {
-      id: 'i-1', orderId: 'o-1', number: 'INV-1', status: 'UNPAID',
-      totalMinor: 300000, paidMinor: 0, currency: 'MAD',
+      id: 'i-1',
+      orderId: 'o-1',
+      number: 'INV-1',
+      status: 'UNPAID',
+      totalMinor: 300000,
+      paidMinor: 0,
+      currency: 'MAD',
     };
     await stubApi(page, [
       ...baseStubs({
-        suppliers: [], requests: [], budgets: [], orders: [order], invoices: [invoice],
-        departments: [], users: [], notifications: [],
+        suppliers: [],
+        requests: [],
+        budgets: [],
+        orders: [order],
+        invoices: [invoice],
+        departments: [],
+        users: [],
+        notifications: [],
       }),
       { method: 'GET', match: '/purchase-orders/o-1', body: order },
       {
-        method: 'GET', match: '/suppliers/s-1',
+        method: 'GET',
+        match: '/suppliers/s-1',
         body: { id: 's-1', name: 'Acme Supplies', status: 'ACTIVE' },
       },
       {
-        method: 'POST', match: '/purchase-orders/o-1/send',
+        method: 'POST',
+        match: '/purchase-orders/o-1/send',
         handle: () => {
           order['status'] = 'SENT';
           return { status: 200, body: order };
@@ -287,7 +405,8 @@ test.describe('critical journeys', () => {
       },
       { method: 'GET', match: '/invoices/i-1', body: invoice },
       {
-        method: 'POST', match: '/invoices/i-1/payments',
+        method: 'POST',
+        match: '/invoices/i-1/payments',
         handle: () => {
           invoice['status'] = 'PAID';
           invoice['paidMinor'] = 300000;
@@ -303,14 +422,18 @@ test.describe('critical journeys', () => {
 
     await page.goto('/orders/o-1');
     await page.getByRole('button', { name: 'Send order' }).click();
-    await expect(page.locator('pf-status-badge', { hasText: 'Sent' }).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('pf-status-badge', { hasText: 'Sent' }).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     await page.goto('/invoices/i-1');
     await page.getByRole('button', { name: /record payment/i }).click();
     const payDialog = page.getByRole('dialog');
     await payDialog.getByLabel(/amount/i).fill('3000');
     await payDialog.getByRole('button', { name: /record|pay/i }).click();
-    await expect(page.locator('pf-status-badge', { hasText: 'Paid' }).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('pf-status-badge', { hasText: 'Paid' }).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('organization administration creates department and user', async ({ page }) => {
@@ -318,14 +441,21 @@ test.describe('critical journeys', () => {
     const users: Record<string, unknown>[] = [{ ...ME }];
     await stubApi(page, [
       ...baseStubs({
-        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
-        departments, users, notifications: [],
+        suppliers: [],
+        requests: [],
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments,
+        users,
+        notifications: [],
       }),
       { method: 'GET', match: '/departments', body: departments },
       { method: 'GET', match: '/memberships', body: [] },
       { method: 'GET', match: '/users', body: users },
       {
-        method: 'POST', match: '/departments',
+        method: 'POST',
+        match: '/departments',
         handle: (_url, payload) => {
           const created = { id: 'dep-1', ...payload };
           departments.push(created);
@@ -333,7 +463,8 @@ test.describe('critical journeys', () => {
         },
       },
       {
-        method: 'POST', match: '/api/v1/users',
+        method: 'POST',
+        match: '/api/v1/users',
         handle: (_url, payload) => {
           const created = { id: 'u-2', status: 'ACTIVE', tenantSlug: 'acme', ...payload };
           users.push(created);
@@ -365,23 +496,40 @@ test.describe('critical journeys', () => {
   test('analytics renders server aggregates', async ({ page }) => {
     await stubApi(page, [
       ...baseStubs({
-        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
-        departments: [], users: [], notifications: [],
+        suppliers: [],
+        requests: [],
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
       }),
       {
-        method: 'GET', match: '/analytics/spend',
+        method: 'GET',
+        match: '/analytics/spend',
         body: {
-          requestedMinor: 100000, orderedMinor: 80000, invoicedMinor: 50000, paidMinor: 20000,
+          requestedMinor: 100000,
+          orderedMinor: 80000,
+          invoicedMinor: 50000,
+          paidMinor: 20000,
           byCategory: [{ category: 'Cloud', amountMinor: 80000 }],
-          byPeriod: [{ period: '2026-10', orderedMinor: 80000, invoicedMinor: 50000, paidMinor: 20000 }],
+          byPeriod: [
+            { period: '2026-10', orderedMinor: 80000, invoicedMinor: 50000, paidMinor: 20000 },
+          ],
         },
       },
       { method: 'GET', match: '/analytics/suppliers', body: [] },
       {
-        method: 'GET', match: '/analytics/approvals',
+        method: 'GET',
+        match: '/analytics/approvals',
         body: { pending: 2, decided: 5, avgLeadHours: 3.5, maxLeadHours: 9 },
       },
-      { method: 'GET', match: '/ai/usage', body: { calls: 0, promptTokens: 0, completionTokens: 0, byFeature: [] } },
+      {
+        method: 'GET',
+        match: '/ai/usage',
+        body: { calls: 0, promptTokens: 0, completionTokens: 0, byFeature: [] },
+      },
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
@@ -397,17 +545,35 @@ test.describe('critical journeys', () => {
     let chatFails = false;
     await stubApi(page, [
       ...baseStubs({
-        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
-        departments: [], users: [], notifications: [],
+        suppliers: [],
+        requests: [],
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
       }),
       {
-        method: 'POST', match: '/ai/chat',
-        handle: () => chatFails
-          ? { status: 503, body: { code: 'AI_DISABLED', message: 'AI features are disabled (AI_ENABLED=false)' } }
-          : {
-            status: 200,
-            body: { answer: 'Spend is flat.', citations: ['orderedMinor=0 via GET /analytics/spend'], model: 'stub' },
-          },
+        method: 'POST',
+        match: '/ai/chat',
+        handle: () =>
+          chatFails
+            ? {
+                status: 503,
+                body: {
+                  code: 'AI_DISABLED',
+                  message: 'AI features are disabled (AI_ENABLED=false)',
+                },
+              }
+            : {
+                status: 200,
+                body: {
+                  answer: 'Spend is flat.',
+                  citations: ['orderedMinor=0 via GET /analytics/spend'],
+                  model: 'stub',
+                },
+              },
       },
     ]);
     await page.goto('/login');
@@ -430,16 +596,30 @@ test.describe('critical journeys', () => {
 
   test('notifications mark-read and settings save', async ({ page }) => {
     const notifications: Record<string, unknown>[] = [
-      { id: 'n-1', type: 'REQUEST_SUBMITTED', title: 'Submitted', body: 'A request awaits.', read: false, createdAt: '2026-10-10T10:00:00Z' },
+      {
+        id: 'n-1',
+        type: 'REQUEST_SUBMITTED',
+        title: 'Submitted',
+        body: 'A request awaits.',
+        read: false,
+        createdAt: '2026-10-10T10:00:00Z',
+      },
     ];
     await stubApi(page, [
       ...baseStubs({
-        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
-        departments: [], users: [], notifications,
+        suppliers: [],
+        requests: [],
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications,
       }),
       { method: 'GET', match: '/notifications', body: notifications },
       {
-        method: 'PATCH', match: '/notifications/n-1/read',
+        method: 'PATCH',
+        match: '/notifications/n-1/read',
         handle: () => {
           notifications[0]['read'] = true;
           return { status: 200, body: notifications[0] };
@@ -447,7 +627,8 @@ test.describe('critical journeys', () => {
       },
       { method: 'GET', match: '/users/me', body: ME },
       {
-        method: 'PATCH', match: '/users/me',
+        method: 'PATCH',
+        match: '/users/me',
         handle: (_url, payload) => ({ status: 200, body: { ...ME, ...payload } }),
       },
     ]);

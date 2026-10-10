@@ -22,8 +22,15 @@ import { parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
 @Component({
   selector: 'app-reset-password',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule,
-    MatInputModule, MatProgressSpinnerModule, LucideAngularModule,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
   ],
   templateUrl: './reset-password.component.html',
   styleUrl: './forgot-password.component.scss',
@@ -51,8 +58,7 @@ export class ResetPasswordComponent {
   constructor() {
     this.form.valueChanges.subscribe(() => {
       const confirm = this.form.controls.confirmPassword;
-      if (confirm.hasError('mismatch')
-        && this.form.controls.newPassword.value === confirm.value) {
+      if (confirm.hasError('mismatch') && this.form.controls.newPassword.value === confirm.value) {
         confirm.setErrors(null);
       }
     });

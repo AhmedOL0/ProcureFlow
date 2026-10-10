@@ -5,7 +5,9 @@
       <mat-label>Sent order</mat-label>
       <mat-select [formControl]="orderControl">
         @for (order of candidates(); track order.id) {
-          <mat-option [value]="order.id">{{ order.id?.slice(0, 8) }}… · {{ order.status }}</mat-option>
+          <mat-option [value]="order.id"
+            >{{ order.id?.slice(0, 8) }}… · {{ order.status }}</mat-option
+          >
         }
       </mat-select>
       <mat-hint>Only sent orders can be invoiced.</mat-hint>

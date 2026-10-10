@@ -15,8 +15,13 @@ import { OrganizationService, Tenant } from './organization.service';
 @Component({
   selector: 'app-workspace',
   imports: [
-    ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatProgressSpinnerModule, PageHeaderComponent, ErrorStateComponent,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    PageHeaderComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './workspace.component.html',
   styleUrl: './admin-cards.scss',
@@ -32,7 +37,10 @@ export class WorkspaceComponent {
   protected readonly tenant = signal<Tenant | null>(null);
   protected readonly notice = signal<string | null>(null);
 
-  readonly tenantName = new FormControl('', { nonNullable: true, validators: [Validators.required] });
+  readonly tenantName = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
 
   constructor() {
     this.reload();

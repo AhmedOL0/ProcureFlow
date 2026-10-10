@@ -42,7 +42,9 @@
             <li class="admin-list__row">
               <span>
                 <button mat-button (click)="selectLane(lane)">{{ lane.name }}</button>
-                <span class="admin-muted">{{ laneRange(lane) }} · escalates after {{ lane.escalateAfterDays ?? 3 }}d</span>
+                <span class="admin-muted"
+                  >{{ laneRange(lane) }} · escalates after {{ lane.escalateAfterDays ?? 3 }}d</span
+                >
               </span>
               <span class="admin-list__actions">
                 <mat-slide-toggle
@@ -70,7 +72,12 @@
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Max amount (blank = open)</mat-label>
-            <input matInput formControlName="maxAmount" inputmode="decimal" placeholder="50000.00" />
+            <input
+              matInput
+              formControlName="maxAmount"
+              inputmode="decimal"
+              placeholder="50000.00"
+            />
             @if (laneForm.controls.maxAmount.touched && laneForm.controls.maxAmount.invalid) {
               <mat-error>Enter a number with up to 2 decimals.</mat-error>
             }
@@ -78,11 +85,16 @@
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Escalate after (days)</mat-label>
             <input matInput formControlName="escalateAfterDays" inputmode="numeric" />
-            @if (laneForm.controls.escalateAfterDays.touched && laneForm.controls.escalateAfterDays.invalid) {
+            @if (
+              laneForm.controls.escalateAfterDays.touched &&
+              laneForm.controls.escalateAfterDays.invalid
+            ) {
               <mat-error>Enter whole days.</mat-error>
             }
           </mat-form-field>
-          <button mat-flat-button color="primary" (click)="createLane()" [disabled]="busy()">Create lane</button>
+          <button mat-flat-button color="primary" (click)="createLane()" [disabled]="busy()">
+            Create lane
+          </button>
         </div>
       }
     </section>
@@ -132,14 +144,22 @@
     <section class="admin-card" aria-label="Delegations">
       <h2>Delegations ({{ delegations().length }})</h2>
       @if (delegations().length === 0) {
-        <p class="admin-muted">No active delegations. Delegates decide exactly as the delegator could, until expiry.</p>
+        <p class="admin-muted">
+          No active delegations. Delegates decide exactly as the delegator could, until expiry.
+        </p>
       } @else {
         <ul class="admin-list">
           @for (delegation of delegations(); track delegation.id) {
             <li class="admin-list__row">
-              <span>{{ resolveUser(delegation.delegatorId) }} → {{ resolveUser(delegation.delegateId) }} · until {{ formatInstant(delegation.endsAt) }}</span>
+              <span
+                >{{ resolveUser(delegation.delegatorId) }} →
+                {{ resolveUser(delegation.delegateId) }} · until
+                {{ formatInstant(delegation.endsAt) }}</span
+              >
               @if (canApprove) {
-                <button mat-button color="warn" (click)="revokeDelegation(delegation)">Revoke</button>
+                <button mat-button color="warn" (click)="revokeDelegation(delegation)">
+                  Revoke
+                </button>
               }
             </li>
           }

@@ -49,7 +49,9 @@
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
-            <p class="copilot-ai-tag">AI-generated interpretation — verify against the citations below</p>
+            <p class="copilot-ai-tag">
+              AI-generated interpretation — verify against the citations below
+            </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">
@@ -81,7 +83,9 @@
           <mat-label>Period (blank = overall)</mat-label>
           <input matInput type="month" [formControl]="periodBox" />
         </mat-form-field>
-        <button mat-flat-button color="primary" (click)="explain()" [disabled]="busy()">Explain</button>
+        <button mat-flat-button color="primary" (click)="explain()" [disabled]="busy()">
+          Explain
+        </button>
       </div>
       <div class="copilot-result">
         @if (busy()) {
@@ -99,7 +103,9 @@
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
-            <p class="copilot-ai-tag">AI-generated interpretation — verify against the citations below</p>
+            <p class="copilot-ai-tag">
+              AI-generated interpretation — verify against the citations below
+            </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">
@@ -176,8 +182,8 @@
                 }
               </ul>
               <p class="copilot-muted">
-                Items stay listed for transcription — supplier links need workspace
-                validation the model cannot provide.
+                Items stay listed for transcription — supplier links need workspace validation the
+                model cannot provide.
               </p>
             }
             @if (canRequest && !draftSaved()) {
@@ -252,7 +258,9 @@
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
-            <p class="copilot-ai-tag">AI-generated interpretation — verify against the citations below</p>
+            <p class="copilot-ai-tag">
+              AI-generated interpretation — verify against the citations below
+            </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">
