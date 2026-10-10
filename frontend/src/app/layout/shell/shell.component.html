@@ -8,7 +8,7 @@
   >
     <div class="shell__brand">ProcureFlow</div>
     <nav class="shell__nav" aria-label="Primary">
-      @for (section of nav; track section.label) {
+      @for (section of visibleNav(); track section.label) {
         <div class="shell__section">{{ section.label }}</div>
         <mat-nav-list>
           @for (item of section.items; track item.url) {

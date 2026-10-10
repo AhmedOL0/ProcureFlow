@@ -1,7 +1,14 @@
-// ProcureFlow design tokens — translated from
-// stitch_procureflow_enterprise_saas_ui/procureflow_design_system/DESIGN.md
+// ProcureFlow design tokens — Obsidian Emerald system, translated from
+// stitch_procureflow_enterprise_saas_ui/obsidian_emerald_executive_procurement/DESIGN.md
 // into Angular Material + custom properties. One system: every component
 // consumes these tokens, never raw hex.
+//
+// Token names predate the re-theme (`pf-navy`, `pf-blue`); their values
+// are emerald now and the names stay so twenty components don't churn.
+// --pf-navy   = Deep Spruce Emerald #064E3B (rails, structural anchors)
+// --pf-blue   = Viridian Emerald #047857 (interactive: CTAs, links, active;
+//               emerald-700 so text/links hold 5:1 on white)
+// --pf-teal   = Copper-accent intelligence marker for AI surfaces
 @use '@angular/material' as mat;
 
 // Self-hosted Inter (variable, latin) so rendering is identical online,
@@ -31,48 +38,56 @@ html {
 
 // --- Brand & surface -------------------------------------------------
 :root {
-  --pf-navy: #142b4a; // nav rails, headings, structural containers
-  --pf-blue: #2563eb; // interactive only: CTAs, links, active states
-  --pf-blue-hover: #1d4ed8;
-  --pf-blue-active: #1e40af;
+  --pf-navy: #064e3b; // deep spruce: nav rails, structural anchors
+  --pf-blue: #047857; // viridian interactive: CTAs, links, active states
+  --pf-blue-hover: #065f46;
+  --pf-blue-active: #064e3b;
+  --pf-focus-ring: #059669; // 3.4:1 on white, focus indicators only
   --pf-teal: #0f766e; // machine-intelligence surfaces only
   --pf-teal-hover: #115e59;
-  --pf-canvas: #f5f7fa; // app backdrop
+  --pf-copper: #d97706; // intelligence accents: anomalies, predictions
+  --pf-copper-text: #92400e; // 7:1 on amber tint
+  --pf-copper-bg: #fffbeb;
+  --pf-copper-border: #fde68a;
+  --pf-canvas: #f8fafc; // glare-free slate underlay
   --pf-card: #ffffff;
-  --pf-text: #191c1e; // primary body text
+  --pf-text: #0f172a; // obsidian primary text
   --pf-slate: #475569; // secondary text, labels, timestamps
   --pf-muted-text: #475569; // alias: muted text keeps 4.6:1 on white
-  --pf-on-navy: #ffffff; // text on navy surfaces
-  --pf-on-navy-dim: #dbe4f3; // secondary text on navy
-  --pf-on-navy-faint: #9db1cc; // timestamps on navy
-  --pf-rail-active: #b2c7ee; // active rail marker on navy
+  --pf-on-navy: #ffffff; // text on spruce surfaces
+  --pf-on-navy-dim: #c7ddd3; // secondary text on spruce
+  --pf-on-navy-faint: #8fb3a4; // timestamps on spruce
+  --pf-rail-active: #6ee7b7; // active rail marker on spruce
   --pf-border: #e2e8f0; // grid rows, panel borders, inputs
   --pf-border-strong: #cbd5e1;
   --pf-header-bg: #f8fafc; // table headers
   --pf-row-hover: #f8fafc;
   --pf-row-border: #f1f5f9; // in-table row separators
+  --pf-selected-row: #ecfdf5; // selected-row tint
 
   // --- Semantic status (bg / text / border) --------------------------
-  --pf-success-bg: #f0fdf4;
-  --pf-success-text: #15803d;
-  --pf-success-border: #bbf7d0;
+  // Approved/compliant reads emerald, review reads copper-amber.
+  --pf-success-bg: #ecfdf5;
+  --pf-success-text: #065f46;
+  --pf-success-border: #a7f3d0;
   --pf-warning-bg: #fffbeb;
-  --pf-warning-text: #b45309;
+  --pf-warning-text: #92400e;
   --pf-warning-border: #fde68a;
   --pf-danger-bg: #fef2f2;
-  --pf-danger-text: #b91c1c;
+  --pf-danger-text: #991b1b;
   --pf-danger-border: #fecaca;
   --pf-info-bg: #f0f9ff;
   --pf-info-text: #0369a1;
   --pf-info-border: #bae6fd;
   --pf-neutral-bg: #f1f5f9;
   --pf-neutral-text: #475569;
-  --pf-neutral-border: #cbd5e1;
+  --pf-neutral-border: #e2e8f0;
 
   // --- Shape & spacing (4px base) ------------------------------------
+  // Controls 6px, containers 8px, pills full — per the emerald spec.
   --pf-radius-sm: 4px;
-  --pf-radius-md: 8px;
-  --pf-radius-lg: 12px;
+  --pf-radius-md: 6px;
+  --pf-radius-lg: 8px;
   --pf-radius-pill: 9999px;  --pf-space-xs: 4px;
   --pf-space-sm: 8px;
   --pf-space-md: 12px;
@@ -96,10 +111,10 @@ html {
   --pf-label-md: 500 12px/16px var(--pf-font);
   --pf-label-sm: 600 11px/14px var(--pf-font);
 
-  // --- Elevation (restrained; borders do the separating) --------------
-  --pf-shadow-1: 0 1px 2px 0 rgb(20 43 74 / 0.04), 0 1px 3px 0 rgb(20 43 74 / 0.06);
-  --pf-shadow-2: 0 4px 6px -1px rgb(20 43 74 / 0.07), 0 2px 4px -2px rgb(20 43 74 / 0.05);
-  --pf-shadow-4: 0 20px 25px -5px rgb(20 43 74 / 0.1), 0 8px 10px -6px rgb(20 43 74 / 0.06);
+  // --- Elevation (architectural flat layering, obsidian-tinted) ------
+  --pf-shadow-1: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --pf-shadow-2: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -1px rgb(15 23 42 / 0.04);
+  --pf-shadow-4: 0 16px 32px -4px rgb(15 23 42 / 0.12), 0 4px 8px -2px rgb(15 23 42 / 0.04);
 
   // --- Material bridge: keep Material components on-palette ----------
   --mat-sys-primary: var(--pf-blue);
@@ -138,7 +153,7 @@ a {
 
 // Visible keyboard focus everywhere (Material leaves gaps on custom parts).
 :focus-visible {
-  outline: 2px solid var(--pf-blue);
+  outline: 2px solid var(--pf-focus-ring);
   outline-offset: 2px;
   border-radius: var(--pf-radius-sm);
 }
@@ -350,20 +365,21 @@ table.pf-table th.pf-num {
   border-radius: var(--pf-radius-pill);
 }
 
-// Machine-intelligence banner: navy container, teal markers, never
-// decorative — rendered only with real insight content behind it.
+// Machine-intelligence banner: copper/amber tier for predictions and
+// anomalies (emerald spec), rendered only with real insight content.
 .pf-ai-banner {
-  background: var(--pf-navy);
-  color: var(--pf-on-navy);
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid var(--pf-copper-border);
+  box-shadow: 0 0 0 1px rgb(217 119 6 / 0.15), var(--pf-shadow-1);
+  color: var(--pf-text);
   border-radius: var(--pf-radius-lg);
-  box-shadow: var(--pf-shadow-1);
   padding: var(--pf-space-lg);
   display: flex;
   gap: var(--pf-space-md);
   align-items: flex-start;
 }
 .pf-ai-banner__icon {
-  color: #5eead4;
+  color: var(--pf-copper);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -371,14 +387,14 @@ table.pf-table th.pf-num {
   font: var(--pf-label-sm);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #5eead4;
+  color: var(--pf-copper-text);
 }
 .pf-ai-banner__body {
   font: var(--pf-body-md);
   margin: var(--pf-space-xs) 0 0;
 }
 .pf-ai-banner__body strong {
-  color: #5eead4;
+  color: var(--pf-copper-text);
 }
 
 // Filter console: search + selects inside the table card, chips below.
