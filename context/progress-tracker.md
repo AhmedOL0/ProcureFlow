@@ -183,8 +183,11 @@ review, README/portfolio overhaul, demo workspace docs.
 
 ## Next up
 
-1. Rebuild backend from this branch and verify Account Settings loads
-   end to end (profile load + save, password change).
+1. Account Settings end to end: DONE 2026-10-10 — backend rebuilt from
+   this branch, `GET /users/me` answers 200, Settings page loads with
+   profile + password sections (screenshot in Temp); save/change flows
+   covered by AccountIT 16/16 on the merged tree. Label nit fixed
+   ("New password" overlapped the visibility toggle).
 2. Brevo live proof needs confirmed login email + SMTP-key provenance +
    a validated sender (currently 535 on auth).
 3. Beyond release: pagination envelopes, login/AI rate limits, inbox
