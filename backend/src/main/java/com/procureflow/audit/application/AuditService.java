@@ -5,7 +5,9 @@ import com.procureflow.audit.domain.AuditEvent;
 import com.procureflow.audit.infrastructure.AuditEventRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -74,9 +76,29 @@ public class AuditService {
             return null;
         }
         try {
-            return json.writeValueAsString(payload);
+            return json.writeValueAsString(redacted(payload));
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw ApiException.badRequest("AUDIT_PAYLOAD", "Audit payload is not serializable");
         }
+    }
+
+    /**
+     * Central sensitive-field guard. Producers are told to send plain maps,
+     * but a single stray {@code passwordHash} or bearer token must never
+     * reach a stored, admin-readable row — so keys naming secrets are masked
+     * here, one level deep, regardless of producer discipline.
+     */
+    static Map<String, Object> redacted(Map<String, Object> payload) {
+        LinkedHashMap<String, Object> safe = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : payload.entrySet()) {
+            String key = entry.getKey() == null ? "" : entry.getKey().toLowerCase(Locale.ROOT);
+            if (key.contains("password") || key.contains("token") || key.contains("secret")
+                    || key.contains("authorization") || key.contains("apikey") || key.contains("api_key")) {
+                safe.put(entry.getKey(), "[REDACTED]");
+            } else {
+                safe.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return safe;
     }
 }

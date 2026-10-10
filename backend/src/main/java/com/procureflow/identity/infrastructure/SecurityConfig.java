@@ -44,6 +44,9 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(
             HttpSecurity http, JwtAuthenticationFilter jwtFilter, ObjectMapper objectMapper) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers
+                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+                        .frameOptions(frame -> frame.deny()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(jsonEntryPoint(objectMapper, HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED"))
