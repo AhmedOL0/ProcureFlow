@@ -157,6 +157,12 @@ contracts and verified live. Awaiting the next phase.
   Workspace/Users/Departments/Policies, My Requests, page-map rail with
   permission-aware entries. All live-verified with screenshots.
 
+- Account management backend (`feature/account-management` → `main`):
+  profile edits (self + admin, names only), self change-password, helpdesk
+  reset, email-link reset via Brevo SMTP behind a MailPort (log-mode
+  default), DB-backed throttling, atomic single-use tokens. 16× AccountIT,
+  full backend verify green (113 IT).
+
 ## Next up (Phase 9+)
 
 1. Merge the Phase 8 PR with CI green.

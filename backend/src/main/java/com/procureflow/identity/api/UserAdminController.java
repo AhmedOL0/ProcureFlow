@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,6 +42,13 @@ public class UserAdminController {
                 users.list(principal.tenantId()).stream().map(UserResponse::from).toList());
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Current workspace profile (self, no admin rights needed)")
+    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal AuthenticatedUser principal) {
+        return ResponseEntity.ok(UserResponse.from(users.get(principal.tenantId(), principal.userId())));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get one user of the current workspace")
     public ResponseEntity<UserResponse> get(
@@ -61,5 +69,35 @@ public class UserAdminController {
                         request.firstName(),
                         request.lastName(),
                         request.roleNames())));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Update a workspace profile (names only, null stays unchanged)")
+    public ResponseEntity<UserResponse> updateProfile(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(UserResponse.from(
+                users.updateProfile(principal.tenantId(), id, request.firstName(), request.lastName())));
+    }
+
+    @PatchMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Update the caller's own profile (names only, null stays unchanged)")
+    public ResponseEntity<UserResponse> updateOwnProfile(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(UserResponse.from(
+                users.updateProfile(principal.tenantId(), principal.userId(), request.firstName(), request.lastName())));
+    }
+
+    @PostMapping("/{id}/password")
+    @Operation(summary = "Helpdesk reset: set a workspace password, revoking all its sessions")
+    public ResponseEntity<Void> resetPassword(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody SetPasswordRequest request) {
+        users.resetPassword(principal.tenantId(), id, request.password());
+        return ResponseEntity.noContent().build();
     }
 }

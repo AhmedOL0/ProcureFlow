@@ -4,6 +4,7 @@ import com.procureflow.identity.application.AuthResult;
 import com.procureflow.identity.application.AuthService;
 import com.procureflow.identity.application.AuthenticatedUser;
 import com.procureflow.identity.application.Credentials;
+import com.procureflow.identity.application.PasswordResetService;
 import com.procureflow.identity.application.Registration;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,9 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService auth;
+    private final PasswordResetService passwordResets;
 
-    public AuthController(AuthService auth) {
+    public AuthController(AuthService auth, PasswordResetService passwordResets) {
         this.auth = auth;
+        this.passwordResets = passwordResets;
     }
 
     @PostMapping("/register")
@@ -66,6 +69,20 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/change-password")
+    @Operation(summary = "Change the caller's own password, revoking all its sessions")
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        if (principal == null) {
+            // /auth/** is public so that register/login stay reachable; this
+            // endpoint still requires a caller, translated here, not in XML.
+            throw com.procureflow.shared.web.ApiException.unauthorized("UNAUTHENTICATED", "Authentication required");
+        }
+        auth.changePassword(principal.userId(), principal.tenantId(), request.currentPassword(), request.newPassword());
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Current authenticated user")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal AuthenticatedUser principal) {
@@ -75,6 +92,20 @@ public class AuthController {
             throw com.procureflow.shared.web.ApiException.unauthorized("UNAUTHENTICATED", "Authentication required");
         }
         return ResponseEntity.ok(UserResponse.from(auth.me(principal.userId())));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Start an email-link password reset (always the same generic answer)")
+    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(
+                new MessageResponse(passwordResets.requestReset(request.email(), request.tenantSlug())));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Redeem a reset token for a new password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResets.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.noContent().build();
     }
 
     private AuthResponse toResponse(AuthResult result) {
