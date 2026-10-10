@@ -21,6 +21,26 @@ test('guests cannot open requests directly', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
+test('guests cannot open operations directly', async ({ page }) => {
+  for (const path of [
+    '/orders',
+    '/invoices',
+    '/budgets',
+    '/analytics',
+    '/notifications',
+    '/admin',
+    '/admin/users',
+    '/admin/departments',
+    '/admin/workflows',
+    '/admin/audit',
+    '/approvals',
+    '/requests/mine',
+  ]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/login/);
+  }
+});
+
 test('empty login shows validation, not a request', async ({ page }) => {
   await page.goto('/login');
   await page.getByRole('button', { name: 'Sign in' }).click();

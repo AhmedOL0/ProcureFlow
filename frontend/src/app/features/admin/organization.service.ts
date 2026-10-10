@@ -1,0 +1,85 @@
+import { inject, Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { environment } from '../../../environments/environment';
+import { components } from '../../../lib/api-types.gen';
+
+export type Tenant = components['schemas']['TenantResponse'];
+export type Department = components['schemas']['DepartmentResponse'];
+export type Membership = components['schemas']['MembershipResponse'];
+export type WorkspaceUser = components['schemas']['UserResponse'];
+export type AuditEvent = components['schemas']['AuditEventResponse'];
+
+/**
+ * Thin typed clients over organization and audit contracts. Role assignment
+ * happens at user creation only — the backend exposes no role-update
+ * endpoint, so this UI does not simulate one.
+ */
+@Injectable({ providedIn: 'root' })
+export class OrganizationService {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/api/v1`;
+
+  tenant(): Observable<Tenant> {
+    return this.http.get<Tenant>(`${this.base}/tenants/current`);
+  }
+
+  renameTenant(name: string): Observable<Tenant> {
+    return this.http.patch<Tenant>(`${this.base}/tenants/current`, { name });
+  }
+
+  departments(): Observable<Department[]> {
+    return this.http.get<Department[]>(`${this.base}/departments`);
+  }
+
+  createDepartment(name: string): Observable<Department> {
+    return this.http.post<Department>(`${this.base}/departments`, { name });
+  }
+
+  renameDepartment(id: string, name: string): Observable<Department> {
+    return this.http.patch<Department>(`${this.base}/departments/${id}`, { name });
+  }
+
+  deleteDepartment(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/departments/${id}`);
+  }
+
+  memberships(): Observable<Membership[]> {
+    return this.http.get<Membership[]>(`${this.base}/memberships`);
+  }
+
+  addMembership(userId: string, departmentId: string): Observable<Membership> {
+    return this.http.post<Membership>(`${this.base}/memberships`, { userId, departmentId });
+  }
+
+  removeMembership(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/memberships/${id}`);
+  }
+
+  users(): Observable<WorkspaceUser[]> {
+    return this.http.get<WorkspaceUser[]>(`${this.base}/users`);
+  }
+
+  createUser(body: components['schemas']['CreateUserRequest']): Observable<WorkspaceUser> {
+    return this.http.post<WorkspaceUser>(`${this.base}/users`, body);
+  }
+}
+
+/** Append-only trail reads. The backend offers no mutation endpoints. */
+@Injectable({ providedIn: 'root' })
+export class AuditService {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/api/v1`;
+
+  list(entityType: string | null, entityId: string | null): Observable<AuditEvent[]> {
+    let params = new HttpParams();
+    if (entityType) {
+      params = params.set('entityType', entityType);
+    }
+    if (entityId) {
+      params = params.set('entityId', entityId);
+    }
+    return this.http.get<AuditEvent[]>(`${this.base}/audit-events`, { params });
+  }
+}

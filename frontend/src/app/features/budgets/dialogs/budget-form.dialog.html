@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>New budget pot</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" (ngSubmit)="save()" class="dialog-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Pot name</mat-label>
+      <input matInput formControlName="name" placeholder="Engineering" />
+      @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+        <mat-error>A name is required.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Period</mat-label>
+      <input matInput type="month" formControlName="period" />
+      @if (form.controls.period.hasError('required') && form.controls.period.touched) {
+        <mat-error>A month is required.</mat-error>
+      }
+      <mat-hint>Name and month must be unique together.</mat-hint>
+    </mat-form-field>
+
+    <div class="dialog-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Amount</mat-label>
+        <input matInput formControlName="amount" inputmode="decimal" placeholder="25000.00" />
+        @if (form.controls.amount.hasError('required') && form.controls.amount.touched) {
+          <mat-error>An amount is required.</mat-error>
+        }
+        @if (form.controls.amount.hasError('pattern') && form.controls.amount.touched) {
+          <mat-error>Enter a number with up to 2 decimals.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="dialog-narrow">
+        <mat-label>Currency</mat-label>
+        <input matInput formControlName="currency" maxlength="3" placeholder="MAD" />
+      </mat-form-field>
+    </div>
+
+    @if (failure()) {
+      <p class="dialog-error" role="alert">{{ failure() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
+    @if (busy()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Create pot
+    }
+  </button>
+</mat-dialog-actions>

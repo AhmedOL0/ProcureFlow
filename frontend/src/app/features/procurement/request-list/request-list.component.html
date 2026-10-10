@@ -1,8 +1,12 @@
 <div class="pf-page">
   <pf-page-header
-    title="Purchase requests"
-    description="What the workspace wants to buy — draft it, add lines, submit it for approval."
-    [breadcrumbs]="[{ label: 'Requests' }]"
+    [title]="mineOnly ? 'My requests' : 'Purchase requests'"
+    [description]="
+      mineOnly
+        ? 'Requests you raised — follow them from draft to decision.'
+        : 'What the workspace wants to buy — draft it, add lines, submit it for approval.'
+    "
+    [breadcrumbs]="[{ label: mineOnly ? 'My requests' : 'Requests' }]"
   >
     <div slot="actions">
       @if (canRequest) {
@@ -67,9 +71,11 @@
       <pf-empty-state
         [icon]="icons.file"
         title="No requests match"
-        message="Try different filters — or raise the first request in this workspace."
-        [actionLabel]="canRequest ? 'New request' : ''"
-        (action)="goNew()"
+        [message]="
+          mineOnly
+            ? 'You have not raised a request yet — start one with New request above.'
+            : 'Try different filters — or raise the first request with New request above.'
+        "
       />
     } @else {
       <div class="request-table-scroll">

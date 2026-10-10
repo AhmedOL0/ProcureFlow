@@ -1,0 +1,97 @@
+<div class="pf-page">
+  @if (loading()) {
+    <div class="order-loading" role="status" aria-label="Loading order file">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    @if (problem.status === 404) {
+      <pf-error-state
+        title="Order not found"
+        message="It may have been deleted, or it belongs to another workspace."
+      />
+    } @else if (problem.status === 403) {
+      <pf-error-state
+        title="Not permitted"
+        message="Your workspace role cannot view purchase orders. Ask an admin for access."
+      />
+    } @else {
+      <pf-error-state
+        title="Order file did not load"
+        [message]="failureMessage()"
+        retryLabel="Retry"
+        (retry)="reload()"
+      />
+    }
+  } @else if (order(); as current) {
+    <pf-page-header
+      [title]="'Order from ' + supplierName()"
+      description="Lines were snapshotted from the approved request — later request edits never rewrite history."
+      [breadcrumbs]="[{ label: 'Orders', url: '/orders' }, { label: 'Order file' }]"
+    >
+      <div slot="actions">
+        @if (canWrite) {
+          @if (canSend()) {
+            <button mat-flat-button color="primary" (click)="send()" [disabled]="acting()">Send order</button>
+          }
+          @if (canReceive()) {
+            <button mat-flat-button color="primary" (click)="openReceive()" [disabled]="acting()">
+              Record receipt
+            </button>
+          }
+          @if (canClose()) {
+            <button mat-flat-button color="primary" (click)="close()" [disabled]="acting()">Close order</button>
+          }
+          @if (canCancel()) {
+            <button mat-stroked-button color="warn" (click)="cancel()" [disabled]="acting()">Cancel</button>
+          }
+        }
+      </div>
+    </pf-page-header>
+
+    <div class="order-head-row">
+      <pf-status-badge [status]="current.status" />
+      <span class="order-total pf-data-mono">{{ formatMinor(current.totalMinor, current.currency) }}</span>
+      @if (current.requestId) {
+        <a class="order-link" [routerLink]="['/requests', current.requestId]">Originating request</a>
+      }
+    </div>
+
+    <section class="order-card" aria-label="Lines">
+      <div class="order-card__head">
+        <h2>Lines ({{ (current.lines ?? []).length }}) — {{ receivedTotal() }} of {{ orderedTotal() }} received</h2>
+      </div>
+      @if ((current.lines ?? []).length === 0) {
+        <pf-empty-state
+          [icon]="icons.truck"
+          title="No lines on this order"
+          message="An order without lines cannot be received or invoiced."
+        />
+      } @else {
+        <table class="pf-table" aria-label="Order lines">
+          <thead>
+            <tr>
+              <th scope="col">Description</th>
+              <th scope="col" class="pf-num">Ordered</th>
+              <th scope="col" class="pf-num">Received</th>
+              <th scope="col" class="pf-num">Unit price</th>
+              <th scope="col" class="pf-num">Line total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of current.lines ?? []; track line.id) {
+              <tr>
+                <td>{{ line.description }}</td>
+                <td class="pf-num pf-data-mono">{{ line.quantity }}</td>
+                <td class="pf-num pf-data-mono">{{ line.receivedQty ?? 0 }}</td>
+                <td class="pf-num pf-data-mono">{{ formatMinor(line.unitPriceMinor, line.currency) }}</td>
+                <td class="pf-num pf-data-mono">
+                  {{ formatMinor((line.quantity ?? 0) * (line.unitPriceMinor ?? 0), line.currency) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
+</div>

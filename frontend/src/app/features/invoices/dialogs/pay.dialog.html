@@ -1,0 +1,26 @@
+<h2 mat-dialog-title>Record payment</h2>
+<mat-dialog-content>
+  <div class="dialog-form">
+    <p class="dialog-hint">Remaining balance: {{ formatMinor(data.remaining, data.currency) }}</p>
+    <mat-form-field appearance="outline">
+      <mat-label>Amount (minor units, e.g. cents)</mat-label>
+      <input matInput type="number" [formControl]="amount" min="1" [max]="data.remaining" step="1" />
+      @if (amount.touched && amount.invalid) {
+        <mat-error>Enter a positive amount.</mat-error>
+      }
+    </mat-form-field>
+    @if (failure()) {
+      <p class="dialog-error" role="alert">{{ failure() }}</p>
+    }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
+    @if (busy()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Record payment
+    }
+  </button>
+</mat-dialog-actions>

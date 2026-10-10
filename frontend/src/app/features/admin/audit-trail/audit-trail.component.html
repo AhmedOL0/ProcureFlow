@@ -1,0 +1,92 @@
+<div class="pf-page">
+  <pf-page-header
+    title="Audit trail"
+    description="Who did what to which record, newest first. Append-only — nothing here can change or delete rows."
+    [breadcrumbs]="[{ label: 'Audit' }]"
+  />
+
+  <div class="pf-table-card">
+    <div class="audit-filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Filter by action, type or id</mat-label>
+        <input matInput [formControl]="entityFilter" placeholder="ORDER_SENT" />
+      </mat-form-field>
+    </div>
+
+    @if (loading()) {
+      <div class="audit-loading" role="status" aria-label="Loading audit trail">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (failure(); as problem) {
+      @if (problem.status === 403) {
+        <pf-error-state
+          title="Not permitted"
+          message="Only workspace admins can read the audit trail."
+        />
+      } @else {
+        <pf-error-state
+          title="Audit trail did not load"
+          [message]="problem.message"
+          retryLabel="Retry"
+          (retry)="reload()"
+        />
+      }
+    } @else if (filtered().length === 0) {
+      <pf-empty-state
+        [icon]="icons.scroll"
+        title="No audit rows match"
+        message="Sensitive actions record here as they happen."
+      />
+    } @else {
+      <div class="audit-table-scroll">
+        <table mat-table [dataSource]="pageRows()" class="pf-table" aria-label="Audit trail">
+          <ng-container matColumnDef="time">
+            <th mat-header-cell *matHeaderCellDef>Time</th>
+            <td mat-cell *matCellDef="let row">{{ readableTime(row.createdAt) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actor">
+            <th mat-header-cell *matHeaderCellDef>Actor</th>
+            <td mat-cell *matCellDef="let row" class="pf-data-mono">{{ shortId(row.actorId) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef>Action</th>
+            <td mat-cell *matCellDef="let row">
+              <button class="audit-action" (click)="toggle(row)">{{ row.action }}</button>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="target">
+            <th mat-header-cell *matHeaderCellDef>Target</th>
+            <td mat-cell *matCellDef="let row">{{ row.entityType }} · {{ shortId(row.entityId) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="expandedDetail">
+            <td mat-cell *matCellDef="let row" [attr.colspan]="columns.length">
+              @if (isExpanded(row)) {
+                <div class="audit-payloads">
+                  <div>
+                    <p class="audit-payload__label">Before</p>
+                    <pre class="audit-payload">{{ row.beforeJson || '—' }}</pre>
+                  </div>
+                  <div>
+                    <p class="audit-payload__label">After</p>
+                    <pre class="audit-payload">{{ row.afterJson || '—' }}</pre>
+                  </div>
+                </div>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; when: whenExpanded"></tr>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="filtered().length"
+        [pageIndex]="page().pageIndex"
+        [pageSize]="page().pageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onPage($event)"
+        aria-label="Audit pages"
+      />
+    }
+  </div>
+</div>

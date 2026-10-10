@@ -14,19 +14,31 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
-import { Bell, FileText, Inbox, LayoutDashboard, Menu, Truck, User } from '../../shared/icons';
+import { Bell, Building2, ChartColumn, ClipboardList, FileText, Inbox, LayoutDashboard, Menu, Receipt, ScrollText, Settings, ShieldCheck, Truck, User, Users, Wallet } from '../../shared/icons';
 import { Breadcrumb } from '../../shared/components/page-header/page-header.component';
 
 interface NavItem {
   label: string;
   url: string;
   icon: typeof Truck;
+  /** Any-of authorities required to see the entry; absent means visible. */
+  authorities?: string[];
+  /** Exact URL match; needed for section roots with children (/requests, /admin). */
+  exact?: boolean;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
 }
 
 /**
- * Authenticated shell: navy rail, header with breadcrumbs, notification
- * inbox entry and user menu. The rail lists only shipped modules —
- * dashboard and suppliers — never stubs.
+ * Authenticated shell: spruce rail, header with breadcrumbs, notification
+ * inbox entry and user menu. Sections follow the page map (Workspace /
+ * Procurement / Administration) but list only shipped modules — never
+ * stubs for screens with no backend contract behind them. Entries the
+ * current workspace role cannot use stay hidden (the backend adjudicates
+ * regardless; this is navigation hygiene, not authorization).
  */
 @Component({
   selector: 'app-shell',
@@ -47,12 +59,65 @@ export class ShellComponent {
 
   protected readonly icons = { bell: Bell, menu: Menu, dashboard: LayoutDashboard, truck: Truck, user: User };
 
-  readonly nav: NavItem[] = [
-    { label: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-    { label: 'Suppliers', url: '/suppliers', icon: Truck },
-    { label: 'Requests', url: '/requests', icon: FileText },
-    { label: 'Approvals', url: '/approvals', icon: Inbox },
+  readonly nav: NavSection[] = [
+    { label: 'Workspace', items: [{ label: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }] },
+    {
+      label: 'Procurement',
+      items: [
+        { label: 'My Requests', url: '/requests/mine', icon: FileText },
+        { label: 'Purchase Requests', url: '/requests', icon: ClipboardList, exact: true },
+        { label: 'Approvals', url: '/approvals', icon: Inbox },
+        { label: 'Suppliers', url: '/suppliers', icon: Building2 },
+        { label: 'Orders', url: '/orders', icon: Truck },
+        { label: 'Invoices', url: '/invoices', icon: Receipt },
+        { label: 'Budgets & Spend', url: '/budgets', icon: Wallet, authorities: ['budget:read'] },
+      ],
+    },
+    {
+      label: 'Intelligence',
+      items: [
+        { label: 'Analytics & Reports', url: '/analytics', icon: ChartColumn, authorities: ['analytics:read'] },
+      ],
+    },
+    {
+      label: 'Administration',
+      items: [
+        {
+          label: 'Workspace',
+          url: '/admin',
+          icon: Settings,
+          exact: true,
+          authorities: ['tenant:manage', 'department:manage', 'user:manage'],
+        },
+        { label: 'Users & Roles', url: '/admin/users', icon: Users, authorities: ['user:manage'] },
+        {
+          label: 'Departments',
+          url: '/admin/departments',
+          icon: Building2,
+          authorities: ['department:manage'],
+        },
+        {
+          label: 'Approval Policies',
+          url: '/admin/workflows',
+          icon: ScrollText,
+          authorities: ['procurement:approve'],
+        },
+        { label: 'Audit Logs', url: '/admin/audit', icon: ShieldCheck, authorities: ['audit:read'] },
+      ],
+    },
   ];
+
+  /** Sections with at least one entry the current role may see. */
+  protected readonly visibleNav = computed<NavSection[]>(() =>
+    this.nav
+      .map((section) => ({
+        ...section,
+        items: section.items.filter(
+          (item) => !item.authorities || item.authorities.some((code) => this.auth.hasAuthority(code)),
+        ),
+      }))
+      .filter((section) => section.items.length > 0),
+  );
 
   private readonly handset = toSignal(
     this.breakpoints.observe([Breakpoints.Handset]).pipe(map((state) => state.matches)),

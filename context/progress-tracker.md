@@ -4,10 +4,10 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 7 done — frontend foundation + suppliers slice** (on
-`feature/frontend-suppliers`, awaiting PR). Design system from the stitch
-reference, authenticated shell, and the first API-backed workflow
-(suppliers) are implemented and verified live. Awaiting the next epic.
+**Phase 8 done — procurement workflows end to end** (on
+`feature/frontend-procurement`, awaiting PR). Requests, approval inbox,
+orders, invoices, admin and audit screens are implemented against real
+contracts and verified live. Awaiting the next phase.
 
 ## Completed
 
@@ -124,16 +124,41 @@ reference, authenticated shell, and the first API-backed workflow
   backend (login → list → dossier, mobile 360px, Stitch directory) with
   screenshots. Backend `verify` still 107/107 green after the CORS change.
 
+### Phase 8 — Procurement workflows end to end (on `feature/frontend-procurement`, awaiting PR)
+- Requests: directory (server status filter + chips, client search/sort/page),
+  dossier with items, lifecycle actions, approve/reject with comments,
+  decision + lane + budget-context + history cards.
+- Approval inbox: pending + recently decided with verdicts; no actions on
+  decided rows.
+- Orders: directory + fulfillment dossier (send/receive/close/cancel by
+  status), create from approved requests, originating-request links.
+- Invoices: directory + 3-way-match dossier, booking against sent orders,
+  payments to PAID with overpay rejected.
+- Admin: tenant rename, departments, memberships, users with roles at
+  creation (no role-update endpoint exists — stated, not simulated).
+- Audit: filterable read-only trail with expandable before/after payloads.
+- Tests: 19× Vitest, 8× Playwright in CI; full procure-to-pay journey
+  verified live in Chromium with screenshots (register → paid + admin/audit).
+  Backend `verify` untouched and green (107/107).
+
 ## In progress
 
-- Phase 7 PR (`feature/frontend-suppliers` → `main`): assembled, gates
-  green, awaiting PR creation.
+- Phase 8 PR (`feature/frontend-operations` → `main`, PR #10): assembled,
+  gates green. A design-system pass on the same branch follows the stitch
+  reference: hardened tokens, grouped navy rail, real-data overview
+  dashboard, auth mastheads, zero raw hex/undefined tokens.
+- RBAC persona roles (`feature/rbac-persona-roles` → `main`, PR #11):
+  APPROVER/FINANCE/AUDITOR defaults, additive provisioning, 4× new IT,
+  full backend verify green.
+- Governance pages (same frontend branch): Budgets & Spend, Analytics &
+  Reports (+AI usage metering), Notifications page, admin split into
+  Workspace/Users/Departments/Policies, My Requests, page-map rail with
+  permission-aware entries. All live-verified with screenshots.
 
-## Next up (new process)
+## Next up (Phase 9+)
 
-1. Merge the Phase 7 PR with CI green.
-2. Next vertical slice (purchase requests list/detail?) — or whatever epic
-   you name.
+1. Merge the Phase 8 PR with CI green.
+2. Whatever epic you name next.
 
 ## Architecture decisions (supplementing docs/decisions)
 

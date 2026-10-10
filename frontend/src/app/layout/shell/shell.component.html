@@ -7,19 +7,25 @@
     (closed)="drawerOpened.set(false)"
   >
     <div class="shell__brand">ProcureFlow</div>
-    <mat-nav-list>
-      @for (item of nav; track item.url) {
-        <a
-          mat-list-item
-          [routerLink]="item.url"
-          routerLinkActive="shell__link--active"
-          (click)="closeOnNavigate()"
-        >
-          <lucide-angular matListItemIcon [img]="item.icon" [size]="18" />
-          <span matListItemTitle>{{ item.label }}</span>
-        </a>
+    <nav class="shell__nav" aria-label="Primary">
+      @for (section of visibleNav(); track section.label) {
+        <div class="shell__section">{{ section.label }}</div>
+        <mat-nav-list>
+          @for (item of section.items; track item.url) {
+            <a
+              mat-list-item
+              [routerLink]="item.url"
+              routerLinkActive="shell__link--active"
+              [routerLinkActiveOptions]="{ exact: item.exact ?? item.url === '/dashboard' }"
+              (click)="closeOnNavigate()"
+            >
+              <lucide-angular matListItemIcon [img]="item.icon" [size]="18" />
+              <span matListItemTitle>{{ item.label }}</span>
+            </a>
+          }
+        </mat-nav-list>
       }
-    </mat-nav-list>
+    </nav>
     <div class="shell__tenant">
       @let shellUser = auth.currentUser();
       @if (shellUser) {
@@ -68,6 +74,7 @@
       } @empty {
         <div class="shell__inbox-empty" mat-menu-item disabled>No notifications yet.</div>
       }
+      <a mat-menu-item routerLink="/notifications" class="shell__inbox-all">View all</a>
     </mat-menu>
 
     <mat-menu #userMenu="matMenu">

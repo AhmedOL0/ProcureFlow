@@ -54,7 +54,7 @@
   align-items: center;
   gap: var(--pf-space-md);
   padding: var(--pf-space-md) 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--pf-row-border);
   flex-wrap: wrap;
 }
 .dossier-list__row:last-child {
@@ -67,7 +67,7 @@
 }
 .dossier-list__name {
   font: var(--pf-label-lg);
-  color: #191c1e;
+  color: var(--pf-text);
   display: inline-flex;
   align-items: center;
   gap: 6px;

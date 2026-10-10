@@ -1,7 +1,14 @@
-// ProcureFlow design tokens — translated from
-// stitch_procureflow_enterprise_saas_ui/procureflow_design_system/DESIGN.md
+// ProcureFlow design tokens — Obsidian Emerald system, translated from
+// stitch_procureflow_enterprise_saas_ui/obsidian_emerald_executive_procurement/DESIGN.md
 // into Angular Material + custom properties. One system: every component
 // consumes these tokens, never raw hex.
+//
+// Token names predate the re-theme (`pf-navy`, `pf-blue`); their values
+// are emerald now and the names stay so twenty components don't churn.
+// --pf-navy   = Deep Spruce Emerald #064E3B (rails, structural anchors)
+// --pf-blue   = Viridian Emerald #047857 (interactive: CTAs, links, active;
+//               emerald-700 so text/links hold 5:1 on white)
+// --pf-teal   = Copper-accent intelligence marker for AI surfaces
 @use '@angular/material' as mat;
 
 // Self-hosted Inter (variable, latin) so rendering is identical online,
@@ -23,7 +30,7 @@ html {
         theme-type: light,
         primary: mat.$azure-palette,
       ),
-      typography: Roboto,
+      typography: Inter,
       density: 0,
     )
   );
@@ -31,43 +38,57 @@ html {
 
 // --- Brand & surface -------------------------------------------------
 :root {
-  --pf-navy: #142b4a; // nav rails, headings, structural containers
-  --pf-blue: #2563eb; // interactive only: CTAs, links, active states
-  --pf-blue-hover: #1d4ed8;
-  --pf-blue-active: #1e40af;
+  --pf-navy: #064e3b; // deep spruce: nav rails, structural anchors
+  --pf-blue: #047857; // viridian interactive: CTAs, links, active states
+  --pf-blue-hover: #065f46;
+  --pf-blue-active: #064e3b;
+  --pf-focus-ring: #059669; // 3.4:1 on white, focus indicators only
   --pf-teal: #0f766e; // machine-intelligence surfaces only
   --pf-teal-hover: #115e59;
-  --pf-canvas: #f5f7fa; // app backdrop
+  --pf-copper: #d97706; // intelligence accents: anomalies, predictions
+  --pf-copper-text: #92400e; // 7:1 on amber tint
+  --pf-copper-bg: #fffbeb;
+  --pf-copper-border: #fde68a;
+  --pf-canvas: #f8fafc; // glare-free slate underlay
   --pf-card: #ffffff;
+  --pf-text: #0f172a; // obsidian primary text
   --pf-slate: #475569; // secondary text, labels, timestamps
+  --pf-muted-text: #475569; // alias: muted text keeps 4.6:1 on white
+  --pf-on-navy: #ffffff; // text on spruce surfaces
+  --pf-on-navy-dim: #c7ddd3; // secondary text on spruce
+  --pf-on-navy-faint: #8fb3a4; // timestamps on spruce
+  --pf-rail-active: #6ee7b7; // active rail marker on spruce
   --pf-border: #e2e8f0; // grid rows, panel borders, inputs
   --pf-border-strong: #cbd5e1;
   --pf-header-bg: #f8fafc; // table headers
   --pf-row-hover: #f8fafc;
+  --pf-row-border: #f1f5f9; // in-table row separators
+  --pf-selected-row: #ecfdf5; // selected-row tint
 
   // --- Semantic status (bg / text / border) --------------------------
-  --pf-success-bg: #f0fdf4;
-  --pf-success-text: #15803d;
-  --pf-success-border: #bbf7d0;
+  // Approved/compliant reads emerald, review reads copper-amber.
+  --pf-success-bg: #ecfdf5;
+  --pf-success-text: #065f46;
+  --pf-success-border: #a7f3d0;
   --pf-warning-bg: #fffbeb;
-  --pf-warning-text: #b45309;
+  --pf-warning-text: #92400e;
   --pf-warning-border: #fde68a;
   --pf-danger-bg: #fef2f2;
-  --pf-danger-text: #b91c1c;
+  --pf-danger-text: #991b1b;
   --pf-danger-border: #fecaca;
   --pf-info-bg: #f0f9ff;
   --pf-info-text: #0369a1;
   --pf-info-border: #bae6fd;
   --pf-neutral-bg: #f1f5f9;
   --pf-neutral-text: #475569;
-  --pf-neutral-border: #cbd5e1;
+  --pf-neutral-border: #e2e8f0;
 
   // --- Shape & spacing (4px base) ------------------------------------
+  // Controls 6px, containers 8px, pills full — per the emerald spec.
   --pf-radius-sm: 4px;
-  --pf-radius-md: 8px;
-  --pf-radius-lg: 12px;
-  --pf-radius-pill: 9999px;
-  --pf-space-xs: 4px;
+  --pf-radius-md: 6px;
+  --pf-radius-lg: 8px;
+  --pf-radius-pill: 9999px;  --pf-space-xs: 4px;
   --pf-space-sm: 8px;
   --pf-space-md: 12px;
   --pf-space-lg: 16px;
@@ -90,6 +111,11 @@ html {
   --pf-label-md: 500 12px/16px var(--pf-font);
   --pf-label-sm: 600 11px/14px var(--pf-font);
 
+  // --- Elevation (architectural flat layering, obsidian-tinted) ------
+  --pf-shadow-1: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --pf-shadow-2: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -1px rgb(15 23 42 / 0.04);
+  --pf-shadow-4: 0 16px 32px -4px rgb(15 23 42 / 0.12), 0 4px 8px -2px rgb(15 23 42 / 0.04);
+
   // --- Material bridge: keep Material components on-palette ----------
   --mat-sys-primary: var(--pf-blue);
   --mat-sys-on-primary: #ffffff;
@@ -103,7 +129,12 @@ body {
   margin: 0;
   font-family: var(--pf-font);
   background: var(--pf-canvas);
-  color: #191c1e;
+  color: var(--pf-text);
+}
+
+// Links are interactive blue everywhere; row titles inherit it.
+a {
+  color: var(--pf-blue);
 }
 
 // Money, quantities and SKUs align in columns.
@@ -111,9 +142,18 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+// Dense operational tables: 40px headers, 48px rows, right-aligned figures.
+.pf-table-card {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  box-shadow: var(--pf-shadow-1);
+  overflow: hidden;
+}
+
 // Visible keyboard focus everywhere (Material leaves gaps on custom parts).
 :focus-visible {
-  outline: 2px solid var(--pf-blue);
+  outline: 2px solid var(--pf-focus-ring);
   outline-offset: 2px;
   border-radius: var(--pf-radius-sm);
 }
@@ -161,7 +201,7 @@ table.pf-table thead th {
 table.pf-table tbody td {
   padding: 0 16px;
   height: 48px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--pf-row-border);
   vertical-align: middle;
 }
 table.pf-table tbody tr:last-child td {
@@ -226,4 +266,157 @@ table.pf-table th.pf-num {
   background: var(--pf-neutral-bg);
   color: var(--pf-neutral-text);
   border-color: var(--pf-neutral-border);
+}
+
+// Section titles inside a page: headline + action link on one row.
+.pf-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pf-space-md);
+}
+.pf-section-head h2 {
+  font: var(--pf-headline-sm);
+  color: var(--pf-navy);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.pf-section-head a {
+  font: var(--pf-label-lg);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pf-section-head a:hover {
+  text-decoration: underline;
+}
+
+// KPI summary row: 4 cards desktop, 2x2 tablet, stacked mobile.
+.pf-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--pf-space-md);
+}
+@media (max-width: 1279px) {
+  .pf-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .pf-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+.pf-kpi {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  box-shadow: var(--pf-shadow-1);
+  padding: var(--pf-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.pf-kpi__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--pf-space-sm);
+}
+.pf-kpi__label {
+  font: var(--pf-label-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-slate);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-kpi__icon {
+  color: var(--pf-blue);
+  flex-shrink: 0;
+}
+.pf-kpi__value {
+  font: var(--pf-headline-lg);
+  color: var(--pf-navy);
+  letter-spacing: -0.01em;
+  margin-top: var(--pf-space-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-kpi__sub {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-kpi__bar {
+  height: 4px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-neutral-bg);
+  margin-top: var(--pf-space-md);
+  overflow: hidden;
+}
+.pf-kpi__fill {
+  height: 100%;
+  background: var(--pf-blue);
+  border-radius: var(--pf-radius-pill);
+}
+
+// Machine-intelligence banner: copper/amber tier for predictions and
+// anomalies (emerald spec), rendered only with real insight content.
+.pf-ai-banner {
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid var(--pf-copper-border);
+  box-shadow: 0 0 0 1px rgb(217 119 6 / 0.15), var(--pf-shadow-1);
+  color: var(--pf-text);
+  border-radius: var(--pf-radius-lg);
+  padding: var(--pf-space-lg);
+  display: flex;
+  gap: var(--pf-space-md);
+  align-items: flex-start;
+}
+.pf-ai-banner__icon {
+  color: var(--pf-copper);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.pf-ai-banner__tag {
+  font: var(--pf-label-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-copper-text);
+}
+.pf-ai-banner__body {
+  font: var(--pf-body-md);
+  margin: var(--pf-space-xs) 0 0;
+}
+.pf-ai-banner__body strong {
+  color: var(--pf-copper-text);
+}
+
+// Filter console: search + selects inside the table card, chips below.
+.pf-filters {
+  display: flex;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-lg);
+  border-bottom: 1px solid var(--pf-border);
+  flex-wrap: wrap;
+}
+.pf-filters mat-form-field {
+  flex: 1 1 240px;
+}
+.pf-filters .pf-filter-sm {
+  flex: 0 1 200px;
+}
+
+// Auth masthead: navy wordmark above the sign-in/register card.
+.auth-brand {
+  font: var(--pf-headline-lg);
+  color: var(--pf-navy);
+  letter-spacing: -0.01em;
+  text-align: center;
+  margin: 10vh auto var(--pf-space-lg);
 }

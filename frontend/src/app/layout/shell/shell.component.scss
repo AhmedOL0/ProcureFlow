@@ -1,4 +1,4 @@
-// Authenticated shell: navy rail (240px, overlay on handsets), header bar
+// Authenticated shell: spruce rail (240px, overlay on handsets), header bar
 // with breadcrumbs, inbox entry and user menu. Content pages bring their
 // own .pf-page rhythm inside router-outlet.
 .shell {
@@ -8,7 +8,7 @@
 .shell__rail {
   width: 240px;
   background: var(--pf-navy);
-  color: #dbe4f3;
+  color: var(--pf-on-navy-dim);
   display: flex;
   flex-direction: column;
   border-right: none;
@@ -17,20 +17,45 @@
 
 .shell__brand {
   font: var(--pf-headline-md);
-  color: #fff;
+  color: var(--pf-on-navy);
   letter-spacing: -0.01em;
-  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
+  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-sm);
+}
+
+.shell__nav {
+  flex: 1 0 auto;
+}
+
+.shell__section {
+  font: var(--pf-label-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-on-navy-faint);
+  padding: var(--pf-space-sm) var(--pf-space-lg) var(--pf-space-xs);
 }
 
 .shell__rail .mat-mdc-list-item {
-  color: #dbe4f3;
+  color: var(--pf-on-navy-dim);
+  min-height: 36px;
+}
+// Material paints item text and icons with its own on-surface tokens;
+// re-assert the rail palette so labels stay legible on navy.
+.shell__rail .mat-mdc-list-item .mdc-list-item__primary-text,
+.shell__rail .mat-mdc-list-item .mat-icon,
+.shell__rail .mat-mdc-list-item lucide-angular {
+  color: var(--pf-on-navy-dim);
 }
 .shell__rail .mat-mdc-list-item:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 .shell__link--active {
   background: rgba(255, 255, 255, 0.12) !important;
-  color: #fff !important;
+  color: var(--pf-on-navy) !important;
+}
+.shell__link--active .mdc-list-item__primary-text,
+.shell__link--active .mat-icon,
+.shell__link--active lucide-angular {
+  color: var(--pf-on-navy) !important;
 }
 .shell__link--active::before {
   content: '';
@@ -40,12 +65,12 @@
   bottom: 8px;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: #7da2f8;
+  background: var(--pf-rail-active);
 }
 
 .shell__tenant {
   margin-top: auto;
-  padding: var(--pf-space-lg);
+  padding: var(--pf-space-md) var(--pf-space-lg);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -53,13 +78,17 @@
 }
 .shell__tenant-name {
   font: var(--pf-label-lg);
-  color: #fff;
+  color: var(--pf-on-navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .shell__tenant-user {
   font: var(--pf-body-sm);
-  color: #9db1cc;
+  color: var(--pf-on-navy-faint);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shell__main {
@@ -70,7 +99,7 @@
 .shell__bar {
   background: var(--pf-card);
   border-bottom: 1px solid var(--pf-border);
-  color: #191c1e;
+  color: var(--pf-text);
   gap: var(--pf-space-sm);
 }
 
@@ -98,7 +127,7 @@
   padding: 0 4px;
   border-radius: var(--pf-radius-pill);
   background: var(--pf-danger-text);
-  color: #fff;
+  color: var(--pf-on-navy);
   font: var(--pf-label-sm);
   display: inline-flex;
   align-items: center;
@@ -113,7 +142,7 @@
 }
 .shell__user-email {
   font: var(--pf-label-lg);
-  color: #191c1e;
+  color: var(--pf-text);
 }
 .shell__user-tenant {
   font: var(--pf-body-sm);
@@ -128,7 +157,7 @@
 .shell__inbox-title {
   display: block;
   font: var(--pf-label-lg);
-  color: #191c1e;
+  color: var(--pf-text);
 }
 .shell__inbox-body {
   display: block;
@@ -143,6 +172,10 @@
   font: var(--pf-body-sm);
   color: var(--pf-slate);
   opacity: 1 !important;
+}
+.shell__inbox-all {
+  font: var(--pf-label-lg);
+  color: var(--pf-blue);
 }
 
 .shell__content {

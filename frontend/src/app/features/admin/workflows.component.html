@@ -1,0 +1,174 @@
+<div class="pf-page">
+  <pf-page-header
+    title="Approval policies"
+    description="Amount lanes with ordered approver steps, plus bounded delegations. Escalation runs on the lane threshold — there is no manual escalate button."
+    [breadcrumbs]="[{ label: 'Policies' }]"
+  />
+
+  @if (notice()) {
+    <p class="admin-notice" role="status">{{ notice() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="admin-loading" role="status" aria-label="Loading policies">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    @if (problem.status === 403) {
+      <pf-error-state
+        title="Not permitted"
+        message="Approval lanes need the approver role. Ask an admin for access."
+      />
+    } @else {
+      <pf-error-state
+        title="Policies did not load"
+        [message]="failureMessage()"
+        retryLabel="Retry"
+        (retry)="reload()"
+      />
+    }
+  } @else {
+    <section class="admin-card" aria-label="Approval lanes">
+      <h2>Lanes ({{ lanes().length }})</h2>
+      @if (lanes().length === 0) {
+        <pf-empty-state
+          [icon]="icons.lanes"
+          title="No lanes yet"
+          message="Without a lane, submitted requests match no workflow and wait unassigned."
+        />
+      } @else {
+        <ul class="admin-list">
+          @for (lane of lanes(); track lane.id) {
+            <li class="admin-list__row">
+              <span>
+                <button mat-button (click)="selectLane(lane)">{{ lane.name }}</button>
+                <span class="admin-muted">{{ laneRange(lane) }} · escalates after {{ lane.escalateAfterDays ?? 3 }}d</span>
+              </span>
+              <span class="admin-list__actions">
+                <mat-slide-toggle
+                  [checked]="lane.active ?? true"
+                  (change)="setLaneActive(lane, $event.checked)"
+                  [aria-label]="'Active: ' + lane.name"
+                />
+              </span>
+            </li>
+          }
+        </ul>
+      }
+      @if (canApprove) {
+        <div class="admin-create" [formGroup]="laneForm">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Lane name</mat-label>
+            <input matInput formControlName="name" placeholder="Engineering under €50k" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Min amount</mat-label>
+            <input matInput formControlName="minAmount" inputmode="decimal" placeholder="0.00" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Max amount (blank = open)</mat-label>
+            <input matInput formControlName="maxAmount" inputmode="decimal" placeholder="50000.00" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Escalate after (days)</mat-label>
+            <input matInput formControlName="escalateAfterDays" inputmode="numeric" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="createLane()" [disabled]="busy()">Create lane</button>
+        </div>
+      }
+    </section>
+
+    @if (selectedLane(); as lane) {
+      <section class="admin-card" aria-label="Lane steps">
+        <h2>Steps — {{ lane.name }} ({{ steps().length }})</h2>
+        @if (steps().length === 0) {
+          <p class="admin-muted">No steps yet. The first added step decides first.</p>
+        } @else {
+          <ul class="admin-list">
+            @for (step of steps(); track step.id) {
+              <li class="admin-list__row">
+                <span>#{{ step.stepOrder }} · {{ resolveUser(step.approverId) }}</span>
+                @if (canApprove) {
+                  <button mat-button color="warn" (click)="removeStep(step)">Remove</button>
+                }
+              </li>
+            }
+          </ul>
+        }
+        @if (canApprove) {
+          <div class="admin-row">
+            @if (users().length > 0) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Approver</mat-label>
+                <mat-select [formControl]="stepApprover">
+                  @for (user of users(); track user.id) {
+                    <mat-option [value]="user.id">{{ user.email }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            } @else {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Approver UUID</mat-label>
+                <input matInput [formControl]="stepApprover" placeholder="paste from Users" />
+              </mat-form-field>
+            }
+            <button mat-stroked-button (click)="addStep()" [disabled]="!stepApprover.value.trim()">
+              Add step
+            </button>
+          </div>
+        }
+      </section>
+    }
+
+    <section class="admin-card" aria-label="Delegations">
+      <h2>Delegations ({{ delegations().length }})</h2>
+      @if (delegations().length === 0) {
+        <p class="admin-muted">No active delegations. Delegates decide exactly as the delegator could, until expiry.</p>
+      } @else {
+        <ul class="admin-list">
+          @for (delegation of delegations(); track delegation.id) {
+            <li class="admin-list__row">
+              <span>{{ resolveUser(delegation.delegatorId) }} → {{ resolveUser(delegation.delegateId) }} · until {{ formatInstant(delegation.endsAt) }}</span>
+              @if (canApprove) {
+                <button mat-button color="warn" (click)="revokeDelegation(delegation)">Revoke</button>
+              }
+            </li>
+          }
+        </ul>
+      }
+      @if (canApprove) {
+        <div class="admin-row">
+          @if (users().length > 0) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Delegate</mat-label>
+              <mat-select [formControl]="delegateId">
+                @for (user of users(); track user.id) {
+                  <mat-option [value]="user.id">{{ user.email }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          } @else {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Delegate UUID</mat-label>
+              <input matInput [formControl]="delegateId" placeholder="paste from Users" />
+            </mat-form-field>
+          }
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Until</mat-label>
+            <input matInput type="datetime-local" [formControl]="delegateUntil" />
+            @if (delegateUntil.hasError('invalid') && delegateUntil.touched) {
+              <mat-error>Pick a valid end date.</mat-error>
+            }
+          </mat-form-field>
+          <button
+            mat-stroked-button
+            (click)="createDelegation()"
+            [disabled]="!delegateId.value.trim() || !delegateUntil.value"
+          >
+            Grant
+          </button>
+        </div>
+      }
+    </section>
+  }
+</div>

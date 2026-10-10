@@ -1,0 +1,48 @@
+.invoice-filters {
+  display: flex;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-lg);
+  border-bottom: 1px solid var(--pf-border);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.invoice-filter-sm {
+  max-width: 200px;
+}
+
+.invoice-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--pf-space-2xl);
+}
+
+.invoice-table-scroll {
+  overflow-x: auto;
+}
+.invoice-table-scroll table.pf-table {
+  min-width: 560px;
+}
+
+.invoice-number {
+  color: var(--pf-blue);
+  font-weight: 500;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+.invoice-number:hover {
+  text-decoration: underline;
+}
+
+.pf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 767px) {
+  .invoice-filters {
+    padding: var(--pf-space-md);
+  }
+}

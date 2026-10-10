@@ -1,0 +1,116 @@
+.analytics-period {
+  width: 170px;
+}
+
+.analytics-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--pf-space-2xl);
+}
+
+.analytics-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--pf-space-md);
+  align-items: start;
+}
+@media (max-width: 1023px) {
+  .analytics-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.analytics-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-md);
+  min-width: 0;
+}
+
+.analytics-card-head {
+  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.analytics-bars {
+  list-style: none;
+  margin: 0;
+  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-md);
+}
+.analytics-bars--flush {
+  padding-top: 0;
+}
+.analytics-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.analytics-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--pf-space-md);
+  font: var(--pf-label-lg);
+  color: var(--pf-text);
+}
+.analytics-bar-meta .pf-data-mono {
+  font-weight: 600;
+}
+.analytics-track {
+  height: 6px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-neutral-bg);
+  overflow: hidden;
+}
+.analytics-fill {
+  height: 100%;
+  background: var(--pf-blue);
+  border-radius: var(--pf-radius-pill);
+}
+.analytics-bar-sub {
+  display: flex;
+  gap: var(--pf-space-lg);
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+}
+
+.analytics-table-scroll {
+  overflow-x: auto;
+}
+.analytics-table-scroll table.pf-table {
+  min-width: 480px;
+}
+
+.analytics-facts {
+  margin: 0;
+  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--pf-space-md);
+}
+.analytics-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.analytics-facts dt {
+  font: var(--pf-label-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-slate);
+}
+.analytics-facts dd {
+  margin: 0;
+  font: var(--pf-headline-md);
+  color: var(--pf-navy);
+}
+
+.analytics-note {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+  margin: 0;
+  padding: 0 var(--pf-space-lg) var(--pf-space-lg);
+}

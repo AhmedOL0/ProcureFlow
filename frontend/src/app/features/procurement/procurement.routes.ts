@@ -9,9 +9,15 @@ export const PROCUREMENT_ROUTES: Routes = [
     data: { breadcrumb: 'Requests' },
   },
   {
+    path: 'mine',
+    loadComponent: () =>
+      import('./request-list/request-list.component').then((m) => m.RequestListComponent),
+    data: { breadcrumb: 'My requests', mode: 'mine' },
+  },
+  {
     path: 'new',
     loadComponent: () =>
-      import('./request-wizard/request-wizard.component').then((m) => m.RequestWizardComponent),
+      import('./request-create/request-create.component').then((m) => m.RequestCreateComponent),
     data: { breadcrumb: 'New request' },
   },
   {

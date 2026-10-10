@@ -1,0 +1,81 @@
+<div class="pf-page">
+  @if (loading()) {
+    <div class="invoice-loading" role="status" aria-label="Loading invoice file">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    @if (problem.status === 404) {
+      <pf-error-state
+        title="Invoice not found"
+        message="It may have been deleted, or it belongs to another workspace."
+      />
+    } @else if (problem.status === 403) {
+      <pf-error-state
+        title="Not permitted"
+        message="Your workspace role cannot view invoices. Ask an admin for access."
+      />
+    } @else {
+      <pf-error-state
+        title="Invoice file did not load"
+        [message]="failureMessage()"
+        retryLabel="Retry"
+        (retry)="reload()"
+      />
+    }
+  } @else if (invoice(); as current) {
+    <pf-page-header
+      [title]="'Invoice ' + (current.number ?? '')"
+      [description]="'Tracking payment status only — recording a payment never transfers money.'"
+      [breadcrumbs]="[{ label: 'Invoices', url: '/invoices' }, { label: current.number ?? 'File' }]"
+    >
+      <div slot="actions">
+        @if (canWrite && remaining() > 0) {
+          <button mat-flat-button color="primary" (click)="openPay()" [disabled]="acting()">
+            Record payment
+          </button>
+        }
+      </div>
+    </pf-page-header>
+
+    <div class="invoice-head-row">
+      <pf-status-badge [status]="current.status" />
+      <span class="invoice-total pf-data-mono">{{ formatMinor(current.totalMinor, current.currency) }}</span>
+      <span class="invoice-paid pf-data-mono">{{ formatMinor(current.paidMinor, current.currency) }} paid</span>
+      @if (current.orderId) {
+        <a class="invoice-link" [routerLink]="['/orders', current.orderId]">Source order</a>
+      }
+    </div>
+
+    <section class="invoice-card" aria-label="Three-way match">
+      <h2>3-way match</h2>
+      @if ((current.match ?? []).length === 0) {
+        <pf-empty-state
+          [icon]="icons.file"
+          title="No match lines"
+          message="This invoice carries no order lines."
+        />
+      } @else {
+        <table class="pf-table" aria-label="Ordered versus received versus invoiced">
+          <thead>
+            <tr>
+              <th scope="col">Order line</th>
+              <th scope="col" class="pf-num">Ordered</th>
+              <th scope="col" class="pf-num">Received</th>
+              <th scope="col" class="pf-num">Invoiced</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of current.match ?? []; track line.orderItemId) {
+              <tr>
+                <td class="pf-data-mono">{{ (line.orderItemId ?? '').slice(0, 8) }}…</td>
+                <td class="pf-num pf-data-mono">{{ line.orderedQty }}</td>
+                <td class="pf-num pf-data-mono">{{ line.receivedQty }}</td>
+                <td class="pf-num pf-data-mono">{{ line.invoicedQty }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
+</div>

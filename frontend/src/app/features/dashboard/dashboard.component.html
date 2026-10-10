@@ -1,28 +1,108 @@
-@let user = auth.currentUser();
-@if (user) {
-  <mat-card class="dashboard-card">
-    <mat-card-header>
-      <mat-card-title>Welcome, {{ user.email }}</mat-card-title>
-      <mat-card-subtitle>Workspace: {{ user.tenantSlug }}</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <p class="dashboard-roles-label">Roles in this workspace:</p>
-      <mat-chip-set aria-label="Workspace roles">
-        @for (role of user.roles ?? []; track role) {
-          <mat-chip>{{ role }}</mat-chip>
-        } @empty {
-          <span class="dashboard-muted">No roles assigned.</span>
+<div class="pf-page">
+  <pf-page-header
+    title="Procurement overview"
+    description="What needs your decision, and where every request stands."
+    [breadcrumbs]="[]"
+  >
+    <div slot="actions">
+      @if (canRequest) {
+        <a mat-flat-button color="primary" routerLink="/requests/new">
+          <lucide-angular [img]="icons.plus" [size]="16" /> New request
+        </a>
+      }
+    </div>
+  </pf-page-header>
+
+  @if (loading()) {
+    <div class="dashboard-loading" role="status" aria-label="Loading overview">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (failure(); as problem) {
+    <pf-error-state
+      title="Overview did not load"
+      [message]="problem.message"
+      retryLabel="Retry"
+      (retry)="reload()"
+    />
+  } @else {
+    <div class="pf-kpis" role="region" aria-label="Workspace summary">
+      @for (kpi of kpis(); track kpi.label) {
+        <div class="pf-kpi">
+          <div class="pf-kpi__top">
+            <span class="pf-kpi__label">{{ kpi.label }}</span>
+            <lucide-angular [img]="kpi.icon" [size]="18" class="pf-kpi__icon" />
+          </div>
+          <div class="pf-kpi__value">{{ kpi.value }}</div>
+          <div class="pf-kpi__sub">{{ kpi.sub }}</div>
+        </div>
+      }
+    </div>
+
+    <div class="dashboard-columns">
+      <section class="pf-table-card" aria-label="Awaiting approval">
+        <div class="dashboard-card-head">
+          <div class="pf-section-head">
+            <h2>Awaiting approval</h2>
+            <a routerLink="/approvals">Open inbox</a>
+          </div>
+        </div>
+        @if (awaiting().length === 0) {
+          <pf-empty-state
+            [icon]="icons.approvals"
+            title="Queue is clear"
+            message="Submitted requests land here for review."
+          />
+        } @else {
+          <ul class="dashboard-rows">
+            @for (row of awaiting(); track row.id) {
+              <li class="dashboard-row">
+                <div class="dashboard-row__main">
+                  <a class="dashboard-row__title" [routerLink]="['/requests', row.id]">
+                    {{ row.title || 'Untitled request' }}
+                  </a>
+                  <span class="dashboard-row__meta">
+                    {{ row.priority ?? 'No priority' }} ·
+                    <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
+                  </span>
+                </div>
+                <a mat-stroked-button [routerLink]="['/requests', row.id]">Review</a>
+              </li>
+            }
+          </ul>
         }
-      </mat-chip-set>
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-stroked-button (click)="signOut()">Sign out</button>
-    </mat-card-actions>
-  </mat-card>
-} @else {
-  <mat-card class="dashboard-card">
-    <mat-card-content>
-      <p class="dashboard-muted">Loading your session…</p>
-    </mat-card-content>
-  </mat-card>
-}
+      </section>
+
+      <section class="pf-table-card" aria-label="Recent requests">
+        <div class="dashboard-card-head">
+          <div class="pf-section-head">
+            <h2>Recent requests</h2>
+            <a routerLink="/requests">View all</a>
+          </div>
+        </div>
+        @if (recent().length === 0) {
+          <pf-empty-state
+            [icon]="icons.open"
+            title="No requests yet"
+            message="Raise the first request to start the procure-to-pay flow."
+          />
+        } @else {
+          <ul class="dashboard-rows">
+            @for (row of recent(); track row.id) {
+              <li class="dashboard-row">
+                <div class="dashboard-row__main">
+                  <a class="dashboard-row__title" [routerLink]="['/requests', row.id]">
+                    {{ row.title || 'Untitled request' }}
+                  </a>
+                  <span class="dashboard-row__meta">
+                    <pf-status-badge [status]="row.status ?? ''" /> ·
+                    <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</div>

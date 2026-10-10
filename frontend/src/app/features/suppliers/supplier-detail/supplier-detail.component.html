@@ -68,9 +68,7 @@
       @if (contacts().length === 0) {
         <pf-empty-state
           title="No contacts yet"
-          message="Add the people you order from — one of them can be the primary contact."
-          [actionLabel]="canWrite ? 'Add contact' : ''"
-          (action)="openContact()"
+          message="Add the people you order from — one of them can be the primary contact. Use Add contact above."
         />
       } @else {
         <ul class="dossier-list">

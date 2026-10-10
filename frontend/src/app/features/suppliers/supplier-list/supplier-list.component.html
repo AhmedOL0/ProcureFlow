@@ -101,9 +101,7 @@
       <pf-empty-state
         [icon]="icons.truck"
         title="No suppliers match"
-        message="Try different filters — or add the first supplier to this workspace."
-        [actionLabel]="canWrite ? 'Add supplier' : ''"
-        (action)="openCreate()"
+        message="Try different filters — or add the first supplier with Add supplier above."
       />
     } @else {
       <div class="supplier-table-scroll">
