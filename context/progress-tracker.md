@@ -148,20 +148,19 @@ review, README/portfolio overhaul, demo workspace docs.
 ## In progress
 
 - Phase 12 review (this pass) on `feature/frontend-operations`.
-
-## In progress
-
-- Account management backend (`feature/account-management` → `main`,
-  PR #12 OPEN, mergeable): profile edits, password changes, email-link
-  reset via Brevo (16× AccountIT, 113 IT green). Merge BEFORE any
-  settings-UI merge — the frontend depends on its endpoints.
-- Security hardening (`feature/hardening-pass` → `main`, PR #13 OPEN):
-  HSTS + frame-deny, explicit inbox auth, audit redaction + unit test.
-- Frontend line (`feature/frontend-operations`, includes merged #10):
-  unmerged commits → design system, emerald re-theme, governance pages,
-  workspace, copilot, account settings UI, Phase 10–11 work. Next PR
-  after #12 merges.
-- Design-system consolidation (uncommitted on `feature/frontend-operations`,
+- Main has merged PR #12 (account) and PR #13 (hardening) on GitHub;
+  this branch just integrated origin/main, so the account endpoints
+  (GET/PATCH /users/me, change-password, forgot/reset) and the hardening
+  pass are now in this line. Local `feature/account-management` and
+  `feature/hardening-pass` branches are stale.
+- Account management backend (merged to main as #12): profile edits,
+  password changes, email-link reset via Brevo (16× AccountIT).
+- Security hardening (merged to main as #13): HSTS + frame-deny,
+  explicit inbox auth, audit redaction + unit test.
+- Frontend line (`feature/frontend-operations`): design system, emerald
+  re-theme, governance pages, workspace, copilot, account settings UI,
+  Phase 10–11 work, plus the #12/#13 integration above.
+- Design-system consolidation (committed 2ad157b on `feature/frontend-operations`,
   2026-10-10): every page migrated onto shared `pf-*` primitives in
   `styles.scss` (sr-only, loading, columns, card-head, panel, list, rows,
   row-link, muted, meter, head-row, stat-pill, form-row, notice, chips,
@@ -172,19 +171,20 @@ review, README/portfolio overhaul, demo workspace docs.
   green, screenshots dashboard/suppliers/users/390px in Temp.
 - Path-var 400 fix (on `feature/frontend-operations`, 2026-10-10): visiting
   Account Settings fired `GET /api/v1/users/me` (PR #12 endpoint, not yet
-  deployed) → matched `/users/{id}` → UUID conversion of `"me"` threw
+  in this line) → matched `/users/{id}` → UUID conversion of `"me"` threw
   `MethodArgumentTypeMismatchException` → no handler → 500 + stack trace.
-  Two layers: (1) expected pre-merge gap — settings UI needs #12 merged
-  first, plan unchanged; (2) real contract bug — every UUID route 500'd on
-  non-UUID values. Fixed (2) with an explicit 400 (`INVALID_PATH_VARIABLE`)
-  in `RestExceptionHandler` + `InvalidPathVariableIT` (red before: 500 on
-  /users/me and /suppliers/not-a-uuid; green after). Full
-  `./mvnw -B verify` green (99 IT + 14 unit/arch, coverage floors met);
-  container rebuilt, live re-probe answers 400 with no stack in logs.
+  Fixed with an explicit 400 (`INVALID_PATH_VARIABLE`) in
+  `RestExceptionHandler` + `InvalidPathVariableIT` (red before: 500 on
+  /users/me and /suppliers/not-a-uuid; green after). Obsolete as a
+  Settings symptom now that #12 is integrated — kept as contract armor
+  for every UUID route. Full `./mvnw -B verify` green (99 IT + 14
+  unit/arch, coverage floors met); container rebuilt, live re-probe
+  answered 400 with no stack in logs.
 
 ## Next up
 
-1. Merge #12 → #13 → frontend line (dependency order).
+1. Rebuild backend from this branch and verify Account Settings loads
+   end to end (profile load + save, password change).
 2. Brevo live proof needs confirmed login email + SMTP-key provenance +
    a validated sender (currently 535 on auth).
 3. Beyond release: pagination envelopes, login/AI rate limits, inbox

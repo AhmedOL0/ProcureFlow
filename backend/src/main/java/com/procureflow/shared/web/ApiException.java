@@ -47,6 +47,14 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.CONFLICT, code, message);
     }
 
+    public static ApiException gone(String code, String message) {
+        return new ApiException(HttpStatus.GONE, code, message);
+    }
+
+    public static ApiException tooManyRequests(String code, String message) {
+        return new ApiException(HttpStatus.TOO_MANY_REQUESTS, code, message);
+    }
+
     public static ApiException unavailable(String code, String message) {
         return new ApiException(HttpStatus.SERVICE_UNAVAILABLE, code, message);
     }

@@ -16,9 +16,11 @@ import org.testcontainers.junit.jupiter.Container;
 /**
  * Malformed path variables are client faults, not server faults: a non-UUID
  * value on a UUID route answers 400 with the problem envelope, never 500.
- * Regression: GET /api/v1/users/me — called by Account Settings before the
- * account endpoints land — fell through to INTERNAL_ERROR with a stack trace
- * in the logs.
+ * Regression: before the account endpoints landed, GET /api/v1/users/me fell
+ * through to /users/{id} and UUID conversion of "me" answered
+ * INTERNAL_ERROR with a stack trace in the logs. The literal /me mapping
+ * now owns that path, so this suite pins the contract with other non-UUID
+ * values instead.
  */
 class InvalidPathVariableIT extends AbstractIntegrationTest {
 
@@ -30,7 +32,7 @@ class InvalidPathVariableIT extends AbstractIntegrationTest {
     void nonUuidUserIdAnswersBadRequest() {
         String token = provision(uniqueSlug("acme"));
 
-        ResponseEntity<String> response = get("/api/v1/users/me", token, String.class);
+        ResponseEntity<String> response = get("/api/v1/users/not-a-uuid", token, String.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
