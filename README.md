@@ -8,12 +8,12 @@ orders and invoices, with an AI copilot that explains spend and drafts
 requests. One backend serves many tenants; tenant data never crosses tenant
 boundaries.
 
-> Status: **Phase 7 — frontend foundation + suppliers slice.** The backend
-> (V1–V12, all epics) is done; the Angular shell is now real: Material
-> design system from the stitch reference, authenticated navy-rail layout
-> with inbox entry, and the first API-backed workflow (supplier directory
-> and dossiers with contacts, categories and scorecards). See
-> `docs/project-management/sprint-plan.md` for the delivery record.
+> Status: **Phase 8 — procurement workflows end to end.** The Angular
+> frontend now runs the full procure-to-pay story in the browser: requests
+> with lifecycle and approvals, orders with receipt, invoices with payment
+> tracking, workspace admin and a read-only audit trail — all against the
+> real API, no simulated data. See `docs/project-management/sprint-plan.md`
+> for the delivery record.
 
 ## Business problem
 
@@ -51,7 +51,7 @@ boundaries in CI.
 | Frontend | Angular 21, TypeScript, Signals, RxJS, Reactive Forms, Vitest, Playwright |
 | Backend | Java 21, Spring Boot 3.5, Security, Data JPA, Flyway, ArchUnit |
 | Data | PostgreSQL 16 (Flyway migrations, no `ddl-auto=create` in prod), Redis 7, RabbitMQ 3 |
-| AI | Groq behind an `AiProvider` port (backend only; disabled until Phase 6) |
+| AI | Groq behind an `AiProvider` port (backend only; 503 while `AI_ENABLED=false`) |
 | Infra | Docker Compose, GitHub Actions, Prometheus + Grafana, Terraform skeleton |
 
 ## Local development
@@ -93,6 +93,7 @@ live contract (`cd frontend && npm run gen:api`, checked in at
 | Analytics | `/analytics/...` | Spend, supplier and approval KPIs (read-only) |
 | AI copilot | `/ai/...` | KPI-cited chat, spend explanations, request extraction, quotation comparison (metered, `ai:use`) |
 | Frontend auth | `/login`, `/register`, `/dashboard` | Angular Material session shell (guard + refresh interceptor) |
+| Frontend workflows | `/suppliers`, `/requests`, `/approvals`, `/orders`, `/invoices`, `/admin`, `/admin/audit` | Directory + dossier screens with lifecycle actions, all API-backed |
 
 ## Testing strategy
 
@@ -107,7 +108,7 @@ every push):
   the build on regression.
 - Frontend unit: `cd frontend && npm test` (Vitest, 19 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-  (7 tests: guarded shell, auth states, suppliers/requests redirects)
+  (8 tests: guarded shell, auth states, route redirects incl. operations screens)
 - API types: boot the backend, then `cd frontend && npm run gen:api` after
   any API change, and commit the result.
 
