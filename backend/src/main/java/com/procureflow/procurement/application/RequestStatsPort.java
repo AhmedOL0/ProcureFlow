@@ -12,6 +12,9 @@ public interface RequestStatsPort {
 
     List<RequestStat> requestStats(String tenantSlug);
 
+    /** Month-bounded variant: half-open [from, to), never null at the call site. */
+    List<RequestStat> requestStats(String tenantSlug, Instant from, Instant to);
+
     record RequestStat(
             UUID requestId,
             String status,

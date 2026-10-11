@@ -1,6 +1,7 @@
 package com.procureflow.procurement.infrastructure;
 
 import com.procureflow.procurement.domain.PurchaseRequest;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +19,15 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     @EntityGraph(attributePaths = {"tenant", "items"})
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug order by r.createdAt desc")
     List<PurchaseRequest> findAllByTenantSlug(@Param("slug") String slug);
+
+    // NOTE: explicit fetch join (not the graph above) so one month of rows
+    // costs exactly one query: the graph would secondary-select items per
+    // request, and the analytics range is the hot path this guards.
+    @Query("select distinct r from PurchaseRequest r left join fetch r.items"
+            + " where r.tenant.slug = :slug and r.createdAt >= :from and r.createdAt < :to"
+            + " order by r.createdAt desc")
+    List<PurchaseRequest> findAllByTenantSlugAndCreatedAtBetween(
+            @Param("slug") String slug, @Param("from") Instant from, @Param("to") Instant to);
 
 
 

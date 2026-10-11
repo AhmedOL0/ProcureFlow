@@ -53,9 +53,24 @@ public class AnalyticsService {
         if (period != null) {
             requirePeriod(period);
         }
+        // A filtered view reads only its month: tenant history stays out of
+        // the persistence context no matter how large it grows. The
+        // all-time path still scans (documented; bounded slices preferred).
+        YearMonth month = period == null ? null : YearMonth.parse(period);
+        Instant from = month == null ? null : month.atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant to = month == null ? null : month.plusMonths(1).atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        List<RequestStatsPort.RequestStat> requestRows = month == null
+                ? requests.requestStats(tenantSlug)
+                : requests.requestStats(tenantSlug, from, to);
+        List<OrderStatsPort.OrderStat> orderRows = month == null
+                ? orders.orderStats(tenantSlug)
+                : orders.orderStats(tenantSlug, from, to);
+        List<InvoiceStatsPort.InvoiceStat> invoiceRows = month == null
+                ? invoices.invoiceStats(tenantSlug)
+                : invoices.invoiceStats(tenantSlug, from, to);
         long requested = 0;
         Map<String, Long> byCategory = new LinkedHashMap<>();
-        for (RequestStatsPort.RequestStat request : requests.requestStats(tenantSlug)) {
+        for (RequestStatsPort.RequestStat request : requestRows) {
             if ("CANCELLED".equals(request.status()) || !inPeriod(request.createdAt(), period)) {
                 continue;
             }
@@ -70,7 +85,7 @@ public class AnalyticsService {
         }
         long ordered = 0;
         Map<String, long[]> monthly = new LinkedHashMap<>();
-        for (OrderStatsPort.OrderStat order : orders.orderStats(tenantSlug)) {
+        for (OrderStatsPort.OrderStat order : orderRows) {
             if ("CANCELLED".equals(order.status()) || !inPeriod(order.createdAt(), period)) {
                 continue;
             }
@@ -82,7 +97,7 @@ public class AnalyticsService {
         }
         long invoiced = 0;
         long paid = 0;
-        for (InvoiceStatsPort.InvoiceStat invoice : invoices.invoiceStats(tenantSlug)) {
+        for (InvoiceStatsPort.InvoiceStat invoice : invoiceRows) {
             if (!inPeriod(invoice.createdAt(), period)) {
                 continue;
             }

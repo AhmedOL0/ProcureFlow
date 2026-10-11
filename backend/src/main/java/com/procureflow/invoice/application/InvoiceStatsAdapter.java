@@ -4,6 +4,7 @@ import com.procureflow.invoice.domain.Invoice;
 import com.procureflow.invoice.infrastructure.InvoicePaymentRepository;
 import com.procureflow.invoice.infrastructure.InvoiceRepository;
 import com.procureflow.organization.application.TenantProvisioning;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,18 @@ public class InvoiceStatsAdapter implements InvoiceStatsPort {
     @Transactional(readOnly = true)
     public List<InvoiceStat> invoiceStats(String tenantSlug) {
         List<Invoice> found = invoices.findAllByTenantIdOrderByCreatedAtDesc(tenants.requireTenantId(tenantSlug));
+        return statsOf(found);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InvoiceStat> invoiceStats(String tenantSlug, Instant from, Instant to) {
+        List<Invoice> found =
+                invoices.findAllByTenantIdAndCreatedAtBetween(tenants.requireTenantId(tenantSlug), from, to);
+        return statsOf(found);
+    }
+
+    private List<InvoiceStat> statsOf(List<Invoice> found) {
         if (found.isEmpty()) {
             return List.of();
         }

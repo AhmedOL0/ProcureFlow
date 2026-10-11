@@ -10,6 +10,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    properties:
+      hibernate:
+        # Query-count gates (AnalyticsIT) read SessionFactory statistics;
+        # collection overhead is negligible for integration tests.
+        generate_statistics: true
   flyway:
     enabled: true
   rabbitmq:
