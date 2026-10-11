@@ -100,4 +100,24 @@ public class UserAdminController {
         users.resetPassword(principal.tenantId(), id, request.password());
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Suspend (DISABLED) or reactivate (ACTIVE) a workspace user; self-change refused")
+    public ResponseEntity<UserResponse> setStatus(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateStatusRequest request) {
+        return ResponseEntity.ok(UserResponse.from(
+                users.setStatus(principal.tenantId(), principal.userId(), id, request.status())));
+    }
+
+    @PatchMapping("/{id}/roles")
+    @Operation(summary = "Replace a workspace user's roles; self-change refused")
+    public ResponseEntity<UserResponse> setRoles(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateRolesRequest request) {
+        return ResponseEntity.ok(UserResponse.from(
+                users.setRoles(principal.tenantId(), principal.userId(), id, request.roleNames())));
+    }
 }

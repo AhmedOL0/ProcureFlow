@@ -139,6 +139,12 @@ public class AuthService {
             throw ApiException.unauthorized("REFRESH_EXPIRED", "Refresh token has expired; please log in again");
         }
         User user = presented.getUser();
+        if (user.getStatus() != User.Status.ACTIVE) {
+            // Suspended accounts cannot rotate: kill the chain and answer
+            // generically, mirroring the login path.
+            revokeAllActive(user.getId());
+            throw ApiException.unauthorized("INVALID_CREDENTIALS", "Invalid email or password");
+        }
         TokenPair pair = issueTokens(user);
         RefreshToken replacement = refreshTokens.findByTokenHash(hash(pair.refreshToken())).orElseThrow();
         presented.revoke(replacement);

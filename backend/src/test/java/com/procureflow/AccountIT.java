@@ -275,6 +275,22 @@ class AccountIT extends AbstractIntegrationTest {
                 Map.of("firstName", "Mallory"),
                 String.class);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                patch(
+                                "/api/v1/users/" + adminA.user().id() + "/status",
+                                adminB.accessToken(),
+                                Map.of("status", "DISABLED"),
+                                String.class)
+                        .getStatusCode());
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                patch(
+                                "/api/v1/users/" + adminA.user().id() + "/roles",
+                                adminB.accessToken(),
+                                Map.of("roleNames", List.of("MEMBER")),
+                                String.class)
+                        .getStatusCode());
     }
 
     @Test
@@ -293,6 +309,109 @@ class AccountIT extends AbstractIntegrationTest {
         assertEquals(HttpStatus.FORBIDDEN, post(
                 "/api/v1/users/" + member.id() + "/password",
                 token, Map.of("password", "reset-horse-123"), String.class).getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, patch(
+                "/api/v1/users/" + member.id() + "/status", token, Map.of("status", "DISABLED"), String.class)
+                .getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, patch(
+                "/api/v1/users/" + member.id() + "/roles", token, Map.of("roleNames", List.of("MEMBER")), String.class)
+                .getStatusCode());
+    }
+
+    @Test
+    void suspendBlocksLoginAndRefreshUntilReactivated() {
+        String slug = uniqueSlug("acct");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+        UserResponse member = createUser(admin.accessToken(), slug, "min", "MEMBER");
+        ResponseEntity<AuthResponse> memberLogin = login("min@" + slug + ".test", "correct-horse-123", slug);
+        assertEquals(HttpStatus.OK, memberLogin.getStatusCode());
+        String refresh = memberLogin.getBody().refreshToken();
+
+        ResponseEntity<UserResponse> suspended = patch(
+                "/api/v1/users/" + member.id() + "/status",
+                admin.accessToken(),
+                Map.of("status", "DISABLED"),
+                UserResponse.class);
+        assertEquals(HttpStatus.OK, suspended.getStatusCode());
+        assertEquals("DISABLED", suspended.getBody().status());
+
+        assertEquals(
+                HttpStatus.UNAUTHORIZED,
+                login("min@" + slug + ".test", "correct-horse-123", slug).getStatusCode());
+        assertEquals(
+                HttpStatus.UNAUTHORIZED,
+                post("/api/v1/auth/refresh", null, Map.of("refreshToken", refresh), String.class).getStatusCode());
+
+        ResponseEntity<UserResponse> reactivated = patch(
+                "/api/v1/users/" + member.id() + "/status",
+                admin.accessToken(),
+                Map.of("status", "ACTIVE"),
+                UserResponse.class);
+        assertEquals(HttpStatus.OK, reactivated.getStatusCode());
+        assertEquals(
+                HttpStatus.OK, login("min@" + slug + ".test", "correct-horse-123", slug).getStatusCode());
+    }
+
+    @Test
+    void selfSuspendAndSelfRoleChangeRefused() {
+        String slug = uniqueSlug("acct");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+
+        assertEquals(
+                HttpStatus.CONFLICT,
+                patch(
+                                "/api/v1/users/" + admin.user().id() + "/status",
+                                admin.accessToken(),
+                                Map.of("status", "DISABLED"),
+                                String.class)
+                        .getStatusCode());
+        assertEquals(
+                HttpStatus.CONFLICT,
+                patch(
+                                "/api/v1/users/" + admin.user().id() + "/roles",
+                                admin.accessToken(),
+                                Map.of("roleNames", List.of("MEMBER")),
+                                String.class)
+                        .getStatusCode());
+        assertEquals("ACTIVE", me(admin.accessToken()).status());
+        assertTrue(me(admin.accessToken()).roles().contains("TENANT_ADMIN"));
+    }
+
+    @Test
+    void roleChangesTakeEffectUnknownRejectedAndAudited() {
+        String slug = uniqueSlug("acct");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+        UserResponse member = createUser(admin.accessToken(), slug, "min", "MEMBER");
+
+        ResponseEntity<UserResponse> promoted = patch(
+                "/api/v1/users/" + member.id() + "/roles",
+                admin.accessToken(),
+                Map.of("roleNames", List.of("APPROVER")),
+                UserResponse.class);
+        assertEquals(HttpStatus.OK, promoted.getStatusCode());
+        assertTrue(promoted.getBody().roles().contains("APPROVER"));
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                patch(
+                                "/api/v1/users/" + member.id() + "/roles",
+                                admin.accessToken(),
+                                Map.of("roleNames", List.of("NOPE")),
+                                String.class)
+                        .getStatusCode());
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                patch(
+                                "/api/v1/users/" + member.id() + "/roles",
+                                admin.accessToken(),
+                                Map.of("roleNames", List.of()),
+                                String.class)
+                        .getStatusCode());
+
+        ResponseEntity<List> trail = get(
+                "/api/v1/audit-events?entityType=user&entityId=" + member.id(), admin.accessToken(), List.class);
+        assertEquals(HttpStatus.OK, trail.getStatusCode());
+        assertNotNull(trail.getBody());
+        assertTrue(trail.getBody().toString().contains("USER_ROLES_CHANGED"));
     }
 
     @Test
@@ -336,6 +455,13 @@ class AccountIT extends AbstractIntegrationTest {
                         "roleNames", List.of(role)),
                 UserResponse.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        return response.getBody();
+    }
+
+    private UserResponse me(String token) {
+        ResponseEntity<UserResponse> response = get("/api/v1/auth/me", token, UserResponse.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         return response.getBody();
     }

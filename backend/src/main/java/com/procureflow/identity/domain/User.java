@@ -130,6 +130,10 @@ public class User {
         return status;
     }
 
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
     public Set<Role> getRoles() {
         return roles;
     }
