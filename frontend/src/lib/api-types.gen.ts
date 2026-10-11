@@ -337,6 +337,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the workspace's invites, newest first */
+        get: operations["list_6"];
+        put?: never;
+        /** Invite an address with a fixed role set (link mailed, token never returned) */
+        post: operations["invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/departments": {
         parameters: {
             query?: never;
@@ -345,7 +363,7 @@ export interface paths {
             cookie?: never;
         };
         /** List departments of the current workspace */
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         /** Create a department */
         post: operations["create_6"];
@@ -363,10 +381,27 @@ export interface paths {
             cookie?: never;
         };
         /** List pots of the current workspace, newest period first */
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         /** Open a named pot for one month (YYYY-MM) */
         post: operations["create_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Redeem a mailbox-verification link */
+        post: operations["verifyEmail"];
         delete?: never;
         options?: never;
         head?: never;
@@ -390,6 +425,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/resend-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-send the mailbox-verification link (always the same generic answer) */
+        post: operations["resendVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/register": {
         parameters: {
             query?: never;
@@ -399,7 +451,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register (creates or joins a workspace) */
+        /** Register (creates a workspace, or joins one with a live invite) */
         post: operations["register"];
         delete?: never;
         options?: never;
@@ -536,7 +588,7 @@ export interface paths {
             cookie?: never;
         };
         /** List delegations of the current workspace */
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         /** Delegate decide power to a workspace member until endsAt */
         post: operations["delegate"];
@@ -993,7 +1045,7 @@ export interface paths {
             cookie?: never;
         };
         /** Paged trail rows, newest first, optionally filtered */
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1104,6 +1156,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invites/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke an invite */
+        delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/approvals/workflows/{id}/steps/{stepId}": {
         parameters: {
             query?: never;
@@ -1132,7 +1201,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Revoke a delegation (delegator or workspace admin) */
-        delete: operations["revoke"];
+        delete: operations["revoke_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1157,6 +1226,7 @@ export interface components {
             firstName?: string;
             lastName?: string;
             status?: string;
+            verified?: boolean;
             tenantSlug?: string;
             roles?: string[];
         };
@@ -1382,6 +1452,21 @@ export interface components {
             /** Format: int64 */
             amountMinor?: number;
         };
+        CreateInviteRequest: {
+            /** Format: email */
+            email: string;
+            roleNames: string[];
+        };
+        InviteResponse: {
+            /** Format: uuid */
+            id?: string;
+            email?: string;
+            roles?: string[];
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         CreateDepartmentRequest: {
             name: string;
             /** Format: uuid */
@@ -1414,9 +1499,19 @@ export interface components {
             /** Format: int64 */
             remainingMinor?: number;
         };
+        VerifyEmailRequest: {
+            token: string;
+        };
         ResetPasswordRequest: {
             token: string;
             newPassword: string;
+        };
+        ResendVerificationRequest: {
+            /** Format: email */
+            email: string;
+        };
+        MessageResponse: {
+            message?: string;
         };
         RegisterRequest: {
             /** Format: email */
@@ -1426,6 +1521,7 @@ export interface components {
             lastName?: string;
             tenantSlug: string;
             tenantName?: string;
+            inviteToken?: string;
         };
         AuthResponse: {
             tokenType?: string;
@@ -1448,9 +1544,6 @@ export interface components {
             /** Format: email */
             email: string;
             tenantSlug?: string;
-        };
-        MessageResponse: {
-            message?: string;
         };
         ChangePasswordRequest: {
             currentPassword: string;
@@ -2458,6 +2551,50 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "*/*": components["schemas"]["InviteResponse"][];
+                };
+            };
+        };
+    };
+    invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInviteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InviteResponse"];
+                };
+            };
+        };
+    };
+    list_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "*/*": components["schemas"]["DepartmentResponse"][];
                 };
             };
@@ -2487,7 +2624,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 period?: string;
@@ -2533,6 +2670,28 @@ export interface operations {
             };
         };
     };
+    verifyEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     resetPassword_1: {
         parameters: {
             query?: never;
@@ -2552,6 +2711,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    resendVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MessageResponse"];
+                };
             };
         };
     };
@@ -2787,7 +2970,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -3728,7 +3911,7 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: {
                 entityType?: string;
@@ -3879,6 +4062,26 @@ export interface operations {
             };
         };
     };
+    revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     removeStep: {
         parameters: {
             query?: never;
@@ -3900,7 +4103,7 @@ export interface operations {
             };
         };
     };
-    revoke: {
+    revoke_1: {
         parameters: {
             query?: never;
             header?: never;

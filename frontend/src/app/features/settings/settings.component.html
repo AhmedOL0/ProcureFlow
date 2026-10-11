@@ -22,6 +22,16 @@
     />
   } @else {
     @let me = user();
+    @if (me && me.verified === false) {
+      <div class="pf-notice" role="status">
+        Mailbox unverified — password resets stay locked until you confirm it.
+        @if (!resent()) {
+          <button mat-button (click)="resendVerification()">Resend verification email</button>
+        } @else {
+          <span> If an account exists for that address, a verification link is on its way. </span>
+        }
+      </div>
+    }
     <section class="pf-table-card" aria-label="Profile">
       <div class="pf-card-head">
         <div class="pf-section-head"><h2>Profile</h2></div>

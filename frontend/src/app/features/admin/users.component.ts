@@ -14,14 +14,14 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
 import { PromptDialogComponent } from '../../shared/components/prompt-dialog/prompt-dialog.component';
 import { Users } from '../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
-import { OrganizationService, WorkspaceUser } from './organization.service';
+import { OrganizationService, WorkspaceInvite, WorkspaceUser } from './organization.service';
 
 /**
- * Users & roles: workspace accounts and the roles they were created with.
- * Roles assign at creation only — the contract exposes no role-update
- * endpoint, so this screen states that instead of faking it. The catalog
- * mirrors the backend defaults: TENANT_ADMIN, APPROVER, FINANCE, OFFICER,
- * AUDITOR, MEMBER (unknown names answer 400 UNKNOWN_ROLE).
+ * Users, roles and invites: workspace accounts, live role/status editing,
+ * and the invite-only joining flow. The catalog mirrors the backend
+ * defaults: TENANT_ADMIN, APPROVER, FINANCE, OFFICER, AUDITOR, MEMBER
+ * (unknown names answer 400 UNKNOWN_ROLE). Invite links go out by mail
+ * (logged in local mode); the token itself never appears in the UI.
  */
 @Component({
   selector: 'app-users',
@@ -49,6 +49,7 @@ export class UsersComponent {
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly users = signal<WorkspaceUser[]>([]);
+  protected readonly invites = signal<WorkspaceInvite[]>([]);
   protected readonly notice = signal<string | null>(null);
 
   readonly newEmail = new FormControl('', {
@@ -61,6 +62,11 @@ export class UsersComponent {
   });
   readonly newRoles = new FormControl<string[]>([], { nonNullable: true });
   readonly roleOptions = ['TENANT_ADMIN', 'APPROVER', 'FINANCE', 'OFFICER', 'AUDITOR', 'MEMBER'];
+  readonly inviteEmail = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.email],
+  });
+  readonly inviteRoles = new FormControl<string[]>(['MEMBER'], { nonNullable: true });
 
   constructor() {
     this.reload();
@@ -73,12 +79,58 @@ export class UsersComponent {
     this.org.users().subscribe({
       next: (rows) => {
         this.users.set(rows ?? []);
+        if (this.canManageUsers) {
+          this.loadInvites();
+        } else {
+          this.loading.set(false);
+        }
+      },
+      error: (error: unknown) => {
+        this.failure.set(parseApiFailure(error));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private loadInvites(): void {
+    this.org.invites().subscribe({
+      next: (rows) => {
+        this.invites.set(rows ?? []);
         this.loading.set(false);
       },
       error: (error: unknown) => {
         this.failure.set(parseApiFailure(error));
         this.loading.set(false);
       },
+    });
+  }
+
+  createInvite(): void {
+    if (this.inviteEmail.invalid || this.inviteRoles.value.length === 0) {
+      this.inviteEmail.markAsTouched();
+      return;
+    }
+    this.org.invite(this.inviteEmail.value.trim(), this.inviteRoles.value).subscribe({
+      next: () => {
+        this.inviteEmail.reset('');
+        this.inviteRoles.reset(['MEMBER']);
+        this.notice.set('Invite sent — the link travels by mail and works once.');
+        this.loadInvites();
+      },
+      error: (error: unknown) => this.failure.set(parseApiFailure(error)),
+    });
+  }
+
+  revokeInvite(invite: WorkspaceInvite): void {
+    if (!invite.id) {
+      return;
+    }
+    this.org.revokeInvite(invite.id).subscribe({
+      next: () => {
+        this.notice.set('Invite revoked.');
+        this.loadInvites();
+      },
+      error: (error: unknown) => this.failure.set(parseApiFailure(error)),
     });
   }
 

@@ -10,6 +10,7 @@ export type Department = components['schemas']['DepartmentResponse'];
 export type Membership = components['schemas']['MembershipResponse'];
 export type WorkspaceUser = components['schemas']['UserResponse'];
 export type AuditEvent = components['schemas']['AuditEventResponse'];
+export type WorkspaceInvite = components['schemas']['InviteResponse'];
 
 /**
  * Thin typed clients over organization and audit contracts. Role assignment
@@ -71,6 +72,18 @@ export class OrganizationService {
 
   resetPassword(id: string, password: string): Observable<void> {
     return this.http.post<void>(`${this.base}/users/${id}/password`, { password });
+  }
+
+  invites(): Observable<WorkspaceInvite[]> {
+    return this.http.get<WorkspaceInvite[]>(`${this.base}/invites`);
+  }
+
+  invite(email: string, roleNames: string[]): Observable<WorkspaceInvite> {
+    return this.http.post<WorkspaceInvite>(`${this.base}/invites`, { email, roleNames });
+  }
+
+  revokeInvite(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/invites/${id}`);
   }
 }
 

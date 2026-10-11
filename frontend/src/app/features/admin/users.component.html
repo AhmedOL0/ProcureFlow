@@ -33,7 +33,12 @@
       <ul class="pf-list">
         @for (user of users(); track user.id) {
           <li class="pf-list__row">
-            <span>{{ user.email }}</span>
+            <span
+              >{{ user.email }}
+              @if (user.verified === false) {
+                <span class="pf-muted">(unverified)</span>
+              }
+            </span>
             <span class="pf-list__actions">
               <span class="pf-muted">{{ (user.roles ?? []).join(', ') || 'no roles' }}</span>
               @if (canManageUsers) {
@@ -64,9 +69,45 @@
           <button mat-flat-button color="primary" (click)="createUser()">Create user</button>
         </div>
         <p class="pf-muted">
-          Roles assign at creation only — the contract exposes no role-update endpoint.
+          Roles assign at creation, and change through the admin console — self-change is refused.
         </p>
       }
     </section>
+
+    @if (canManageUsers) {
+      <section class="pf-panel" aria-label="Invites">
+        <div class="pf-panel__head"><h2>Invites ({{ invites().length }})</h2></div>
+        @if (invites().length === 0) {
+          <p class="pf-muted">No open invites. Joining a workspace needs one.</p>
+        } @else {
+          <ul class="pf-list">
+            @for (invite of invites(); track invite.id) {
+              <li class="pf-list__row">
+                <span>{{ invite.email }}</span>
+                <span class="pf-list__actions">
+                  <span class="pf-muted">{{ (invite.roles ?? []).join(', ') }}</span>
+                  <button mat-button color="warn" (click)="revokeInvite(invite)">Revoke</button>
+                </span>
+              </li>
+            }
+          </ul>
+        }
+        <div class="pf-form-row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" [formControl]="inviteEmail" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Roles</mat-label>
+            <mat-select [formControl]="inviteRoles" multiple>
+              @for (role of roleOptions; track role) {
+                <mat-option [value]="role">{{ role }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="createInvite()">Send invite</button>
+        </div>
+      </section>
+    }
   }
 </div>

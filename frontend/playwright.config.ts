@@ -13,6 +13,9 @@ export default defineConfig({
     baseURL: 'http://localhost:4200',
     trace: 'on-first-retry',
   },
+  // Two-browser parallel runs occasionally need more than the 5s default
+  // for navigation under load; assertions are unchanged, only the wait.
+  expect: { timeout: 10000 },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

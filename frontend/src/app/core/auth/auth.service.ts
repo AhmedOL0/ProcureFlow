@@ -83,12 +83,14 @@ export class AuthService {
     password: string,
     tenantSlug: string,
     tenantName?: string,
+    inviteToken?: string,
   ): Observable<UserResponse> {
     const body: RegisterRequest = {
       email,
       password,
       tenantSlug,
       ...(tenantName?.trim() ? { tenantName: tenantName.trim() } : {}),
+      ...(inviteToken?.trim() ? { inviteToken: inviteToken.trim() } : {}),
     };
     return this.http.post<AuthResponse>(`${this.api}/api/v1/auth/register`, body).pipe(
       map((response) => this.store(response)),
@@ -163,6 +165,16 @@ export class AuthService {
   /** Redeems a reset token for a new password. */
   resetPassword(token: string, newPassword: string): Observable<void> {
     return this.http.post<void>(`${this.api}/api/v1/auth/reset-password`, { token, newPassword });
+  }
+
+  /** Redeems a mailbox-verification link. Unknown tokens 404, spent ones 410. */
+  verifyEmail(token: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/api/v1/auth/verify-email`, { token });
+  }
+
+  /** Re-sends the verification link. The answer is generic by design. */
+  resendVerification(email: string): Observable<{ message?: string }> {
+    return this.http.post<{ message?: string }>(`${this.api}/api/v1/auth/resend-verification`, { email });
   }
 
   logout(navigate = true): void {

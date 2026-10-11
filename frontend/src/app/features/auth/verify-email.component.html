@@ -1,0 +1,39 @@
+<div class="auth-brand" aria-hidden="true">ProcureFlow</div>
+<main class="auth-main">
+  <mat-card class="auth-card">
+    <mat-card-header>
+      <mat-card-title><h1 class="auth-title">Verify your mailbox</h1></mat-card-title>
+      @if (state() === 'working' || state() === 'missing') {
+        <mat-card-subtitle>Confirming your address…</mat-card-subtitle>
+      }
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (state() === 'working') {
+        <div class="auth-loading" role="status" aria-label="Verifying mailbox">
+          <mat-spinner diameter="28" />
+        </div>
+      } @else if (state() === 'done') {
+        <p class="auth-sent" role="status">
+          Mailbox verified — password resets are unlocked. <a routerLink="/login">Sign in</a>
+        </p>
+      } @else if (state() === 'spent') {
+        <p class="auth-error" role="alert">
+          This link expired or was already used. Ask for a fresh one from the sign-in screen.
+        </p>
+      } @else if (state() === 'invalid') {
+        <p class="auth-error" role="alert">
+          This link is not valid. Check the full URL from your email and try again.
+        </p>
+      } @else {
+        <p class="auth-error" role="alert">
+          No verification token found. Open the link from your email — it carries the token.
+        </p>
+      }
+    </mat-card-content>
+
+    <mat-card-actions>
+      <span class="auth-switch"><a routerLink="/login">Back to sign in</a></span>
+    </mat-card-actions>
+  </mat-card>
+</main>

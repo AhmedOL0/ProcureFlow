@@ -17,9 +17,9 @@ import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/
 
 /**
  * Account settings: profile names and self-service password change.
- * Email, roles and status are not editable here by contract design (email
- * moves through a verified workflow that does not exist yet; roles assign
- * at user creation). Changing the password ends every session, so success
+ * Email, roles and status are not editable here by contract design.
+ * Unverified mailboxes see a resend banner (resets stay locked until the
+ * mailbox is proven). Changing the password ends every session, so success
  * routes to the login screen.
  */
 @Component({
@@ -49,6 +49,7 @@ export class SettingsComponent {
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly notice = signal<string | null>(null);
+  protected readonly resent = signal(false);
   protected readonly showCurrent = signal(false);
   protected readonly showNew = signal(false);
   protected readonly savingProfile = signal(false);
@@ -147,5 +148,16 @@ export class SettingsComponent {
   protected failureMessage(): string {
     const failure = this.failure();
     return failure ? userMessageFor(failure) : '';
+  }
+
+  resendVerification(): void {
+    const email = this.user()?.email;
+    if (!email || this.resent()) {
+      return;
+    }
+    this.auth.resendVerification(email).subscribe({
+      next: () => this.resent.set(true),
+      error: () => this.resent.set(true),
+    });
   }
 }

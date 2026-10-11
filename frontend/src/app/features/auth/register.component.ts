@@ -11,7 +11,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
 /**
  * Workspace registration: a new slug plus tenant name creates a workspace
- * (caller becomes admin); an existing slug joins it as a member.
+ * (caller becomes admin); an existing slug joins it with a live invite code.
  */
 @Component({
   selector: 'app-register',
@@ -30,6 +30,7 @@ export class RegisterComponent {
     }),
     tenantSlug: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     tenantName: new FormControl('', { nonNullable: true }),
+    inviteToken: new FormControl('', { nonNullable: true }),
   });
   readonly busy = signal(false);
   readonly failure = signal<string | null>(null);
@@ -41,13 +42,15 @@ export class RegisterComponent {
     }
     this.busy.set(true);
     this.failure.set(null);
-    const { email, password, tenantSlug, tenantName } = this.form.getRawValue();
-    this.auth.register(email, password, tenantSlug.trim(), tenantName).subscribe({
+    const { email, password, tenantSlug, tenantName, inviteToken } = this.form.getRawValue();
+    this.auth.register(email, password, tenantSlug.trim(), tenantName, inviteToken).subscribe({
       error: (error: unknown) => {
         this.busy.set(false);
         const code = this.auth.apiErrorCode(error);
         if (code === 'EMAIL_IN_USE') {
           this.failure.set('This email is already registered in this workspace — try signing in.');
+        } else if (code === 'INVITE_REQUIRED') {
+          this.failure.set('Joining needs a live invite code from a workspace admin.');
         } else if (code === 'TENANT_NAME_REQUIRED') {
           this.failure.set('A workspace name is required to create a new workspace.');
         } else if (code === 'WEAK_PASSWORD') {
