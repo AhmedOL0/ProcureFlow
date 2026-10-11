@@ -34,11 +34,13 @@ public class PurchaseRequestItemService {
 
     /**
      * Persists one item for an already-loaded request. Joins the caller's
-     * transaction (creation batches several of these atomically).
+     * transaction (creation batches several of these atomically). Flushes
+     * so the next sibling in the same batch sees this line when the
+     * single-currency guard reads the request's lines back.
      */
     public PurchaseRequestItem createForRequest(
             PurchaseRequest request, String tenantSlug, PurchaseRequestService.ItemInput input) {
-        return items.save(toItem(request, tenantSlug, input));
+        return items.saveAndFlush(toItem(request, tenantSlug, input));
     }
 
     public PurchaseRequestItem update(
@@ -59,6 +61,7 @@ public class PurchaseRequestItemService {
             item.setUnitPriceMinor(unitPriceMinor);
         }
         if (currency != null) {
+            requireSingleCurrency(item.getRequest().getId(), currency, item.getId());
             item.setCurrency(currency);
         }
         if (supplierId != null) {
@@ -74,12 +77,31 @@ public class PurchaseRequestItemService {
         items.delete(scopedDraftItem(tenantSlug, itemId, callerId, admin));
     }
 
+    /**
+     * Single-currency invariant: totals sum minor units as-is, so a request
+     * mixing codes would report (and reserve) a meaningless total. The
+     * first line sets the request currency; every later line must match it.
+     */
+    private void requireSingleCurrency(UUID requestId, String currency, UUID ignoreItemId) {
+        for (PurchaseRequestItem existing : items.findAllByRequest_IdOrderByCreatedAt(requestId)) {
+            if (ignoreItemId != null && ignoreItemId.equals(existing.getId())) {
+                continue;
+            }
+            if (existing.getCurrency() != null && !existing.getCurrency().equalsIgnoreCase(currency)) {
+                throw ApiException.badRequest(
+                        "MIXED_CURRENCY", "All lines of a request must share one currency");
+            }
+        }
+    }
+
     private PurchaseRequestItem toItem(
             PurchaseRequest request, String tenantSlug, PurchaseRequestService.ItemInput input) {
         PurchaseRequestItem item = new PurchaseRequestItem(
                 request, input.description(), input.quantity(), input.unitPriceMinor());
         item.setCategory(input.category());
-        item.setCurrency(input.currency() == null ? "MAD" : input.currency());
+        String currency = input.currency() == null ? "MAD" : input.currency();
+        requireSingleCurrency(request.getId(), currency, null);
+        item.setCurrency(currency);
         if (input.supplierId() != null) {
             if (!supplierLookup.existsInTenant(input.supplierId(), tenantSlug)) {
                 throw ApiException.notFound("SUPPLIER_NOT_FOUND", "Supplier not found");
@@ -89,8 +111,7 @@ public class PurchaseRequestItemService {
         return item;
     }
 
-    private PurchaseRequestItem scopedDraftItem(String tenantSlug, UUID itemId, UUID callerId, boolean admin) {
-        PurchaseRequestItem item = items
+    private PurchaseRequestItem scopedDraftItem(String tenantSlug, UUID itemId, UUID callerId, boolean admin) {        PurchaseRequestItem item = items
                 .findByIdAndTenantSlug(itemId, tenantSlug)
                 .orElseThrow(() -> ApiException.notFound("ITEM_NOT_FOUND", "Request item not found"));
         if (item.getRequest().getStatus() != com.procureflow.procurement.domain.PurchaseRequest.Status.DRAFT) {

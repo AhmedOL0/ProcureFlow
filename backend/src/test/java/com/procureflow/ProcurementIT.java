@@ -212,8 +212,50 @@ class ProcurementIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void itemsLinkToTenantSuppliersOnly() {
-        Fixture tenantA = provision(uniqueSlug("acme"));
+    void mixedCurrencyLinesAreRejected() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        UUID id = createId(
+                admin.token(),
+                "Laptops",
+                List.of(Map.of("description", "ThinkPad", "quantity", 2, "unitPriceMinor", 89900, "currency", "MAD")));
+
+        ResponseEntity<String> eur = post(
+                "/api/v1/purchase-requests/" + id + "/items",
+                admin.token(),
+                Map.of("description", "Souris", "quantity", 5, "unitPriceMinor", 2500, "currency", "EUR"),
+                String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, eur.getStatusCode());
+        assertNotNull(eur.getBody());
+        assertTrue(eur.getBody().contains("MIXED_CURRENCY"));
+
+        ResponseEntity<Map> mad = post(
+                "/api/v1/purchase-requests/" + id + "/items",
+                admin.token(),
+                Map.of("description", "Mouse", "quantity", 5, "unitPriceMinor", 2500, "currency", "MAD"),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, mad.getStatusCode());
+
+        ResponseEntity<Map> fetched = get("/api/v1/purchase-requests/" + id, admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, fetched.getStatusCode());
+        assertNotNull(fetched.getBody());
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> itemList = (List<Map<String, Object>>) fetched.getBody().get("items");
+        assertNotNull(itemList);
+        assertEquals(2, itemList.size());
+        UUID firstId = UUID.fromString(itemList.get(0).get("id").toString());
+
+        ResponseEntity<String> reprice = rest.exchange(
+                "/api/v1/purchase-request-items/" + firstId,
+                HttpMethod.PATCH,
+                new HttpEntity<>(Map.of("currency", "EUR"), bearer(admin.token())),
+                String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, reprice.getStatusCode());
+        assertNotNull(reprice.getBody());
+        assertTrue(reprice.getBody().contains("MIXED_CURRENCY"));
+    }
+
+    @Test
+    void itemsLinkToTenantSuppliersOnly() {        Fixture tenantA = provision(uniqueSlug("acme"));
         Fixture tenantB = provision(uniqueSlug("globex"));
         UUID supplier = createSupplier(tenantA.token(), "Acme Parts");
         UUID request = createId(tenantB.token(), "Laptops", null);
