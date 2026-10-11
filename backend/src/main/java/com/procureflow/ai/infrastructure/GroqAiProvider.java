@@ -9,6 +9,7 @@ import com.procureflow.shared.web.ApiException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
@@ -35,6 +36,7 @@ public class GroqAiProvider implements AiProvider {
     private final String endpoint;
     private final ObjectMapper json;
 
+    @Autowired
     public GroqAiProvider(
             @Value("${app.ai.groq.api-key:}") String apiKey,
             @Value("${app.ai.groq.model:openai/gpt-oss-120b}") String model,
