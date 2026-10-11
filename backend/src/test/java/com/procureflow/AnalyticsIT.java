@@ -13,13 +13,16 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -39,6 +42,12 @@ class AnalyticsIT extends AbstractIntegrationTest {
 
     @MockitoBean
     private MailPort mail;
+
+    @Autowired
+    private SessionFactory sessions;
+
+    @Autowired
+    private JdbcTemplate jdbc;
 
     @Test
     void spendAggregatesAcrossTheFlow() {
@@ -79,6 +88,65 @@ class AnalyticsIT extends AbstractIntegrationTest {
         assertEquals(
                 HttpStatus.BAD_REQUEST,
                 get("/api/v1/analytics/spend?period=last-year", admin.token(), String.class).getStatusCode());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void spendWithPeriodReadsOnlyThatMonth() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        for (int flow = 1; flow <= 6; flow++) {
+            paidFlow(admin.token(), "-" + flow);
+        }
+        backdateHalf(admin.slug());
+        String month = YearMonth.now(ZoneOffset.UTC).toString();
+
+        sessions.getStatistics().setStatisticsEnabled(true);
+        sessions.getStatistics().clear();
+        ResponseEntity<Map> filtered = get("/api/v1/analytics/spend?period=" + month, admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, filtered.getStatusCode());
+        assertNotNull(filtered.getBody());
+        assertEquals(3 * 181300L, number(filtered.getBody(), "orderedMinor"));
+        assertEquals(3 * 181300L, number(filtered.getBody(), "paidMinor"));
+        assertEquals(1, ((List<?>) filtered.getBody().get("byPeriod")).size());
+        // Bounded by the month, not by tenant history: 3 of 6 flows load
+        // (requests incl. items, orders incl. lines, invoices), plus tenant
+        // resolution. The old full scan loads all 6 flows here.
+        long loaded = sessions.getStatistics().getEntityLoadCount();
+        assertTrue(loaded <= 30, "spend(period) loaded " + loaded + " entities for 3 flows");
+        long queries = sessions.getStatistics().getQueryExecutionCount();
+        assertTrue(queries <= 8, "spend(period) issued " + queries + " queries for 3 flows");
+
+        ResponseEntity<Map> history = get("/api/v1/analytics/spend?period=2000-01", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, history.getStatusCode());
+        assertNotNull(history.getBody());
+        assertEquals(3 * 181300L, number(history.getBody(), "orderedMinor"));
+        assertEquals(1, ((List<?>) history.getBody().get("byPeriod")).size());
+    }
+
+    /**
+     * Moves an arbitrary half of the tenant's chains into January 2000 so a
+     * period filter has something to exclude. Same technique as the dev
+     * seeder: services stamp "now", history is an explicit test step.
+     */
+    private void backdateHalf(String slug) {
+        UUID tenant = jdbc.queryForObject("SELECT id FROM tenants WHERE slug = ?", UUID.class, slug);
+        assertNotNull(tenant);
+        String half = "SELECT id FROM purchase_requests WHERE tenant_id = '" + tenant + "' ORDER BY id LIMIT 3";
+        String stamp = "TIMESTAMP '2000-01-15 12:00:00+00'";
+        jdbc.update("UPDATE purchase_request_items SET created_at = " + stamp
+                + " WHERE request_id IN (" + half + ")");
+        jdbc.update("UPDATE purchase_orders SET created_at = " + stamp + " WHERE request_id IN (" + half + ")");
+        jdbc.update("UPDATE purchase_order_items SET created_at = " + stamp
+                + " WHERE order_id IN (SELECT id FROM purchase_orders WHERE request_id IN (" + half + "))");
+        jdbc.update("UPDATE invoices SET created_at = " + stamp
+                + " WHERE order_id IN (SELECT id FROM purchase_orders WHERE request_id IN (" + half + "))");
+        jdbc.update("UPDATE invoice_lines SET created_at = " + stamp
+                + " WHERE invoice_id IN (SELECT id FROM invoices WHERE order_id IN "
+                + "(SELECT id FROM purchase_orders WHERE request_id IN (" + half + ")))");
+        jdbc.update("UPDATE invoice_payments SET created_at = " + stamp
+                + " WHERE invoice_id IN (SELECT id FROM invoices WHERE order_id IN "
+                + "(SELECT id FROM purchase_orders WHERE request_id IN (" + half + ")))");
+        jdbc.update("UPDATE purchase_requests SET created_at = " + stamp + " WHERE id IN (" + half + ")");
     }
 
     @Test
@@ -265,6 +333,10 @@ class AnalyticsIT extends AbstractIntegrationTest {
     }
 
     private void paidFlow(String token) {
+        paidFlow(token, "");
+    }
+
+    private void paidFlow(String token, String tag) {
         UUID request = submitted(token);
         assertEquals(
                 HttpStatus.CREATED,
@@ -274,7 +346,7 @@ class AnalyticsIT extends AbstractIntegrationTest {
                                 new HttpEntity<>(Map.of("requestId", request, "decision", "APPROVED"), bearer(token)),
                                 Map.class)
                         .getStatusCode());
-        UUID supplier = supplier(token, "Acme Parts");
+        UUID supplier = supplier(token, "Acme Parts" + tag);
         ResponseEntity<Map> order = rest.exchange(
                 "/api/v1/purchase-orders",
                 HttpMethod.POST,
@@ -299,7 +371,8 @@ class AnalyticsIT extends AbstractIntegrationTest {
         ResponseEntity<Map> invoice = rest.exchange(
                 "/api/v1/invoices",
                 HttpMethod.POST,
-                new HttpEntity<>(Map.of("orderId", orderId, "number", "INV-1", "lines", invoiceLines), bearer(token)),
+                new HttpEntity<>(
+                        Map.of("orderId", orderId, "number", "INV-1" + tag, "lines", invoiceLines), bearer(token)),
                 Map.class);
         assertEquals(HttpStatus.CREATED, invoice.getStatusCode());
         assertNotNull(invoice.getBody());

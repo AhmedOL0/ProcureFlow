@@ -12,6 +12,9 @@ public interface OrderStatsPort {
 
     List<OrderStat> orderStats(String tenantSlug);
 
+    /** Month-bounded variant: half-open [from, to), never null at the call site. */
+    List<OrderStat> orderStats(String tenantSlug, Instant from, Instant to);
+
     record OrderStat(UUID orderId, String status, String currency, Instant createdAt, List<LineStat> lines) {
     }
 

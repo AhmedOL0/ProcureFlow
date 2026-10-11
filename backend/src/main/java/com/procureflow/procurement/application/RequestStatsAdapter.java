@@ -2,6 +2,7 @@ package com.procureflow.procurement.application;
 
 import com.procureflow.procurement.domain.PurchaseRequest;
 import com.procureflow.procurement.infrastructure.PurchaseRequestRepository;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,14 @@ public class RequestStatsAdapter implements RequestStatsPort {
     @Transactional(readOnly = true)
     public List<RequestStat> requestStats(String tenantSlug) {
         return requests.findAllByTenantSlug(tenantSlug).stream()
+                .map(RequestStatsAdapter::stat)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RequestStat> requestStats(String tenantSlug, Instant from, Instant to) {
+        return requests.findAllByTenantSlugAndCreatedAtBetween(tenantSlug, from, to).stream()
                 .map(RequestStatsAdapter::stat)
                 .toList();
     }

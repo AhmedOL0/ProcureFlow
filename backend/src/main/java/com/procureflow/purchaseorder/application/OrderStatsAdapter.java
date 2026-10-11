@@ -5,6 +5,7 @@ import com.procureflow.purchaseorder.domain.OrderItem;
 import com.procureflow.purchaseorder.domain.PurchaseOrder;
 import com.procureflow.purchaseorder.infrastructure.OrderItemRepository;
 import com.procureflow.purchaseorder.infrastructure.PurchaseOrderRepository;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,18 @@ public class OrderStatsAdapter implements OrderStatsPort {
     @Transactional(readOnly = true)
     public List<OrderStat> orderStats(String tenantSlug) {
         List<PurchaseOrder> found = orders.findAllByTenantIdOrderByCreatedAtDesc(tenants.requireTenantId(tenantSlug));
+        return statsOf(found);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderStat> orderStats(String tenantSlug, Instant from, Instant to) {
+        List<PurchaseOrder> found =
+                orders.findAllByTenantIdAndCreatedAtBetween(tenants.requireTenantId(tenantSlug), from, to);
+        return statsOf(found);
+    }
+
+    private List<OrderStat> statsOf(List<PurchaseOrder> found) {
         if (found.isEmpty()) {
             return List.of();
         }

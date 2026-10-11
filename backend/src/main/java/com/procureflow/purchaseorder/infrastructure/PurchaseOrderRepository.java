@@ -1,6 +1,7 @@
 package com.procureflow.purchaseorder.infrastructure;
 
 import com.procureflow.purchaseorder.domain.PurchaseOrder;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +18,13 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, UU
     Optional<PurchaseOrder> findByIdAndTenantId(UUID id, UUID tenantId);
 
     List<PurchaseOrder> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);
+
+    // Half-open month range (inclusive start, exclusive end): adjacent
+    // months never share a row, and nulls are impossible by construction.
+    @Query("select o from PurchaseOrder o where o.tenantId = :tenantId"
+            + " and o.createdAt >= :from and o.createdAt < :to order by o.createdAt desc")
+    List<PurchaseOrder> findAllByTenantIdAndCreatedAtBetween(
+            @Param("tenantId") UUID tenantId, @Param("from") Instant from, @Param("to") Instant to);
 
     Page<PurchaseOrder> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId, Pageable pageable);
 
