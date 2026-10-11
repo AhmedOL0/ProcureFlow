@@ -667,6 +667,40 @@ export interface paths {
         patch: operations["updateProfile"];
         trace?: never;
     };
+    "/api/v1/users/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Suspend (DISABLED) or reactivate (ACTIVE) a workspace user; self-change refused */
+        patch: operations["setStatus"];
+        trace?: never;
+    };
+    "/api/v1/users/{id}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Replace a workspace user's roles; self-change refused */
+        patch: operations["setRoles"];
+        trace?: never;
+    };
     "/api/v1/users/me": {
         parameters: {
             query?: never;
@@ -872,7 +906,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** My inbox, newest first */
+        /** My inbox, newest first (paged) */
         get: operations["inbox"];
         put?: never;
         post?: never;
@@ -958,7 +992,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List trail rows, newest first, optionally filtered */
+        /** Paged trail rows, newest first, optionally filtered */
         get: operations["list_9"];
         put?: never;
         post?: never;
@@ -1535,6 +1569,13 @@ export interface components {
             firstName?: string;
             lastName?: string;
         };
+        UpdateStatusRequest: {
+            /** @enum {string} */
+            status: "ACTIVE" | "INVITED" | "DISABLED";
+        };
+        UpdateRolesRequest: {
+            roleNames: string[];
+        };
         UpdateTenantRequest: {
             name: string;
         };
@@ -1603,6 +1644,17 @@ export interface components {
             escalateAfterDays?: number;
             active?: boolean;
         };
+        PagedNotificationResponse: {
+            content?: components["schemas"]["NotificationResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
         ReservationResponse: {
             /** Format: uuid */
             id?: string;
@@ -1626,6 +1678,17 @@ export interface components {
             afterJson?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        PagedAuditEventResponse: {
+            content?: components["schemas"]["AuditEventResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         AssignmentResponse: {
             /** Format: uuid */
@@ -2984,6 +3047,58 @@ export interface operations {
             };
         };
     };
+    setStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    setRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRolesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -3486,7 +3601,10 @@ export interface operations {
     };
     inbox: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3499,7 +3617,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["NotificationResponse"][];
+                    "*/*": components["schemas"]["PagedNotificationResponse"];
                 };
             };
         };
@@ -3615,6 +3733,8 @@ export interface operations {
             query?: {
                 entityType?: string;
                 entityId?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -3628,7 +3748,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["AuditEventResponse"][];
+                    "*/*": components["schemas"]["PagedAuditEventResponse"];
                 };
             };
         };

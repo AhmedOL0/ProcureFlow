@@ -636,7 +636,11 @@ test.describe('critical journeys', () => {
         users: [],
         notifications,
       }),
-      { method: 'GET', match: '/notifications', body: notifications },
+      {
+        method: 'GET',
+        match: '/notifications',
+        body: { content: notifications, page: 0, size: 20, totalElements: 1, totalPages: 1 },
+      },
       {
         method: 'PATCH',
         match: '/notifications/n-1/read',

@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -13,15 +14,18 @@ import { formatInstant } from '../../shared/utils/time';
 
 /**
  * Notification history: every event the workspace raised for the caller,
- * newest first. Rows carry the event text only — the contract has no
- * request deep-link, so none is invented. Mark-all-read fans out to one
- * PATCH per unread row (no bulk endpoint exists).
+ * newest first, paged server-side. Rows carry the event text only — the
+ * contract has no request deep-link, so none is invented. Mark-all-read
+ * fans out to one PATCH per unread row (no bulk endpoint exists). The
+ * unread chip narrows the loaded page; full-text search across pages
+ * awaits a server search param.
  */
 @Component({
   selector: 'app-notifications',
   imports: [
     MatButtonModule,
     MatChipsModule,
+    MatPaginatorModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
     PageHeaderComponent,
@@ -51,5 +55,9 @@ export class NotificationsComponent {
 
   showUnread(): void {
     this.unreadOnly.set(true);
+  }
+
+  onPage(page: PageEvent): void {
+    this.inbox.load(page.pageIndex, page.pageSize);
   }
 }

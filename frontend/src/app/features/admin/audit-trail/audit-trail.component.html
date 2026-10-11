@@ -39,7 +39,7 @@
       />
     } @else {
       <div class="pf-table-scroll">
-        <table mat-table [dataSource]="pageRows()" class="pf-table" aria-label="Audit trail">
+        <table mat-table [dataSource]="filtered()" class="pf-table" aria-label="Audit trail">
           <ng-container matColumnDef="time">
             <th mat-header-cell *matHeaderCellDef>Time</th>
             <td mat-cell *matCellDef="let row">{{ readableTime(row.createdAt) }}</td>
@@ -89,7 +89,7 @@
         </table>
       </div>
       <mat-paginator
-        [length]="filtered().length"
+        [length]="page().length"
         [pageIndex]="page().pageIndex"
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"

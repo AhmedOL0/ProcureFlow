@@ -17,7 +17,7 @@
     <div class="pf-chips">
       <mat-chip-listbox aria-label="Read filter">
         <mat-chip-option [selected]="!unreadOnly()" (click)="showAll()">
-          All ({{ inbox.items().length }})
+          All ({{ inbox.page().length }})
         </mat-chip-option>
         <mat-chip-option [selected]="unreadOnly()" (click)="showUnread()">
           Unread ({{ inbox.unread() }})
@@ -59,6 +59,14 @@
           </li>
         }
       </ul>
+      <mat-paginator
+        [length]="inbox.page().length"
+        [pageIndex]="inbox.page().pageIndex"
+        [pageSize]="inbox.page().pageSize"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+        aria-label="Notification pages"
+      />
     }
   </div>
 </div>

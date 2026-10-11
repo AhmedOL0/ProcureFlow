@@ -45,6 +45,11 @@ export class AuditTrailComponent {
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
   protected readonly expanded = signal<string | null>(null);
 
+  /**
+   * Free-text filter over the loaded page. Server-side search across all
+   * pages awaits a search param on the contract; until then the filter
+   * narrows what the paginator fetched, and the counts stay server-true.
+   */
   protected readonly filtered = computed(() => {
     const query = this.entityFilter.value.trim().toLowerCase();
     const rows = this.rows();
@@ -59,22 +64,22 @@ export class AuditTrailComponent {
     );
   });
 
-  protected readonly pageRows = computed(() => {
-    const { pageIndex, pageSize } = this.page();
-    return this.filtered().slice(pageIndex * pageSize, pageIndex * pageSize + pageSize);
-  });
-
   constructor() {
     this.reload();
   }
 
   reload(): void {
+    const current = this.page();
+    this.load(current.pageIndex, current.pageSize);
+  }
+
+  load(pageIndex: number, pageSize: number): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.trail.list(null, null).subscribe({
-      next: (rows) => {
-        this.rows.set(rows ?? []);
-        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+    this.trail.page(null, null, pageIndex, pageSize).subscribe({
+      next: (result) => {
+        this.rows.set(result.rows);
+        this.page.set({ pageIndex, pageSize, length: result.total });
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -85,7 +90,7 @@ export class AuditTrailComponent {
   }
 
   onPage(page: PageEvent): void {
-    this.page.set(page);
+    this.load(page.pageIndex, page.pageSize);
   }
 
   toggle(row: AuditEvent): void {

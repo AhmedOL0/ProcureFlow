@@ -44,6 +44,8 @@ async function stubApi(page: Page, token: string): Promise<void> {
       await json([]);
     } else if (method === 'GET' && url.includes('/supplier-categories')) {
       await json([]);
+    } else if (method === 'GET' && url.includes('/notifications')) {
+      await json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
     } else {
       await route.abort('failed');
     }
