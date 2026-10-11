@@ -341,6 +341,9 @@ table.pf-table th.pf-num {
   font-family: var(--pf-font);
   font-weight: 700;
   // Long money figures shrink with the card instead of ellipsizing.
+  // Plain fallback first: engines without container-query units drop the
+  // whole clamp() declaration, which would silently inherit body size.
+  font-size: 24px;
   font-size: clamp(18px, 9cqw, 24px);
   line-height: 1.25;
   letter-spacing: -0.01em;
