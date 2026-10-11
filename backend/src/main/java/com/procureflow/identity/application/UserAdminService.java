@@ -36,6 +36,7 @@ public class UserAdminService {
     private final RefreshTokenRepository refreshTokens;
     private final EntityManager entities;
     private final ApplicationEventPublisher events;
+    private final EmailVerificationService verification;
 
     public UserAdminService(
             UserRepository users,
@@ -44,7 +45,8 @@ public class UserAdminService {
             PasswordEncoder encoder,
             RefreshTokenRepository refreshTokens,
             EntityManager entities,
-            ApplicationEventPublisher events) {
+            ApplicationEventPublisher events,
+            EmailVerificationService verification) {
         this.users = users;
         this.roleProvisioning = roleProvisioning;
         this.tenants = tenants;
@@ -52,6 +54,7 @@ public class UserAdminService {
         this.refreshTokens = refreshTokens;
         this.entities = entities;
         this.events = events;
+        this.verification = verification;
     }
 
     @Transactional(readOnly = true)
@@ -85,7 +88,9 @@ public class UserAdminService {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.getRoles().addAll(roleProvisioning.resolveRoles(tenantSlug, roleNames));
-        return users.save(user);
+        users.save(user);
+        verification.sendFor(user);
+        return user;
     }
 
     /**

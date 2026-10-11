@@ -4,6 +4,7 @@ import com.procureflow.identity.application.AuthResult;
 import com.procureflow.identity.application.AuthService;
 import com.procureflow.identity.application.AuthenticatedUser;
 import com.procureflow.identity.application.Credentials;
+import com.procureflow.identity.application.EmailVerificationService;
 import com.procureflow.identity.application.PasswordResetService;
 import com.procureflow.identity.application.Registration;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,14 +32,17 @@ public class AuthController {
 
     private final AuthService auth;
     private final PasswordResetService passwordResets;
+    private final EmailVerificationService verification;
 
-    public AuthController(AuthService auth, PasswordResetService passwordResets) {
+    public AuthController(
+            AuthService auth, PasswordResetService passwordResets, EmailVerificationService verification) {
         this.auth = auth;
         this.passwordResets = passwordResets;
+        this.verification = verification;
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Register (creates or joins a workspace)")
+    @Operation(summary = "Register (creates a workspace, or joins one with a live invite)")
     public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request, HttpServletRequest http) {
         AuthResult result = auth.register(new Registration(
@@ -47,7 +51,8 @@ public class AuthController {
                 request.firstName(),
                 request.lastName(),
                 request.tenantSlug(),
-                request.tenantName()),
+                request.tenantName(),
+                request.inviteToken()),
                 clientIp(http));
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(result));
     }
@@ -112,6 +117,19 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         passwordResets.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/verify-email")
+    @Operation(summary = "Redeem a mailbox-verification link")
+    public ResponseEntity<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        verification.verify(request.token());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/resend-verification")
+    @Operation(summary = "Re-send the mailbox-verification link (always the same generic answer)")
+    public ResponseEntity<MessageResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        return ResponseEntity.ok(new MessageResponse(verification.resend(request.email())));
     }
 
     /**

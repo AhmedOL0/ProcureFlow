@@ -46,6 +46,8 @@ public class AuthService {
     private final JwtService jwt;
     private final EntityManager entities;
     private final AuthAttemptThrottle attempts;
+    private final EmailVerificationService verification;
+    private final InviteService invites;
 
     @Value("${app.jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
@@ -58,7 +60,9 @@ public class AuthService {
             PasswordEncoder encoder,
             JwtService jwt,
             EntityManager entities,
-            AuthAttemptThrottle attempts) {
+            AuthAttemptThrottle attempts,
+            EmailVerificationService verification,
+            InviteService invites) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.tenants = tenants;
@@ -67,6 +71,8 @@ public class AuthService {
         this.jwt = jwt;
         this.entities = entities;
         this.attempts = attempts;
+        this.verification = verification;
+        this.invites = invites;
     }
 
     public AuthResult register(Registration cmd, String clientIp) {
@@ -76,12 +82,16 @@ public class AuthService {
         String slug = normalize(cmd.tenantSlug());
         UUID tenantId;
         Set<String> roleNames;
+        boolean verified;
         if (tenants.exists(slug)) {
             if (users.findByTenantSlugAndEmail(slug, email).isPresent()) {
                 throw ApiException.conflict("EMAIL_IN_USE", "This email is already registered in this workspace");
             }
+            // Joining is invite-only: the token binds address, workspace and
+            // role set, and redemption itself proves the mailbox.
             tenantId = tenants.requireTenantId(slug);
-            roleNames = Set.of(RoleProvisioningService.MEMBER);
+            roleNames = invites.redeem(slug, email, cmd.inviteToken());
+            verified = true;
         } else {
             if (cmd.tenantName() == null || cmd.tenantName().isBlank()) {
                 throw ApiException.badRequest(
@@ -89,12 +99,17 @@ public class AuthService {
             }
             tenantId = tenants.ensureTenant(slug, cmd.tenantName().trim());
             roleNames = Set.of(RoleProvisioningService.TENANT_ADMIN);
+            verified = false;
         }
         User user = new User(entities.getReference(Tenant.class, tenantId), email, encoder.encode(cmd.password()));
         user.setFirstName(cmd.firstName());
         user.setLastName(cmd.lastName());
+        user.setVerified(verified);
         user.getRoles().addAll(roleProvisioning.resolveRoles(slug, roleNames));
         users.save(user);
+        if (!verified) {
+            verification.sendFor(user);
+        }
         return new AuthResult(user, issueTokens(user));
     }
 

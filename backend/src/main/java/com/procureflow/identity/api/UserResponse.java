@@ -11,6 +11,7 @@ public record UserResponse(
         String firstName,
         String lastName,
         String status,
+        boolean verified,
         String tenantSlug,
         List<String> roles) {
 
@@ -21,6 +22,7 @@ public record UserResponse(
                 user.getFirstName(),
                 user.getLastName(),
                 user.getStatus().name(),
+                user.isVerified(),
                 user.getTenant().getSlug(),
                 user.getRoles().stream().map(Role::getName).sorted().toList());
     }

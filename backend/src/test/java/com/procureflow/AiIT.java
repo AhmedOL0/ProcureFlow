@@ -5,19 +5,26 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.procureflow.identity.api.AuthResponse;
+import com.procureflow.identity.application.MailPort;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+
+import static org.mockito.Mockito.verify;
 
 /**
  * Procurement copilot behind the test-double provider: KPI-cited answers,
@@ -29,6 +36,9 @@ class AiIT extends AbstractIntegrationTest {
     @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES = postgresContainer();
+
+    @MockitoBean
+    private MailPort mail;
 
     @Test
     void chatAnswersWithCitationsAndMeters() {
@@ -112,7 +122,7 @@ class AiIT extends AbstractIntegrationTest {
     @Test
     void membersWithoutAiUseAreForbidden() {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture worker = join(admin.slug());
+        Fixture worker = join(admin);
 
         assertEquals(
                 HttpStatus.FORBIDDEN,
@@ -145,17 +155,40 @@ class AiIT extends AbstractIntegrationTest {
         return new Fixture(slug, response.getBody().accessToken());
     }
 
-    private Fixture join(String slug) {
+    private Fixture join(Fixture admin) {
+        String email =
+                "worker-" + UUID.randomUUID().toString().substring(0, 8) + "@" + admin.slug() + ".test";
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",
                 Map.of(
-                        "email", "worker-" + UUID.randomUUID().toString().substring(0, 8) + "@" + slug + ".test",
+                        "email", email,
                         "password", "correct-horse-123",
-                        "tenantSlug", slug),
+                        "tenantSlug", admin.slug(),
+                        "inviteToken", inviteToken(admin.token(), email)),
                 AuthResponse.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        return new Fixture(slug, response.getBody().accessToken());
+        return new Fixture(admin.slug(), response.getBody().accessToken());
+    }
+
+    private String inviteToken(String adminToken, String email) {
+        ResponseEntity<Map> invited = rest.exchange(
+                "/api/v1/invites",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("email", email, "roleNames", List.of("MEMBER")), bearer(adminToken)),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, invited.getStatusCode());
+        ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
+        verify(mail, org.mockito.Mockito.atLeastOnce()).send(sent.capture());
+        return sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email))
+                .reduce((first, second) -> second)
+                .map(message -> {
+                    Matcher matcher = Pattern.compile("invite=([A-Za-z0-9_-]+)").matcher(message.textBody());
+                    assertTrue(matcher.find());
+                    return matcher.group(1);
+                })
+                .orElseThrow();
     }
 
     private <T> ResponseEntity<T> post(String url, String token, Object body, Class<T> type) {

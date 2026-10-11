@@ -7,7 +7,8 @@ import jakarta.validation.constraints.Size;
 /**
  * Registration payload. {@code tenantSlug} is always required: an unknown
  * slug creates the workspace (then {@code tenantName} is required and the
- * caller becomes admin), a known slug joins it as a member.
+ * caller becomes admin), a known slug joins it — but only with a live
+ * invite token for the registrant's address.
  */
 public record RegisterRequest(
         @Email @NotBlank String email,
@@ -15,5 +16,6 @@ public record RegisterRequest(
         String firstName,
         String lastName,
         @NotBlank String tenantSlug,
-        String tenantName) {
+        String tenantName,
+        String inviteToken) {
 }

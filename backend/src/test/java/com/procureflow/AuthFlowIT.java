@@ -6,15 +6,24 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.procureflow.identity.api.AuthResponse;
+import com.procureflow.identity.application.MailPort;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+
+import static org.mockito.Mockito.verify;
 
 /**
  * End-to-end authentication journeys against the running API: tenant
@@ -26,6 +35,9 @@ class AuthFlowIT extends AbstractIntegrationTest {
     @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES = postgresContainer();
+
+    @MockitoBean
+    private MailPort mail;
 
     @Test
     void loginThrottledAfterRepeatedFailures() {
@@ -73,21 +85,53 @@ class AuthFlowIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void registerJoinsExistingTenantAsMember() {
+    void registerJoinRequiresAnInvite() {
         String slug = uniqueSlug("acme");
-        register(slug, "boss@" + slug + ".test");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+
+        ResponseEntity<String> refused = rest.postForEntity(
+                "/api/v1/auth/register",
+                Map.of(
+                        "email", "min@" + slug + ".test",
+                        "password", "correct-horse-123",
+                        "tenantSlug", slug),
+                String.class);
+
+        assertEquals(HttpStatus.FORBIDDEN, refused.getStatusCode());
+        assertNotNull(refused.getBody());
+        assertTrue(refused.getBody().contains("INVITE_REQUIRED"));
+    }
+
+    @Test
+    void registerJoinsWithALiveInvite() {
+        String slug = uniqueSlug("acme");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+        String token = inviteToken(admin.accessToken(), "min@" + slug + ".test", List.of("MEMBER"));
 
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",
                 Map.of(
                         "email", "min@" + slug + ".test",
                         "password", "correct-horse-123",
-                        "tenantSlug", slug),
+                        "tenantSlug", slug,
+                        "inviteToken", token),
                 AuthResponse.class);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().user().roles().contains("MEMBER"));
+        assertTrue(response.getBody().user().verified());
+
+        // Single use: the same token is spent.
+        ResponseEntity<String> replay = rest.postForEntity(
+                "/api/v1/auth/register",
+                Map.of(
+                        "email", "min2@" + slug + ".test",
+                        "password", "correct-horse-123",
+                        "tenantSlug", slug,
+                        "inviteToken", token),
+                String.class);
+        assertEquals(HttpStatus.FORBIDDEN, replay.getStatusCode());
     }
 
     @Test
@@ -226,6 +270,26 @@ class AuthFlowIT extends AbstractIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().contains("MALFORMED_JSON"));
+    }
+
+    private String inviteToken(String adminToken, String email, List<String> roles) {
+        ResponseEntity<Map> invited = rest.exchange(
+                "/api/v1/invites",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("email", email, "roleNames", roles), bearer(adminToken)),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, invited.getStatusCode());
+        ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
+        verify(mail, org.mockito.Mockito.atLeastOnce()).send(sent.capture());
+        return sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email))
+                .reduce((first, second) -> second)
+                .map(message -> {
+                    Matcher matcher = Pattern.compile("invite=([A-Za-z0-9_-]+)").matcher(message.textBody());
+                    assertTrue(matcher.find());
+                    return matcher.group(1);
+                })
+                .orElseThrow();
     }
 
     private AuthResponse register(String tenantSlug, String email) {

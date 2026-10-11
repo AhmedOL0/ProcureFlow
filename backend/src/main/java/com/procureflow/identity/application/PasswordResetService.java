@@ -87,6 +87,11 @@ public class PasswordResetService {
             // Activation is a separate concern; a dormant account gets no token.
             return GENERIC_MESSAGE;
         }
+        if (!user.isVerified()) {
+            // Mailbox ownership unproven: minting here would let anyone claim
+            // a typo'd address and wait for its reset mail. Generic reply.
+            return GENERIC_MESSAGE;
+        }
         String rawToken = AuthService.randomToken();
         tokens.save(new PasswordResetToken(user, AuthService.hash(rawToken), Instant.now().plus(tokenTtl)));
         mailResetLink(user.getEmail(), resetUrl(rawToken));

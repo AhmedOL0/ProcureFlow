@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.procureflow.identity.api.AuthResponse;
+import com.procureflow.identity.application.MailPort;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
@@ -23,8 +27,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+
+import static org.mockito.Mockito.verify;
 
 /**
  * Approval decisions and delegations: immutable verdicts on submitted
@@ -43,6 +50,9 @@ class ApprovalIT extends AbstractIntegrationTest {
 
     @Autowired
     private com.procureflow.approval.application.ApprovalService approvals;
+
+    @MockitoBean
+    private MailPort mail;
 
     @Test
     void approverApprovesSubmittedRequest() {
@@ -101,7 +111,7 @@ class ApprovalIT extends AbstractIntegrationTest {
     @Test
     void memberCannotDecideWithoutDelegation() {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture worker = join(admin.slug());
+        Fixture worker = join(admin);
         UUID request = submitted(admin);
 
         assertEquals(HttpStatus.FORBIDDEN, decide(worker.token(), request, "APPROVED", null).getStatusCode());
@@ -110,7 +120,7 @@ class ApprovalIT extends AbstractIntegrationTest {
     @Test
     void delegateDecidesAfterGrant() {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture worker = join(admin.slug());
+        Fixture worker = join(admin);
         UUID request = submitted(admin);
 
         ResponseEntity<Map> delegation = delegate(admin.token(), worker.userId(), Instant.now().plusSeconds(3600));
@@ -125,7 +135,7 @@ class ApprovalIT extends AbstractIntegrationTest {
     @Test
     void expiredDelegationCannotDecide() throws Exception {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture worker = join(admin.slug());
+        Fixture worker = join(admin);
         UUID request = submitted(admin);
 
         ResponseEntity<Map> delegation = delegate(admin.token(), worker.userId(), Instant.now().plusSeconds(1));
@@ -138,7 +148,7 @@ class ApprovalIT extends AbstractIntegrationTest {
     @Test
     void revokedDelegationCannotDecide() {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture worker = join(admin.slug());
+        Fixture worker = join(admin);
         UUID request = submitted(admin);
 
         ResponseEntity<Map> delegation = delegate(admin.token(), worker.userId(), Instant.now().plusSeconds(3600));
@@ -217,8 +227,8 @@ class ApprovalIT extends AbstractIntegrationTest {
     @Test
     void assignedApproverDecidesButOutsiderCannot() {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture first = join(admin.slug());
-        Fixture second = join(admin.slug());
+        Fixture first = join(admin);
+        Fixture second = join(admin);
         UUID workflow = createWorkflow(admin.token(), "Standard", 0L, null, 3);
         addStep(admin.token(), workflow, 1, first.userId(), HttpStatus.CREATED);
         addStep(admin.token(), workflow, 2, second.userId(), HttpStatus.CREATED);
@@ -239,8 +249,8 @@ class ApprovalIT extends AbstractIntegrationTest {
     @Test
     void escalationHandsAnOverdueRequestToTheNextLevel() {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture first = join(admin.slug());
-        Fixture second = join(admin.slug());
+        Fixture first = join(admin);
+        Fixture second = join(admin);
         UUID workflow = createWorkflow(admin.token(), "Standard", 0L, null, 3);
         addStep(admin.token(), workflow, 1, first.userId(), HttpStatus.CREATED);
         addStep(admin.token(), workflow, 2, second.userId(), HttpStatus.CREATED);
@@ -267,15 +277,15 @@ class ApprovalIT extends AbstractIntegrationTest {
     @Test
     void escalationNeverCrossesTenants() {
         Fixture tenantA = provision(uniqueSlug("acme"));
-        Fixture firstA = join(tenantA.slug());
-        Fixture secondA = join(tenantA.slug());
+        Fixture firstA = join(tenantA);
+        Fixture secondA = join(tenantA);
         UUID laneA = createWorkflow(tenantA.token(), "Standard", 0L, null, 3);
         addStep(tenantA.token(), laneA, 1, firstA.userId(), HttpStatus.CREATED);
         addStep(tenantA.token(), laneA, 2, secondA.userId(), HttpStatus.CREATED);
 
         Fixture tenantB = provision(uniqueSlug("globex"));
-        Fixture firstB = join(tenantB.slug());
-        Fixture secondB = join(tenantB.slug());
+        Fixture firstB = join(tenantB);
+        Fixture secondB = join(tenantB);
         UUID laneB = createWorkflow(tenantB.token(), "Standard", 0L, null, 3);
         addStep(tenantB.token(), laneB, 1, firstB.userId(), HttpStatus.CREATED);
         addStep(tenantB.token(), laneB, 2, secondB.userId(), HttpStatus.CREATED);
@@ -376,18 +386,41 @@ class ApprovalIT extends AbstractIntegrationTest {
         return new Fixture(slug, response.getBody().accessToken(), response.getBody().user().id());
     }
 
-    private Fixture join(String slug) {
+    private Fixture join(Fixture admin) {
+        String email =
+                "worker-" + UUID.randomUUID().toString().substring(0, 8) + "@" + admin.slug() + ".test";
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",
                 Map.of(
-                        "email", "worker-" + UUID.randomUUID().toString().substring(0, 8) + "@" + slug + ".test",
+                        "email", email,
                         "password", "correct-horse-123",
-                        "tenantSlug", slug),
+                        "tenantSlug", admin.slug(),
+                        "inviteToken", inviteToken(admin.token(), email)),
                 AuthResponse.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertNotNull(response.getBody().user());
-        return new Fixture(slug, response.getBody().accessToken(), response.getBody().user().id());
+        return new Fixture(admin.slug(), response.getBody().accessToken(), response.getBody().user().id());
+    }
+
+    private String inviteToken(String adminToken, String email) {
+        ResponseEntity<Map> invited = rest.exchange(
+                "/api/v1/invites",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("email", email, "roleNames", List.of("MEMBER")), bearer(adminToken)),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, invited.getStatusCode());
+        ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
+        verify(mail, org.mockito.Mockito.atLeastOnce()).send(sent.capture());
+        return sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email))
+                .reduce((first, second) -> second)
+                .map(message -> {
+                    Matcher matcher = Pattern.compile("invite=([A-Za-z0-9_-]+)").matcher(message.textBody());
+                    assertTrue(matcher.find());
+                    return matcher.group(1);
+                })
+                .orElseThrow();
     }
 
     private UUID submitted(Fixture admin) {
