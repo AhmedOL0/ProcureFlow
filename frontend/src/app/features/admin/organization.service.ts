@@ -127,6 +127,7 @@ export class AuditService {
   page(
     entityType: string | null,
     entityId: string | null,
+    query: string | null,
     pageIndex: number,
     pageSize: number,
   ): Observable<AuditPage> {
@@ -136,6 +137,9 @@ export class AuditService {
     }
     if (entityId) {
       params = params.set('entityId', entityId);
+    }
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
     }
     return this.http
       .get<components['schemas']['PagedAuditEventResponse']>(`${this.base}/audit-events`, { params })

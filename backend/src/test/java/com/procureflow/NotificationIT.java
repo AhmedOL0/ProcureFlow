@@ -178,6 +178,33 @@ class NotificationIT extends AbstractIntegrationTest {
                 get("/api/v1/notifications?size=101", admin.token(), String.class).getStatusCode());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void unreadOnlyNarrowsServerSide() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        submitted(admin.token(), "Laptops");
+        UUID read = UUID.fromString(inbox(admin.token()).get(0).get("id").toString());
+        rest.exchange(
+                "/api/v1/notifications/" + read + "/read",
+                HttpMethod.PATCH,
+                new HttpEntity<>(bearer(admin.token())),
+                Map.class);
+        submitted(admin.token(), "Monitors");
+
+        ResponseEntity<Map> unread = get("/api/v1/notifications?unreadOnly=true", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, unread.getStatusCode());
+        assertNotNull(unread.getBody());
+        List<Map<String, Object>> rows = (List<Map<String, Object>>) unread.getBody().get("content");
+        assertEquals(1, rows.size());
+        assertEquals(Boolean.FALSE, rows.get(0).get("read"));
+        assertEquals(1L, ((Number) unread.getBody().get("totalElements")).longValue());
+
+        ResponseEntity<Map> all = get("/api/v1/notifications", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, all.getStatusCode());
+        assertNotNull(all.getBody());
+        assertEquals(2L, ((Number) all.getBody().get("totalElements")).longValue());
+    }
+
     private Fixture provision(String slug) {
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",

@@ -654,7 +654,15 @@ test.describe('critical journeys', () => {
       {
         method: 'GET',
         match: '/notifications',
-        body: { content: notifications, page: 0, size: 20, totalElements: 1, totalPages: 1 },
+        handle: (url) => {
+          const rows = new URL(url).searchParams.get('unreadOnly') === 'true'
+            ? notifications.filter((n) => !n['read'])
+            : notifications;
+          return {
+            status: 200,
+            body: { content: rows, page: 0, size: 20, totalElements: rows.length, totalPages: 1 },
+          };
+        },
       },
       {
         method: 'PATCH',

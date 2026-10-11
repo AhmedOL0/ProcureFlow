@@ -29,12 +29,20 @@ public class NotificationService {
     /**
      * Paged inbox read, newest first. The inbox grows with every submission
      * and decision, so reads stay bounded; callers show {@code totalElements}
-     * on their paginator controls.
+     * on their paginator controls. {@code unreadOnly} narrows server-side so
+     * the Unread tab counts the whole inbox, not just the loaded page.
      */
     @Transactional(readOnly = true)
-    public Paged<AppNotification> inbox(String tenantSlug, UUID userId, int page, int size) {
-        Page<AppNotification> found = notifications.findAllByTenantIdAndUserIdOrderByCreatedAtDesc(
-                tenants.requireTenantId(tenantSlug), userId, PageRequest.of(page, size));
+    public Paged<AppNotification> inbox(
+            String tenantSlug, UUID userId, boolean unreadOnly, int page, int size) {
+        Page<AppNotification> found;
+        if (unreadOnly) {
+            found = notifications.findAllByTenantIdAndUserIdAndReadFalseOrderByCreatedAtDesc(
+                    tenants.requireTenantId(tenantSlug), userId, PageRequest.of(page, size));
+        } else {
+            found = notifications.findAllByTenantIdAndUserIdOrderByCreatedAtDesc(
+                    tenants.requireTenantId(tenantSlug), userId, PageRequest.of(page, size));
+        }
         return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 

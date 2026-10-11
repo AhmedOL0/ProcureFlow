@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,7 +8,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { computed } from '@angular/core';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
@@ -41,31 +42,22 @@ export class AuditTrailComponent {
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
-  private readonly rows = signal<AuditEvent[]>([]);
+  protected readonly rows = signal<AuditEvent[]>([]);
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
   protected readonly expanded = signal<string | null>(null);
 
   /**
-   * Free-text filter over the loaded page. Server-side search across all
-   * pages awaits a search param on the contract; until then the filter
-   * narrows what the paginator fetched, and the counts stay server-true.
+   * Free-text search over action and entity type, executed server-side so
+   * matches count every page instead of the loaded one.
    */
-  protected readonly filtered = computed(() => {
-    const query = this.entityFilter.value.trim().toLowerCase();
-    const rows = this.rows();
-    if (!query) {
-      return rows;
-    }
-    return rows.filter(
-      (row) =>
-        (row.action ?? '').toLowerCase().includes(query) ||
-        (row.entityType ?? '').toLowerCase().includes(query) ||
-        (row.entityId ?? '').toLowerCase().includes(query),
-    );
-  });
-
   constructor() {
     this.reload();
+    this.entityFilter.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(() => {
+        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+        this.reload();
+      });
   }
 
   reload(): void {
@@ -76,7 +68,7 @@ export class AuditTrailComponent {
   load(pageIndex: number, pageSize: number): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.trail.page(null, null, pageIndex, pageSize).subscribe({
+    this.trail.page(null, null, this.entityFilter.value, pageIndex, pageSize).subscribe({
       next: (result) => {
         this.rows.set(result.rows);
         this.page.set({ pageIndex, pageSize, length: result.total });

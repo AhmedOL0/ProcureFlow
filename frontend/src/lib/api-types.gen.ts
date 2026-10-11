@@ -975,7 +975,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** My inbox, newest first (paged) */
+        /** My inbox, newest first (paged, optionally unread only) */
         get: operations["inbox"];
         put?: never;
         post?: never;
@@ -1061,7 +1061,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Paged trail rows, newest first, optionally filtered */
+        /** Paged trail rows, newest first, optionally filtered and searched */
         get: operations["list_10"];
         put?: never;
         post?: never;
@@ -3939,6 +3939,7 @@ export interface operations {
     inbox: {
         parameters: {
             query?: {
+                unreadOnly?: boolean;
                 page?: number;
                 size?: number;
             };
@@ -4070,6 +4071,7 @@ export interface operations {
             query?: {
                 entityType?: string;
                 entityId?: string;
+                q?: string;
                 page?: number;
                 size?: number;
             };

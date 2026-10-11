@@ -7,8 +7,10 @@ Live state of the project. Update after every meaningful change.
 **Phase 13 — enterprise hardening + directory pagination (in progress).**
 C1 invite-gated join + email verification is merged; C2 server pagination
 is implemented backend + frontend with all gates green (backend 140 IT,
-frontend build + 29 Vitest + 48 Playwright). Remaining: C3 backup drill,
-C4 audit-search/unread filters, final push + live probes.
+frontend build + 29 Vitest + 48 Playwright). C3 backup sidecar is drilled
+live; C4 audit-search + inbox-unread filters are implemented with all
+gates green (backend 143 IT, frontend build + 29 Vitest + 48 Playwright)
+and live-probed. Remaining: final push + release notes.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:
@@ -39,6 +41,34 @@ review, README/portfolio overhaul, demo workspace docs.
 - E2E doubles fixed for envelopes: `/suppliers?` disambiguation,
   `/categories` + `/invites` stubs, Users-region scoping.
 - Verified: tsc 0, build 0, 29 Vitest, 48/48 Playwright (chromium+firefox).
+
+### Phase 13c — C3 backup sidecar + restore drill (this change)
+- Opt-in `db-backup` compose service (profile `backup`,
+  postgres:16-alpine so `pg_dump` matches the server): one compressed
+  custom-format dump per run into the `pgbackups` volume, pruned to
+  `BACKUP_RETENTION` (default 7); one-shot or looping sidecar modes.
+- Live drill 2026-10-11: one-shot dump (175901 bytes), canary row
+  restored into `procureflow_restore` and selected back intact, scratch
+  dropped; runbook in `infrastructure/docker/README.md` with the honest
+  scope (local dev only — production needs managed PITR + tested SLO).
+- Verified: `docker compose config --quiet` exit 0, drill commands run
+  for real against the local stack.
+
+### Phase 13d — C4 audit search + inbox unread filter (this change)
+- Backend: `GET /audit-events?q=` searches action + entity type
+  server-side (4 new branch queries, blanks normalize to unfiltered, no
+  null params); `GET /notifications?unreadOnly=true` narrows server-side
+  (derived `...AndReadFalse...` query, wrapper normalized to false).
+- Frontend: trail free-text box debounces into server `q` (client-only
+  narrowing removed); Unread chip reloads page 0 with `unreadOnly`;
+  shell/workspace/badge reads stay unfiltered; `api-types.gen.ts` regen.
+- Tests: `AuditIT.trailSearchesActionsAndTypesServerSide` (incl. blank-q
+  unfiltered; literal space, not `%20` — RestTemplate double-encodes),
+  `NotificationIT.unreadOnlyNarrowsServerSide`; inbox e2e stub honors
+  the param.
+- Verified: backend 143 IT green; tsc + build clean, 29 Vitest, 48/48
+  Playwright; live probes on the C4 image (submit→unreadOnly 1→read→0,
+  decide→q=REQUEST_DECIDED 1, q=purchase_request 1, miss 0).
 
 ### Phase 1 — Foundation (commit 2e2a26c)
 - Repo skeleton, 12 module boundaries + layer contracts, ArchUnit gates.

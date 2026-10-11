@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -17,8 +17,8 @@ import { formatInstant } from '../../shared/utils/time';
  * newest first, paged server-side. Rows carry the event text only — the
  * contract has no request deep-link, so none is invented. Mark-all-read
  * fans out to one PATCH per unread row (no bulk endpoint exists). The
- * unread chip narrows the loaded page; full-text search across pages
- * awaits a server search param.
+ * unread chip narrows server-side via `unreadOnly`, so its counts hold at
+ * any inbox size; full-text search across pages is still out of scope.
  */
 @Component({
   selector: 'app-notifications',
@@ -41,9 +41,7 @@ export class NotificationsComponent {
   protected readonly formatInstant = formatInstant;
 
   protected readonly unreadOnly = signal(false);
-  protected readonly visible = computed(() =>
-    this.unreadOnly() ? this.inbox.items().filter((item) => !item.read) : this.inbox.items(),
-  );
+  protected readonly visible = this.inbox.items;
 
   constructor() {
     this.inbox.refresh();
@@ -51,13 +49,15 @@ export class NotificationsComponent {
 
   showAll(): void {
     this.unreadOnly.set(false);
+    this.inbox.load(0, this.inbox.page().pageSize, false);
   }
 
   showUnread(): void {
     this.unreadOnly.set(true);
+    this.inbox.load(0, this.inbox.page().pageSize, true);
   }
 
   onPage(page: PageEvent): void {
-    this.inbox.load(page.pageIndex, page.pageSize);
+    this.inbox.load(page.pageIndex, page.pageSize, this.unreadOnly());
   }
 }

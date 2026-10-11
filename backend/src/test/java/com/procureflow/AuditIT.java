@@ -151,6 +151,38 @@ class AuditIT extends AbstractIntegrationTest {
                 get("/api/v1/audit-events?size=101", admin.token(), String.class).getStatusCode());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void trailSearchesActionsAndTypesServerSide() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        approved(admin.token());
+        approved(admin.token());
+
+        ResponseEntity<Map> byAction = get("/api/v1/audit-events?q=REQUEST_DECIDED", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, byAction.getStatusCode());
+        assertNotNull(byAction.getBody());
+        assertTrue(((List<?>) byAction.getBody().get("content")).size() >= 2);
+        assertTrue(((Number) byAction.getBody().get("totalElements")).longValue() >= 2);
+
+        ResponseEntity<Map> byType = get("/api/v1/audit-events?q=purchase_request", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, byType.getStatusCode());
+        assertNotNull(byType.getBody());
+        assertTrue(((List<?>) byType.getBody().get("content")).size() >= 2);
+
+        ResponseEntity<Map> miss = get("/api/v1/audit-events?q=NO_SUCH_ACTION", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, miss.getStatusCode());
+        assertNotNull(miss.getBody());
+        assertTrue(((List<?>) miss.getBody().get("content")).isEmpty());
+        assertEquals(0L, ((Number) miss.getBody().get("totalElements")).longValue());
+
+        // Literal space: RestTemplate encodes it; a pre-encoded %20 would
+        // double-encode and arrive as a real search term instead of blank.
+        ResponseEntity<Map> blank = get("/api/v1/audit-events?q= ", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, blank.getStatusCode());
+        assertNotNull(blank.getBody());
+        assertTrue(((Number) blank.getBody().get("totalElements")).longValue() >= 2);
+    }
+
     private Fixture provision(String slug) {
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",

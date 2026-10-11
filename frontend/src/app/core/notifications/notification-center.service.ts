@@ -20,6 +20,9 @@ export interface PageState {
  * (first page by default) and `page.length` the server total. The unread
  * badge therefore counts the loaded page — exact at realistic volumes, and
  * the notifications page always shows the true total beside its paginator.
+ * The read filter travels as `unreadOnly` so the Unread tab counts the
+ * whole inbox, not just the loaded page; shell and workspace always read
+ * the full inbox and pass nothing.
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationCenterService {
@@ -32,12 +35,12 @@ export class NotificationCenterService {
   readonly failed = signal(false);
   readonly unread = computed(() => this.items().filter((item) => !item.read).length);
 
-  refresh(): void {
+  refresh(unreadOnly = false): void {
     const current = this.page();
-    this.load(current.pageIndex, current.pageSize);
+    this.load(current.pageIndex, current.pageSize, unreadOnly);
   }
 
-  load(pageIndex: number, pageSize: number): void {
+  load(pageIndex: number, pageSize: number, unreadOnly = false): void {
     if (this.loading()) {
       return;
     }
@@ -45,7 +48,7 @@ export class NotificationCenterService {
     this.failed.set(false);
     this.http
       .get<InboxPage>(`${this.api}/api/v1/notifications`, {
-        params: { page: pageIndex, size: pageSize },
+        params: { page: pageIndex, size: pageSize, ...(unreadOnly ? { unreadOnly: true } : {}) },
       })
       .subscribe({
         next: (result) => {

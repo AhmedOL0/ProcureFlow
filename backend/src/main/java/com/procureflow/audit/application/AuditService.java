@@ -61,22 +61,38 @@ public class AuditService {
     /**
      * Paged trail read: same newest-first order and filter branches as the
      * original list, but bounded — the trail grows forever, so unbounded
-     * reads were the first scalability wall.
+     * reads were the first scalability wall. A non-blank {@code q} narrows
+     * server-side over action and entity type, so the trail search counts
+     * every page instead of the loaded one.
      */
     @Transactional(readOnly = true)
-    public Paged<AuditEvent> page(String tenantSlug, String entityType, UUID entityId, int page, int size) {
+    public Paged<AuditEvent> page(
+            String tenantSlug, String entityType, UUID entityId, String q, int page, int size) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         PageRequest pageable = PageRequest.of(page, size);
+        String query = q == null || q.isBlank() ? "" : q;
         Page<AuditEvent> found;
-        if (entityType == null && entityId == null) {
-            found = events.findAllByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+        if (query.isEmpty()) {
+            if (entityType == null && entityId == null) {
+                found = events.findAllByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+            } else if (entityType != null && entityId == null) {
+                found = events.findAllByTenantIdAndEntityTypeOrderByCreatedAtDesc(tenantId, entityType, pageable);
+            } else if (entityType == null) {
+                found = events.findAllByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, entityId, pageable);
+            } else {
+                found = events.findAllByTenantIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(
+                        tenantId, entityType, entityId, pageable);
+            }
         } else if (entityType != null && entityId == null) {
-            found = events.findAllByTenantIdAndEntityTypeOrderByCreatedAtDesc(tenantId, entityType, pageable);
-        } else if (entityType == null) {
-            found = events.findAllByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, entityId, pageable);
+            found = events.searchByTenantIdAndEntityTypeOrderByCreatedAtDesc(
+                    tenantId, entityType, query, pageable);
+        } else if (entityType == null && entityId != null) {
+            found = events.searchByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, entityId, query, pageable);
+        } else if (entityType != null) {
+            found = events.searchByTenantIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(
+                    tenantId, entityType, entityId, query, pageable);
         } else {
-            found = events.findAllByTenantIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(
-                    tenantId, entityType, entityId, pageable);
+            found = events.searchByTenantIdOrderByCreatedAtDesc(tenantId, query, pageable);
         }
         return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }

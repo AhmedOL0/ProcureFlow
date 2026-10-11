@@ -34,7 +34,7 @@
         title="Notifications did not load"
         message="The inbox could not be reached. Check your connection and try again."
         retryLabel="Retry"
-        (retry)="inbox.refresh()"
+        (retry)="inbox.refresh(unreadOnly())"
       />
     } @else if (visible().length === 0) {
       <pf-empty-state

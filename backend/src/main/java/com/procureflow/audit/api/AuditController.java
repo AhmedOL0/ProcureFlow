@@ -31,15 +31,22 @@ public class AuditController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('audit:read')")
-    @Operation(summary = "Paged trail rows, newest first, optionally filtered")
+    @Operation(summary = "Paged trail rows, newest first, optionally filtered and searched")
     public ResponseEntity<Paged<AuditEventResponse>> list(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestParam(required = false) String entityType,
             @RequestParam(required = false) UUID entityId,
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         return ResponseEntity.ok(trail
-                .page(principal.tenantId(), entityType, entityId, Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .page(
+                        principal.tenantId(),
+                        entityType,
+                        entityId,
+                        q,
+                        Paged.pageOrThrow(page),
+                        Paged.sizeOrThrow(size))
                 .map(AuditEventResponse::from));
     }
 }

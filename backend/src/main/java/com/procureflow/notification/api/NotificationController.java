@@ -34,13 +34,19 @@ public class NotificationController {
     }
 
     @GetMapping
-    @Operation(summary = "My inbox, newest first (paged)")
+    @Operation(summary = "My inbox, newest first (paged, optionally unread only)")
     public ResponseEntity<Paged<NotificationResponse>> inbox(
             @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) Boolean unreadOnly,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         return ResponseEntity.ok(inbox
-                .inbox(principal.tenantId(), principal.userId(), Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .inbox(
+                        principal.tenantId(),
+                        principal.userId(),
+                        unreadOnly != null && unreadOnly,
+                        Paged.pageOrThrow(page),
+                        Paged.sizeOrThrow(size))
                 .map(NotificationResponse::from));
     }
 

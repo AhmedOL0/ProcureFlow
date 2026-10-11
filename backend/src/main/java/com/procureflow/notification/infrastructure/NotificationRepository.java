@@ -13,5 +13,8 @@ public interface NotificationRepository extends JpaRepository<AppNotification, U
     Page<AppNotification> findAllByTenantIdAndUserIdOrderByCreatedAtDesc(
             UUID tenantId, UUID userId, Pageable pageable);
 
+    Page<AppNotification> findAllByTenantIdAndUserIdAndReadFalseOrderByCreatedAtDesc(
+            UUID tenantId, UUID userId, Pageable pageable);
+
     Optional<AppNotification> findByIdAndTenantId(UUID id, UUID tenantId);
 }
