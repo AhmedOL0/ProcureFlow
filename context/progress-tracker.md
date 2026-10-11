@@ -70,6 +70,25 @@ review, README/portfolio overhaul, demo workspace docs.
   Playwright; live probes on the C4 image (submit→unreadOnly 1→read→0,
   decide→q=REQUEST_DECIDED 1, q=purchase_request 1, miss 0).
 
+### Phase 13g — rail, buttons and charts pass (this change)
+- Workspace overlap fixed at the token level: `p.pf-muted` gains bottom
+  rhythm (the zero margin kissed outline floating labels; same pattern
+  guards settings/departments/users).
+- Rail: curated icon picks (FileClock, Stamp, Network, ListChecks —
+  kills the Suppliers/Departments Building2 duplicate), 40px rows,
+  section rhythm and label-lg entries. Buttons: header actions go
+  full-width on mobile.
+- Charts without a dependency: shared `SpendChartComponent` (grouped
+  ordered/invoiced/paid bars, gridlines, native tooltips, sr-only data
+  table) and `DonutChartComponent` (ring + value legend) on pure-SVG +
+  token fills; math unit-covered in `charts.spec.ts`. Dashboard trend is
+  now spend-per-month + decision-rate stat; analytics pairs trajectory
+  with the donut and on-time meters in the supplier table.
+- Verified: tsc + build clean, 34 Vitest, 50/50 Playwright
+  (chromium+firefox); evidence `docs/screens/` (01/06/10 refreshed +
+  11-dashboard-mobile). Pre-existing shell-scss 4kB budget warning
+  confirmed on the clean tree (5.58kB, not from this pass).
+
 ### Phase 13e — Brevo live wiring + demo seed (this change)
 - Brevo: root cause of the 535 was the SMTP *username* (account email),
   not the key — login is `…@smtp-brevo.com` (SMTP & API → Connexion).

@@ -9,6 +9,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { SpendChartComponent, SpendPoint } from '../../shared/components/spend-chart/spend-chart.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { FileText, Inbox, Plus, ShieldCheck } from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
@@ -50,6 +51,7 @@ interface Kpi {
     StatusBadgeComponent,
     EmptyStateComponent,
     ErrorStateComponent,
+    SpendChartComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -206,9 +208,26 @@ export class DashboardComponent {
 
   protected readonly trend = computed<SpendMonth[]>(() => (this.spend()?.byPeriod ?? []).slice(-6));
 
-  protected readonly trendMax = computed(() =>
-    this.trend().reduce((max, row) => Math.max(max, row.orderedMinor ?? 0), 0),
+  protected readonly trendPoints = computed<SpendPoint[]>(() =>
+    this.trend().map((month) => ({
+      period: month.period ?? '',
+      ordered: month.orderedMinor ?? 0,
+      invoiced: month.invoicedMinor ?? 0,
+      paid: month.paidMinor ?? 0,
+    })),
   );
+
+  protected readonly decisionRate = computed<string | null>(() => {
+    const flow = this.approvalKpis();
+    if (!flow) {
+      return null;
+    }
+    const total = (flow.pending ?? 0) + (flow.decided ?? 0);
+    if (total <= 0) {
+      return null;
+    }
+    return `${Math.round(((flow.decided ?? 0) / total) * 100)}% decided`;
+  });
 
   constructor() {
     this.reload();
@@ -267,14 +286,6 @@ export class DashboardComponent {
           this.monthPotMissing.set(this.canSeeBudgets && rows.length === 0);
         },
       });
-  }
-
-  trendWidth(value: number | null | undefined): number {
-    const max = this.trendMax();
-    if (value === null || value === undefined || !Number.isFinite(value) || max <= 0) {
-      return 0;
-    }
-    return Math.min(100, Math.max(0, (value / max) * 100));
   }
 
   leadHours(value: number | null | undefined): string {

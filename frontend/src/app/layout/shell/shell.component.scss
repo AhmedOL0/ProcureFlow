@@ -49,9 +49,13 @@
 .shell__section {
   font: var(--pf-label-sm);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   color: var(--pf-rail-faint);
   padding: var(--pf-space-sm) var(--pf-space-lg) var(--pf-space-xs);
+  margin-top: var(--pf-space-sm);
+}
+.shell__nav > .shell__section:first-child {
+  margin-top: 0;
 }
 
 .shell__rail .mat-mdc-list {
@@ -59,8 +63,11 @@
 }
 .shell__rail .mat-mdc-list-item {
   color: var(--pf-rail-dim);
-  min-height: 36px;
+  min-height: 40px;
   border-radius: var(--pf-radius-md);
+}
+.shell__rail .mat-mdc-list-item .mdc-list-item__primary-text {
+  font: var(--pf-label-lg);
 }
 // Material paints item text and icons with its own on-surface tokens;
 // re-assert the rail palette so labels stay legible on white.

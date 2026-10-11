@@ -1,0 +1,114 @@
+// Category donut: ring on a neutral track, total in the middle, legend
+// with values on the side. Segment fills come from the token system.
+.donut-chart {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pf-space-lg) var(--pf-space-2xl);
+  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
+}
+
+.donut-chart__canvas {
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.donut-chart__track {
+  fill: none;
+  stroke: var(--pf-neutral-bg);
+  stroke-width: 26;
+}
+
+.donut-chart__arc {
+  fill: none;
+  stroke-width: 26;
+  &.donut-segment--0 {
+    stroke: var(--pf-navy);
+  }
+  &.donut-segment--1 {
+    stroke: var(--pf-blue);
+  }
+  &.donut-segment--2 {
+    stroke: var(--pf-teal);
+  }
+  &.donut-segment--3 {
+    stroke: var(--pf-copper);
+  }
+  &.donut-segment--4 {
+    stroke: var(--pf-slate);
+  }
+  &.donut-segment--5 {
+    stroke: var(--pf-info-text);
+  }
+}
+
+.donut-chart__total {
+  font: 600 15px/20px var(--pf-font);
+  fill: var(--pf-navy);
+}
+
+.donut-chart__caption {
+  font: var(--pf-label-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  fill: var(--pf-slate);
+}
+
+.donut-chart__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-sm);
+  min-width: 0;
+  flex: 1 1 200px;
+  font: var(--pf-label-lg);
+  color: var(--pf-text);
+}
+
+.donut-chart__legend li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pf-space-sm);
+  min-width: 0;
+}
+
+.donut-chart__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--pf-radius-sm);
+  flex-shrink: 0;
+  align-self: center;
+  &.donut-segment--0 {
+    background: var(--pf-navy);
+  }
+  &.donut-segment--1 {
+    background: var(--pf-blue);
+  }
+  &.donut-segment--2 {
+    background: var(--pf-teal);
+  }
+  &.donut-segment--3 {
+    background: var(--pf-copper);
+  }
+  &.donut-segment--4 {
+    background: var(--pf-slate);
+  }
+  &.donut-segment--5 {
+    background: var(--pf-info-text);
+  }
+}
+
+.donut-chart__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donut-chart__value {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--pf-slate);
+}

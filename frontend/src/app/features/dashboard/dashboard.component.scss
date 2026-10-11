@@ -1,6 +1,6 @@
-// Dashboard: finance note, audit banner, approval-flow strip and the
-// vertical order trend. Loading, columns, card heads and rows are the
-// global pf-* primitives in styles.scss.
+// Dashboard: finance note, audit banner and the approval-flow strip.
+// Loading, columns, card heads and rows are the global pf-* primitives
+// in styles.scss; charts come from the shared chart components.
 .dashboard-note {
   font: var(--pf-body-sm);
   color: var(--pf-slate);
@@ -72,48 +72,4 @@
 }
 .dashboard-flow a:hover {
   text-decoration: underline;
-}
-
-.dashboard-trend {
-  list-style: none;
-  margin: 0;
-  padding: var(--pf-space-lg);
-  display: flex;
-  align-items: stretch;
-  gap: var(--pf-space-md);
-  overflow-x: auto;
-}
-.dashboard-trend__bar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--pf-space-xs);
-  min-width: 72px;
-  flex: 1 1 0;
-}
-.dashboard-track {
-  height: 96px;
-  width: 100%;
-  max-width: 56px;
-  display: flex;
-  align-items: flex-end;
-  background: var(--pf-neutral-bg);
-  border-radius: var(--pf-radius-sm);
-  overflow: hidden;
-}
-.dashboard-fill {
-  width: 100%;
-  background: var(--pf-blue);
-  border-radius: var(--pf-radius-sm);
-  min-height: 2px;
-}
-.dashboard-trend__label {
-  font: var(--pf-body-sm);
-  color: var(--pf-slate);
-}
-.dashboard-trend__value {
-  font: var(--pf-label-md);
-  color: var(--pf-text);
-  text-align: center;
-  overflow-wrap: anywhere;
 }

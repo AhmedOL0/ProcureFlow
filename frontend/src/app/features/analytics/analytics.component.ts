@@ -11,9 +11,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { DonutChartComponent } from '../../shared/components/donut-chart/donut-chart.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { SpendChartComponent, SpendPoint } from '../../shared/components/spend-chart/spend-chart.component';
 import { Inbox, Truck, Wallet } from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
 import { formatMinor } from '../../shared/utils/money';
@@ -48,6 +50,8 @@ import {
     PageHeaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
+    SpendChartComponent,
+    DonutChartComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.scss',
@@ -92,15 +96,17 @@ export class AnalyticsComponent {
   });
   protected readonly months = computed<SpendMonth[]>(() => this.spend()?.byPeriod ?? []);
 
-  protected readonly categoryMax = computed(() =>
-    this.categories().reduce((max, row) => Math.max(max, row.amountMinor), 0),
+  protected readonly spendPoints = computed<SpendPoint[]>(() =>
+    this.months().map((month) => ({
+      period: month.period ?? '',
+      ordered: month.orderedMinor ?? 0,
+      invoiced: month.invoicedMinor ?? 0,
+      paid: month.paidMinor ?? 0,
+    })),
   );
-  protected readonly monthMax = computed(() =>
-    this.months().reduce(
-      (max, row) =>
-        Math.max(max, row.orderedMinor ?? 0, row.invoicedMinor ?? 0, row.paidMinor ?? 0),
-      0,
-    ),
+
+  protected readonly donutSlices = computed(() =>
+    this.categories().map((row) => ({ label: row.category, value: row.amountMinor })),
   );
 
   protected readonly supplierColumns = ['supplier', 'periods', 'onTime', 'quality'];

@@ -43,24 +43,6 @@
 .analytics-bar-meta .pf-data-mono {
   font-weight: 600;
 }
-.analytics-track {
-  height: 6px;
-  border-radius: var(--pf-radius-pill);
-  background: var(--pf-neutral-bg);
-  overflow: hidden;
-}
-.analytics-fill {
-  height: 100%;
-  background: var(--pf-blue);
-  border-radius: var(--pf-radius-pill);
-}
-.analytics-bar-sub {
-  display: flex;
-  gap: var(--pf-space-lg);
-  font: var(--pf-body-sm);
-  color: var(--pf-slate);
-}
-
 .analytics-facts {
   margin: 0;
   padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);

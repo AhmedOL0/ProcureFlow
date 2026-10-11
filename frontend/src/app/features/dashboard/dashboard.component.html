@@ -70,31 +70,25 @@
           <span class="dashboard-flow__value">{{ leadHours(flow.maxLeadHours) }}</span>
           <span class="dashboard-flow__label">max lead</span>
         </div>
+        @if (decisionRate(); as rate) {
+          <div class="dashboard-flow__stat">
+            <span class="dashboard-flow__value">{{ rate }}</span>
+            <span class="dashboard-flow__label">decision rate</span>
+          </div>
+        }
         <a routerLink="/analytics">Analytics</a>
       </div>
     }
 
     @if (trend().length > 0) {
-      <section class="pf-table-card" aria-label="Order trend">
+      <section class="pf-table-card" aria-label="Spend per month">
         <div class="pf-card-head">
           <div class="pf-section-head">
-            <h2>Ordered per month</h2>
+            <h2>Spend per month</h2>
             <a routerLink="/analytics">Full trajectory</a>
           </div>
         </div>
-        <ul class="dashboard-trend">
-          @for (month of trend(); track month.period) {
-            <li class="dashboard-trend__bar">
-              <div class="dashboard-track" aria-hidden="true">
-                <div class="dashboard-fill" [style.height.%]="trendWidth(month.orderedMinor)"></div>
-              </div>
-              <span class="dashboard-trend__label pf-data-mono">{{ month.period }}</span>
-              <span class="dashboard-trend__value pf-data-mono">{{
-                formatMinor(month.orderedMinor)
-              }}</span>
-            </li>
-          }
-        </ul>
+        <app-spend-chart [months]="trendPoints()" />
       </section>
     }
 

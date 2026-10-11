@@ -69,31 +69,7 @@
             message="Ordered, invoiced and paid totals appear here once purchasing moves."
           />
         } @else {
-          <ul class="analytics-bars">
-            @for (month of months(); track month.period) {
-              <li class="analytics-bar-row">
-                <div class="analytics-bar-meta">
-                  <span class="pf-data-mono">{{ month.period }}</span>
-                  <span class="pf-data-mono">{{ formatMinor(month.orderedMinor) }}</span>
-                </div>
-                <div class="analytics-track" aria-hidden="true">
-                  <div
-                    class="analytics-fill"
-                    [style.width.%]="barWidth(month.orderedMinor ?? 0, monthMax())"
-                  ></div>
-                </div>
-                <div class="analytics-bar-sub">
-                  <span
-                    >Invoiced
-                    <span class="pf-data-mono">{{ formatMinor(month.invoicedMinor) }}</span></span
-                  >
-                  <span
-                    >Paid <span class="pf-data-mono">{{ formatMinor(month.paidMinor) }}</span></span
-                  >
-                </div>
-              </li>
-            }
-          </ul>
+          <app-spend-chart [months]="spendPoints()" />
         }
       </section>
 
@@ -114,22 +90,7 @@
             message="Category totals appear once ordered lines carry categories."
           />
         } @else {
-          <ul class="analytics-bars">
-            @for (row of categories(); track row.category) {
-              <li class="analytics-bar-row">
-                <div class="analytics-bar-meta">
-                  <span>{{ row.category }}</span>
-                  <span class="pf-data-mono">{{ formatMinor(row.amountMinor) }}</span>
-                </div>
-                <div class="analytics-track" aria-hidden="true">
-                  <div
-                    class="analytics-fill"
-                    [style.width.%]="barWidth(row.amountMinor, categoryMax())"
-                  ></div>
-                </div>
-              </li>
-            }
-          </ul>
+          <app-donut-chart [slices]="donutSlices()" />
         }
       </section>
     </div>
@@ -169,7 +130,15 @@
               <ng-container matColumnDef="onTime">
                 <th mat-header-cell *matHeaderCellDef class="pf-num">On-time %</th>
                 <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
-                  {{ row.avgOnTime ?? '—' }}
+                  <span class="pf-meter-row">
+                    {{ row.avgOnTime ?? '—' }}
+                    <span class="pf-meter" aria-hidden="true"
+                      ><span
+                        class="pf-meter__fill"
+                        [style.width.%]="barWidth(row.avgOnTime ?? 0, 100)"
+                      ></span
+                    ></span>
+                  </span>
                 </td>
               </ng-container>
               <ng-container matColumnDef="quality">

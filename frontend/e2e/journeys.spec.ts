@@ -572,8 +572,8 @@ test.describe('critical journeys', () => {
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
     await page.goto('/analytics');
-    await expect(page.getByText('Cloud')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('2026-10')).toBeVisible();
+    await expect(page.getByText('Cloud', { exact: true })).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.spend-chart__month', { hasText: '2026-10' })).toBeVisible();
   });
 
   test('copilot answers with citations and survives provider failure', async ({ page }) => {

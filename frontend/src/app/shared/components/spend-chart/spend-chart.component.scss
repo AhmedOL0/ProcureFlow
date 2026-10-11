@@ -1,0 +1,68 @@
+// Grouped spend bars: value grid, series fills from the token system,
+// legend swatches. Static SVG (no animation) honours reduced-motion by
+// having nothing to reduce.
+.spend-chart {
+  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
+}
+
+.spend-chart__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.spend-chart__grid {
+  stroke: var(--pf-border);
+  stroke-width: 1;
+}
+
+.spend-chart__tick {
+  font: var(--pf-body-sm);
+  fill: var(--pf-slate);
+}
+
+.spend-chart__month {
+  font: 400 11px/14px var(--pf-font);
+  fill: var(--pf-slate);
+}
+
+.spend-chart__bar {
+  &.spend-bar--ordered {
+    fill: var(--pf-navy);
+  }
+  &.spend-bar--invoiced {
+    fill: var(--pf-blue);
+  }
+  &.spend-bar--paid {
+    fill: var(--pf-copper);
+  }
+}
+
+.spend-chart__legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pf-space-md) var(--pf-space-lg);
+  margin: var(--pf-space-md) 0 0;
+  padding: 0;
+  font: var(--pf-label-md);
+  color: var(--pf-slate);
+}
+
+.spend-chart__swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--pf-radius-sm);
+  margin-right: var(--pf-space-xs);
+  vertical-align: baseline;
+  &.spend-bar--ordered {
+    background: var(--pf-navy);
+  }
+  &.spend-bar--invoiced {
+    background: var(--pf-blue);
+  }
+  &.spend-bar--paid {
+    background: var(--pf-copper);
+  }
+}

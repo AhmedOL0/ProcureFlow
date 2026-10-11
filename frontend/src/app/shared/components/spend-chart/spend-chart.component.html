@@ -1,0 +1,69 @@
+<div class="spend-chart">
+  <svg
+    class="spend-chart__canvas"
+    [attr.viewBox]="'0 0 ' + width + ' ' + height"
+    aria-hidden="true"
+    focusable="false"
+  >
+    @for (line of grid(); track line.y) {
+      <line
+        class="spend-chart__grid"
+        [attr.x1]="56"
+        [attr.x2]="width - 12"
+        [attr.y1]="line.y"
+        [attr.y2]="line.y"
+      />
+      <text class="spend-chart__tick" [attr.x]="48" [attr.y]="line.y + 4" text-anchor="end">
+        {{ line.label }}
+      </text>
+    }
+    @for (bar of bars(); track $index) {
+      <rect
+        [attr.class]="'spend-chart__bar ' + bar.css"
+        [attr.x]="bar.x"
+        [attr.y]="bar.y"
+        [attr.width]="bar.width"
+        [attr.height]="bar.height"
+        rx="2"
+      >
+        <title>{{ bar.title }}</title>
+      </rect>
+    }
+    @for (label of monthLabels(); track label.text) {
+      <text
+        class="spend-chart__month"
+        [attr.x]="label.x"
+        [attr.y]="label.y"
+        text-anchor="middle"
+      >
+        {{ label.text }}
+      </text>
+    }
+  </svg>
+  <ul class="spend-chart__legend" aria-label="Series">
+    <li><span class="spend-chart__swatch spend-bar--ordered" aria-hidden="true"></span>Ordered</li>
+    <li><span class="spend-chart__swatch spend-bar--invoiced" aria-hidden="true"></span>Invoiced</li>
+    <li><span class="spend-chart__swatch spend-bar--paid" aria-hidden="true"></span>Paid</li>
+  </ul>
+  <table class="pf-sr-only">
+    <caption>Monthly spend figures</caption>
+    <thead>
+      <tr>
+        <th scope="col">Month</th>
+        <th scope="col">Ordered</th>
+        <th scope="col">Invoiced</th>
+        <th scope="col">Paid</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of months(); track row.period) {
+        <tr>
+          <th scope="row">{{ row.period }}</th>
+          <td>{{ formatMinor(row.ordered, currency()) }}</td>
+          <td>{{ formatMinor(row.invoiced, currency()) }}</td>
+          <td>{{ formatMinor(row.paid, currency()) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -616,7 +616,9 @@ a.pf-row__title:hover {
   color: var(--pf-slate);
 }
 p.pf-muted {
-  margin: 0;
+  // Bottom rhythm is load-bearing: without it a caption above an outline
+  // field touches the floating label (seen on Workspace settings).
+  margin: 0 0 var(--pf-space-sm);
 }
 
 // Horizontal meter: list score bars and utilization fills.
