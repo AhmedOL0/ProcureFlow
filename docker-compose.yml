@@ -88,6 +88,7 @@ services:
       AI_ENABLED: ${AI_ENABLED:-false}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
+      AI_MONTHLY_TOKEN_CAP: ${AI_MONTHLY_TOKEN_CAP:-1000000}
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:4200}
       MAIL_PROVIDER: ${MAIL_PROVIDER:-log}
       MAIL_HOST: ${MAIL_HOST:-}

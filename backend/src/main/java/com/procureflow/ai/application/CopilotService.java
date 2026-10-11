@@ -6,6 +6,7 @@ import com.procureflow.ai.infrastructure.AiUsageRecordRepository;
 import com.procureflow.analytics.application.AnalyticsService;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,7 @@ public class CopilotService {
     private final TenantProvisioning tenants;
     private final ObjectMapper json;
     private final MeterRegistry meters;
+    private final long monthlyTokenCap;
 
     public CopilotService(
             ObjectProvider<AiProvider> providers,
@@ -45,7 +48,8 @@ public class CopilotService {
             AiUsageRecordRepository usage,
             TenantProvisioning tenants,
             ObjectMapper json,
-            MeterRegistry meters) {
+            MeterRegistry meters,
+            @Value("${app.ai.monthly-token-cap:1000000}") long monthlyTokenCap) {
         // The provider bean exists only when AI_ENABLED=true (Groq) or in tests
         // (fake); a null here means "disabled", answered as 503 per use case.
         this.provider = providers.getIfAvailable();
@@ -54,12 +58,14 @@ public class CopilotService {
         this.tenants = tenants;
         this.json = json;
         this.meters = meters;
+        this.monthlyTokenCap = monthlyTokenCap;
     }
 
     @Transactional
     public ChatAnswer chat(String tenantSlug, String question) {
         String asked = AiValidator.question(question);
         requireAvailable();
+        requireQuota(tenantSlug);
         AnalyticsService.SpendView spend = analytics.spend(tenantSlug, null);
         String figures = "requested=%d, ordered=%d, invoiced=%d, paid=%d (minor units)"
                 .formatted(spend.requestedMinor(), spend.orderedMinor(), spend.invoicedMinor(), spend.paidMinor());
@@ -84,6 +90,7 @@ public class CopilotService {
             requirePeriod(period);
         }
         requireAvailable();
+        requireQuota(tenantSlug);
         AnalyticsService.SpendView spend = analytics.spend(tenantSlug, period);
         AnalyticsService.ApprovalKpi approvals = analytics.approvals(tenantSlug);
         String top = spend.byCategory().isEmpty()
@@ -107,6 +114,7 @@ public class CopilotService {
     public AiValidator.DraftRequest extract(String tenantSlug, String text) {
         String sentence = AiValidator.question(text);
         requireAvailable();
+        requireQuota(tenantSlug);
         AiCompletionResult result = provider.complete(new AiCompletionRequest(
                 tenantSlug, "extract", Prompts.EXTRACT_SYSTEM, sentence, 400, 0.0));
         AiValidator.DraftRequest draft = AiValidator.draft(result.text(), json);
@@ -125,6 +133,7 @@ public class CopilotService {
             }
         }
         requireAvailable();
+        requireQuota(tenantSlug);
         StringBuilder table = new StringBuilder();
         for (QuoteInput quote : quotes) {
             table.append(quote.supplier().trim()).append(": ").append(quote.amountMinor()).append("; ");
@@ -167,6 +176,23 @@ public class CopilotService {
     private void requireAvailable() {
         if (provider == null || !provider.isAvailable()) {
             throw ApiException.unavailable("AI_DISABLED", "AI features are disabled (AI_ENABLED=false)");
+        }
+    }
+
+    /**
+     * Monthly per-tenant token budget, checked before every provider call so
+     * a compromised key or runaway client cannot burn the provider budget.
+     * Metering stays exact (per-call rows); this is the guardrail on top.
+     */
+    private void requireQuota(String tenantSlug) {
+        Instant monthStart = LocalDate.now(ZoneOffset.UTC)
+                .withDayOfMonth(1)
+                .atStartOfDay()
+                .toInstant(ZoneOffset.UTC);
+        long spent = usage.sumTokensSince(tenants.requireTenantId(tenantSlug), monthStart);
+        if (spent >= monthlyTokenCap) {
+            throw ApiException.tooManyRequests(
+                    "AI_QUOTA_EXCEEDED", "Monthly AI budget spent; try again next month");
         }
     }
 

@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -31,19 +32,30 @@ public class GroqAiProvider implements AiProvider {
     private final RestClient client;
     private final String apiKey;
     private final String model;
+    private final String endpoint;
     private final ObjectMapper json;
 
     public GroqAiProvider(
             @Value("${app.ai.groq.api-key:}") String apiKey,
             @Value("${app.ai.groq.model:openai/gpt-oss-120b}") String model,
             ObjectMapper json) {
+        this(apiKey, model, json, defaultClient(), ENDPOINT);
+    }
+
+    /** Test seam: caller-owned HTTP stack and endpoint (a local stub server). */
+    GroqAiProvider(String apiKey, String model, ObjectMapper json, RestClient client, String endpoint) {
         this.apiKey = apiKey == null ? "" : apiKey;
         this.model = model;
         this.json = json;
+        this.client = client;
+        this.endpoint = endpoint;
+    }
+
+    private static RestClient defaultClient() {
         SimpleClientHttpRequestFactory requests = new SimpleClientHttpRequestFactory();
         requests.setConnectTimeout(Duration.ofSeconds(5));
         requests.setReadTimeout(Duration.ofSeconds(30));
-        this.client = RestClient.builder().requestFactory(requests).build();
+        return RestClient.builder().requestFactory(requests).build();
     }
 
     @Override
@@ -63,10 +75,26 @@ public class GroqAiProvider implements AiProvider {
                         Map.of("role", "user", "content", request.userPrompt())),
                 "max_tokens", request.maxTokens(),
                 "temperature", request.temperature());
-        JsonNode root;
         try {
-            String raw = client.post()
-                    .uri(ENDPOINT)
+            return postOnce(body);
+        } catch (HttpStatusCodeException retryable) {
+            if (!isRetryable(retryable)) {
+                throw mapProviderError(retryable);
+            }
+            sleepOnce();
+            try {
+                return postOnce(body);
+            } catch (HttpStatusCodeException failed) {
+                throw mapProviderError(failed);
+            }
+        }
+    }
+
+    private AiCompletionResult postOnce(Map<String, Object> body) {
+        String raw;
+        try {
+            raw = client.post()
+                    .uri(endpoint)
                     .headers(headers -> {
                         headers.setBearerAuth(apiKey);
                         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -74,9 +102,14 @@ public class GroqAiProvider implements AiProvider {
                     .body(body)
                     .retrieve()
                     .body(String.class);
-            root = json.readTree(raw);
+        } catch (HttpStatusCodeException e) {
+            throw e;
         } catch (RuntimeException e) {
             throw ApiException.badGateway("PROVIDER_ERROR", "The AI provider call failed");
+        }
+        JsonNode root;
+        try {
+            root = json.readTree(raw);
         } catch (Exception e) {
             throw ApiException.badGateway("PROVIDER_MALFORMED", "The AI provider answer was unreadable");
         }
@@ -87,5 +120,26 @@ public class GroqAiProvider implements AiProvider {
         JsonNode usage = root.path("usage");
         return new AiCompletionResult(
                 text, model, usage.path("prompt_tokens").asInt(0), usage.path("completion_tokens").asInt(0));
+    }
+
+    private static boolean isRetryable(HttpStatusCodeException e) {
+        return e.getStatusCode().value() == 429 || e.getStatusCode().is5xxServerError();
+    }
+
+    private static ApiException mapProviderError(HttpStatusCodeException e) {
+        if (e.getStatusCode().value() == 429) {
+            return ApiException.tooManyRequests(
+                    "PROVIDER_RATE_LIMITED", "The AI provider is rate limiting; try again shortly");
+        }
+        return ApiException.badGateway("PROVIDER_ERROR", "The AI provider call failed");
+    }
+
+    private static void sleepOnce() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw ApiException.badGateway("PROVIDER_ERROR", "The AI provider call failed");
+        }
     }
 }

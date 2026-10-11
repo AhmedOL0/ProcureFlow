@@ -85,8 +85,8 @@ Status: Verified / Partially verified / Unverified / Missing / Not applicable (s
 | Gated provider (503 when disabled), timeouts, 502 mapping | Verified | `GroqAiProvider`, `CopilotServiceTest` | — | — | — | — | — | none | — |
 | Tenant-scoped aggregates-only prompts + citations | Verified | `CopilotService:59-137`, `AiIT` | — | — | — | — | — | none | — |
 | Output validation (bounds, extract JSON schema) | Verified | `AiValidator:23-80` | — | — | — | — | — | none | — |
-| Per-tenant quotas / spend caps | Missing | metering without limiting (`README:172-173`) | AI cost abuse | Medium | P1 | — | M | monthly token cap + 429 | capped tenant gets 429 + message |
-| 429/retry/backoff on provider calls | Missing | any RuntimeException → 502 | transient failures surface raw | Medium | P2 | — | S | retry-once + map 429 | — |
+| Per-tenant quotas / spend caps | Fixed 2026-10-11 | monthly token cap (`app.ai.monthly-token-cap`, quota unit tests) | AI cost abuse | Medium | P1 | — | M | done | capped tenant gets 429 AI_QUOTA_EXCEEDED |
+| 429/retry/backoff on provider calls | Fixed 2026-10-11 | retry-once on 429/5xx, 429→PROVIDER_RATE_LIMITED (`GroqAiProviderTest`) | transient failures surface raw | Medium | P2 | — | S | done | — |
 | Prompt-injection sanitization | Missing | length-check + concat only | exfiltration via crafted data | Low | P2 | — | S | delimit/escape user content | injection test in AiIT |
 | Conversation history storage | Missing | no history table | no continuity/audit of chats | Low | P3 | — | M | — | — |
 | Stale `AiProvider` javadoc ("no implementation") | Verified (comment) | `AiProvider.java:4-9` | doc rot | Info | P3 | — | S | one-line fix | — |

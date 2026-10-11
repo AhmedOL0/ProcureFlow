@@ -77,6 +77,9 @@ app:
     groq:
       api-key: ${GROQ_API_KEY:}
       model: ${GROQ_MODEL:openai/gpt-oss-120b}
+    # Monthly per-tenant token budget across all copilot features; spent
+    # tenants answer 429 AI_QUOTA_EXCEEDED until the next UTC month.
+    monthly-token-cap: ${AI_MONTHLY_TOKEN_CAP:1000000}
   auth:
     # Password-reset tokens live this long, then 410. Short on purpose.
     password-reset-ttl-minutes: ${PASSWORD_RESET_TTL_MINUTES:30}

@@ -169,10 +169,10 @@ quotation comparison, plus a per-tenant usage endpoint. Answers render as
 text with citations and model tags; the UI cancels in-flight calls and
 never presents model output as verified fact.
 
-Limits, stated plainly: no per-tenant spend caps (metering without
-limiting — a heavy user burns budget); no login throttling yet (BCrypt-12
-and no enumeration are the current defense); email-link reset needs SMTP
-credentials or it stays in log-mode.
+Limits, stated plainly: AI has a monthly per-tenant token cap (default
+1M, `AI_MONTHLY_TOKEN_CAP`) with one retry on provider 429/5xx; login,
+register and refresh are throttled per account/IP; email-link reset needs
+SMTP credentials or it stays in log-mode.
 
 ## Security
 
