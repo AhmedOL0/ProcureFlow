@@ -61,7 +61,9 @@ async function signIn(page: Page): Promise<void> {
   await page.getByLabel('Work email').fill('boss@acme.test');
   await page.getByLabel('Password').fill('x');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  // Generous timeout: full-matrix runs parallelize two browsers and the
+  // dev server occasionally needs more than the 5s default to respond.
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
 }
 
 async function expectAxeClean(page: Page): Promise<void> {

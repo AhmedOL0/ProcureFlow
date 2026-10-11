@@ -170,6 +170,19 @@ review, README/portfolio overhaul, demo workspace docs.
   matrix, ADR-010 (outbox deferred with triggers). Full `verify` green
   (126 IT + unit/arch, floors met); frontend 48 e2e across both
   browsers. Commits 9069db8, 146b98f, d4bdb3d, fbe2483, all pushed.
+- Deferred-item attack (2026-10-11): N+1 bulk-fetch rewrites (invoice
+  booking/stats, order receive/stats, lane matching, categories,
+  primary clearing — suites incl. races green), paged audit + inbox
+  slice (shared Paged envelope, server MatPaginators, api-types
+  regenerated, e2e doubles updated), takeUntilDestroyed on all 14
+  form subscriptions, conditional-bean structural gate + AI-enabled
+  boot slice (caught FakeAiProvider breaking AI-on wiring),
+  backend-ci api-contract diff job. Full `verify` 129 IT green;
+  frontend build + 28 Vitest + 48 e2e green; containers rebuilt,
+  envelopes + throttle live-probed, notifications paginator
+  screenshotted. One parallel-load login flake seen twice in
+  full-matrix runs (never in isolation or CI-with-retries); a11y
+  helper timeout widened to 15s.
 - Enterprise readiness audit (read-only, 2026-10-10): 9-file package in
   `docs/enterprise-readiness/` (executive summary, feature matrix,
   security, architecture/data, UX, testing, DevOps, roadmap, release

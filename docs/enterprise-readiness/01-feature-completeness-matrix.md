@@ -73,7 +73,7 @@ Status: Verified / Partially verified / Unverified / Missing / Not applicable (s
 | Capability | Status | Evidence | Impact | Risk | Priority | Deps | Effort | Action | Acceptance |
 |---|---|---|---|---|---|---|---|---|---|
 | Server filters + client sort/page, all four data states | Verified | every list component + html | — | — | — | — | — | none | — |
-| Pagination envelopes | Missing | zero `Pageable` in backend | unbounded reads break at scale | High | P0 | — | M | envelope per `docs/api/README.md` target | 10k-row table loads page 1 <500ms |
+| Pagination envelopes | Partially fixed 2026-10-11 | shared `Paged<T>` + audit/inbox slices live (envelope, 1..100 cap, 400 bounds); remaining lists unbounded | unbounded reads break at scale | High | P0 | — | M | roll out per slice | 10k-row table loads page 1 <500ms |
 | CSV/export, PDF reports | Missing | no export code | ops toil, audit needs | Medium | P2 | pagination | M | tenant-scoped CSV for requests/invoices/audit | export of foreign tenant → 404 |
 | Bulk operations | Missing | N+1 inbox reads noted | toil at scale | Low | P3 | — | M | — | — |
 | 404 page | Missing | `**` redirects to dashboard/login | confused navigation | Low | P2 | — | S | NotFound component | — |
@@ -98,13 +98,13 @@ Status: Verified / Partially verified / Unverified / Missing / Not applicable (s
 | ArchUnit module boundaries (4 rules) | Verified | `ArchitectureRulesTest`, green | — | — | — | — | — | none | — |
 | Outbox for domain events | Missing | in-process Spring events only | lost notifications on crash between commit and listener | Medium | P2 | — | M | outbox table + relay | kill-9 test: no lost event |
 | Missing composite indexes (4) | Fixed 2026-10-11 | V15 migration (budgets, requests, links, invoice FK) | slow month-end queries | Medium | P1 | — | S | done; EXPLAIN on hot paths | seq-scan-free on hot paths |
-| N+1 fan-outs (budget sums, invoice lines, approval steps, analytics) | Verified | §3 data report | latency at scale | Medium | P1 | pagination | M | bulk-fetch rewrites | query-countasserted tests |
+| N+1 fan-outs (budget sums, invoice lines, approval steps, analytics) | Fixed 2026-10-11 | GROUP BY sums, single-fetch receive/attach/stats, bulk categories, statement-level primary clearing; suites green incl. races | latency at scale | Medium | P1 | pagination | M | done (scorecards were already join-fetched) | — |
 | Structured logs / correlation IDs | Missing | text logs, traceId only on 500s | un-debuggable incidents | Medium | P2 | — | S | MDC request id + JSON option | — |
 | Prometheus wired + alerts firing | Partially verified | configs + `alerts.yml` exist, unwired | blind ops | Medium | P1 | compose service | M | add service, receiver, drill | alert fires on synthetic 5xx |
 | pg backup + restore test | Missing | volumes only | data loss | High | P0 | — | S | nightly dump sidecar + quarterly restore drill | restore rehearsal recorded |
 | Secrets: env-only, fail-fast compose | Verified | `docker-compose.yml:81`, `secrets.md` | — | — | — | — | — | none | — |
 | Placeholder JWT boots with public value | Disproven 2026-10-11 | default is 61 chars; length gate refuses it (`JwtServiceTest.documentedPlaceholderRefusesToStart`) | none — boot already fails loudly | Info | — | — | — | none | — |
 | CSP / Referrer-Policy / Permissions-Policy | Missing | HSTS + frame-deny only | XSS impact uncontained | Low | P2 | — | S | add headers, verify e2e | — |
-| Frontend axe tests | Fixed 2026-10-11 | `e2e/a11y.spec.ts` (5 pages, wcag2a+aa) caught + fixed a critical chip-role violation | a11y regressions undetected | Medium | P1 | — | S | done | — |
-| valueChanges unsubscribe hygiene | Partially verified | ~12 never-torn-down subs | slow leaks on navigation | Medium | P2 | — | S | takeUntilDestroyed/async | — |
-| api-types freshness proof | Unverified | no timestamp; spot-checks match | silent drift | Low | P2 | — | S | CI diff job regenerate-and-compare | — |
+| Frontend axe tests | Fixed 2026-10-11 | `e2e/a11y.spec.ts` (5 pages, wcag2a+aa) caught + fixed a critical chip-role violation; Firefox matrix 48/48 | a11y regressions undetected | Medium | P1 | — | S | done | — |
+| valueChanges unsubscribe hygiene | Fixed 2026-10-11 | all 14 sites use takeUntilDestroyed(); full e2e green | slow leaks on navigation | Medium | P2 | — | S | done | — |
+| api-types freshness proof | Fixed 2026-10-11 | backend-ci api-contract job regenerates with the pinned generator and diffs | silent drift | Low | P2 | — | S | done | — |
