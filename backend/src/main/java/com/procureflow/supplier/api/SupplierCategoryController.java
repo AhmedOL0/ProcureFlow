@@ -33,6 +33,7 @@ public class SupplierCategoryController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List categories of the current workspace")
     public ResponseEntity<List<CategoryResponse>> list(@AuthenticationPrincipal AuthenticatedUser principal) {
         return ResponseEntity.ok(categories.list(principal.tenantId()).stream()

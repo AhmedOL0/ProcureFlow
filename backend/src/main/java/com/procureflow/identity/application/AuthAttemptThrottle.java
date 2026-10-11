@@ -60,7 +60,12 @@ public class AuthAttemptThrottle {
                 Duration.ofHours(1));
     }
 
-    private void check(String bucket, int max, Duration window) {
+    /**
+     * Generic budget check shared by every throttled flow (auth endpoints
+     * and password reset): prune, record, count, 429 past the max. One
+     * policy, one ledger; buckets namespace the flows apart.
+     */
+    public void check(String bucket, int max, Duration window) {
         Instant now = Instant.now();
         ledger.pruneBefore(now.minus(window.multipliedBy(2)));
         ledger.record(bucket, now);

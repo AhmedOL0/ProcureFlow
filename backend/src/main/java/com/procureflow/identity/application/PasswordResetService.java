@@ -1,9 +1,7 @@
 package com.procureflow.identity.application;
 
-import com.procureflow.identity.domain.PasswordResetThrottle;
 import com.procureflow.identity.domain.PasswordResetToken;
 import com.procureflow.identity.domain.User;
-import com.procureflow.identity.infrastructure.PasswordResetThrottleRepository;
 import com.procureflow.identity.infrastructure.PasswordResetTokenRepository;
 import com.procureflow.identity.infrastructure.RefreshTokenRepository;
 import com.procureflow.identity.infrastructure.UserRepository;
@@ -38,7 +36,7 @@ public class PasswordResetService {
 
     private final UserRepository users;
     private final PasswordResetTokenRepository tokens;
-    private final PasswordResetThrottleRepository throttle;
+    private final AuthAttemptThrottle attempts;
     private final RefreshTokenRepository refreshTokens;
     private final PasswordEncoder encoder;
     private final MailPort mail;
@@ -48,7 +46,7 @@ public class PasswordResetService {
     public PasswordResetService(
             UserRepository users,
             PasswordResetTokenRepository tokens,
-            PasswordResetThrottleRepository throttle,
+            AuthAttemptThrottle attempts,
             RefreshTokenRepository refreshTokens,
             PasswordEncoder encoder,
             MailPort mail,
@@ -56,7 +54,7 @@ public class PasswordResetService {
             @Value("${app.auth.password-reset-ttl-minutes:30}") long ttlMinutes) {
         this.users = users;
         this.tokens = tokens;
-        this.throttle = throttle;
+        this.attempts = attempts;
         this.refreshTokens = refreshTokens;
         this.encoder = encoder;
         this.mail = mail;
@@ -74,7 +72,7 @@ public class PasswordResetService {
     public String requestReset(String email, String tenantSlug) {
         String normalized = email == null ? "" : email.trim().toLowerCase();
         String slug = tenantSlug == null || tenantSlug.isBlank() ? null : tenantSlug.trim().toLowerCase();
-        checkThrottle(emailBucket(normalized, slug), FORGOT_MAX_PER_HOUR, Duration.ofHours(1));
+        attempts.check(emailBucket(normalized, slug), FORGOT_MAX_PER_HOUR, Duration.ofHours(1));
         if (!normalized.contains("@")) {
             return GENERIC_MESSAGE;
         }
@@ -103,7 +101,7 @@ public class PasswordResetService {
     @Transactional
     public void resetPassword(String rawToken, String newPassword) {
         String hash = AuthService.hash(rawToken == null ? "" : rawToken);
-        checkThrottle("token:" + hash, RESET_MAX_PER_10_MINUTES, Duration.ofMinutes(10));
+        attempts.check("token:" + hash, RESET_MAX_PER_10_MINUTES, Duration.ofMinutes(10));
         PasswordResetToken token = tokens
                 .findByTokenHash(hash)
                 .orElseThrow(() -> ApiException.notFound("INVALID_TOKEN", "This reset link is invalid."));
@@ -149,16 +147,6 @@ public class PasswordResetService {
         }
         String root = base.toString().replaceAll("/+$", "");
         return root + "/reset-password?token=" + rawToken;
-    }
-
-    private void checkThrottle(String bucket, int max, Duration window) {
-        Instant now = Instant.now();
-        throttle.deleteOlderThan(now.minus(window.multipliedBy(2)));
-        throttle.save(new PasswordResetThrottle(bucket, now));
-        long recent = throttle.countByBucketAndRequestedAtAfter(bucket, now.minus(window));
-        if (recent > max) {
-            throw ApiException.tooManyRequests("TOO_MANY_REQUESTS", "Too many attempts; try again later.");
-        }
     }
 
     private static String emailBucket(String email, String tenantSlug) {

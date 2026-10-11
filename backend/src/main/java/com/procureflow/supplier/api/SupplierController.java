@@ -46,6 +46,7 @@ public class SupplierController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Search suppliers of the current workspace")
     public ResponseEntity<List<SupplierResponse>> search(
             @AuthenticationPrincipal AuthenticatedUser principal,
@@ -73,6 +74,7 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get one supplier of the current workspace")
     public ResponseEntity<SupplierResponse> get(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
@@ -107,6 +109,7 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}/contacts")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List contacts of a supplier")
     public ResponseEntity<List<ContactResponse>> contacts(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
@@ -134,6 +137,7 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}/categories")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List categories assigned to a supplier")
     public ResponseEntity<List<CategoryResponse>> categories(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
@@ -156,6 +160,7 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}/performances")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List scorecards of a supplier, newest first")
     public ResponseEntity<List<PerformanceResponse>> performances(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {

@@ -67,6 +67,7 @@ public class PurchaseRequestController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List requests of the current workspace, newest first")
     public ResponseEntity<List<PurchaseRequestResponse>> list(
             @AuthenticationPrincipal AuthenticatedUser principal,
@@ -77,6 +78,7 @@ public class PurchaseRequestController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get one request with its items and total")
     public ResponseEntity<PurchaseRequestResponse> get(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {

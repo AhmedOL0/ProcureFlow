@@ -33,6 +33,7 @@ public class DepartmentController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List departments of the current workspace")
     public ResponseEntity<List<DepartmentResponse>> list(@AuthenticationPrincipal AuthenticatedUser principal) {
         return ResponseEntity.ok(
@@ -51,6 +52,7 @@ public class DepartmentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get one department of the current workspace")
     public ResponseEntity<DepartmentResponse> get(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {

@@ -32,6 +32,7 @@ public class MembershipController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List memberships of the current workspace")
     public ResponseEntity<List<MembershipResponse>> list(@AuthenticationPrincipal AuthenticatedUser principal) {
         return ResponseEntity.ok(

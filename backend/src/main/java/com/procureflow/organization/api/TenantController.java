@@ -27,6 +27,7 @@ public class TenantController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get the current workspace")
     public ResponseEntity<TenantResponse> current(@AuthenticationPrincipal AuthenticatedUser principal) {
         return ResponseEntity.ok(TenantResponse.from(tenants.current(principal.tenantId())));
