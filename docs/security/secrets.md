@@ -17,11 +17,16 @@
 ## Outbound mail (Brevo SMTP)
 
 7. Provider setup (Brevo): transactional SMTP relay at
-   `smtp-relay.brevo.com:587` with STARTTLS. `MAIL_USERNAME` is the Brevo
-   account login email; `MAIL_PASSWORD` is a Brevo SMTP key (`xsmtpsib-…`,
+   `smtp-relay.brevo.com:587` with STARTTLS. `MAIL_USERNAME` is the SMTP
+   login shown under SMTP & API → SMTP ("Connexion",
+   `…@smtp-brevo.com`) — NOT the account email; using the account email
+   authenticates as nobody and answers 535 (learned 2026-10-11).
+   `MAIL_PASSWORD` is a Brevo SMTP key (`xsmtpsib-…`,
    generated under SMTP & API → SMTP keys — it is NOT the account
    password and NOT a `v3` API key). `MAIL_FROM` must be a
    Brevo-validated sender address or delivery fails at submission.
+   If 535 persists with correct credentials, check SMTP & API → authorized
+   IPs: Brevo blocks non-allowlisted source IPs for SMTP keys.
 8. `MAIL_PROVIDER=smtp` selects the Brevo adapter; anything else (default
    `log`) sinks mail to a safe log line (recipient + subject only — never
    tokens or URLs). Timeouts are 5s connect / 10s read/write.

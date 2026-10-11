@@ -70,6 +70,23 @@ review, README/portfolio overhaul, demo workspace docs.
   Playwright; live probes on the C4 image (submit→unreadOnly 1→read→0,
   decide→q=REQUEST_DECIDED 1, q=purchase_request 1, miss 0).
 
+### Phase 13e — Brevo live wiring + demo seed (this change)
+- Brevo: root cause of the 535 was the SMTP *username* (account email),
+  not the key — login is `…@smtp-brevo.com` (SMTP & API → Connexion).
+  `.env` now carries the smtp-brevo login, a fresh `xsmtpsib-…ztV382`
+  key and the validated `ahmedouarrali12@gmail.com` sender
+  (`docs/security/secrets.md` corrected). New error is `525 Unauthorized
+  IP`: credentials accepted, source IP blocked — needs `160.179.6.115`
+  allowlisted under SMTP & API → authorized IPs, then re-probe.
+- `DemoSeeder` (dev profile only, ArchUnit-clean): 6 users, 3
+  departments, 5 suppliers + scorecards, 7 pots, 12 requests (all
+  states), 4 orders, 2 invoices, lane, backdated 2026-05..09. Seed via
+  `MAIL_PROVIDER=log docker compose run --rm -e
+  SPRING_PROFILES_ACTIVE=dev backend`; reset procedure in `docs/demo.md`
+  (ordered deletes — plain tenant delete violates NO ACTION FKs).
+- Verified: backend 143 IT green; live spend trajectory 4 periods, 5
+  categories, 8.02M/2.66M/1.71M/1.30M req/ord/inv/paid.
+
 ### Phase 1 — Foundation (commit 2e2a26c)
 - Repo skeleton, 12 module boundaries + layer contracts, ArchUnit gates.
 - V1 schema (tenants/users/roles/permissions/departments/memberships).
