@@ -99,6 +99,29 @@ services:
     ports:
       - "${BACKEND_PORT:-8080}:8080"
 
+  # ---- Nightly database dumps (opt-in: not part of the default stack) ----
+  # One-shot: docker compose --profile backup run --rm db-backup sh /backup.sh once
+  # Scheduled sidecar: docker compose --profile backup up -d db-backup
+  db-backup:
+    image: postgres:16-alpine
+    container_name: procureflow-backup
+    profiles: [backup]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-procureflow}
+      PGUSER: ${POSTGRES_USER:-procureflow}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (see .env.example)}
+      BACKUP_RETENTION: ${BACKUP_RETENTION:-7}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - pgbackups:/backups
+      - ./infrastructure/docker/backup/backup.sh:/backup.sh:ro
+    command: ["sh", "/backup.sh", "loop"]
+
   frontend:
     build:
       context: ./frontend
@@ -116,3 +139,4 @@ volumes:
   pgdata:
   redisdata:
   rabbitdata:
+  pgbackups:
