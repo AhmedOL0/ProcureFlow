@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -81,13 +82,14 @@ public class AuthController {
     }
 
     @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Change the caller's own password, revoking all its sessions")
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody ChangePasswordRequest request) {
         if (principal == null) {
-            // /auth/** is public so that register/login stay reachable; this
-            // endpoint still requires a caller, translated here, not in XML.
+            // Belt and braces: the chain already rejects anonymous callers,
+            // but the 401 envelope here pins the exact public contract.
             throw com.procureflow.shared.web.ApiException.unauthorized("UNAUTHENTICATED", "Authentication required");
         }
         auth.changePassword(principal.userId(), principal.tenantId(), request.currentPassword(), request.newPassword());
@@ -95,11 +97,12 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Current authenticated user")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal AuthenticatedUser principal) {
         if (principal == null) {
-            // /auth/** is public so that register/login stay reachable; this
-            // endpoint still requires a caller, translated here, not in XML.
+            // Belt and braces: the chain already rejects anonymous callers,
+            // but the 401 envelope here pins the exact public contract.
             throw com.procureflow.shared.web.ApiException.unauthorized("UNAUTHENTICATED", "Authentication required");
         }
         return ResponseEntity.ok(UserResponse.from(auth.me(principal.userId())));

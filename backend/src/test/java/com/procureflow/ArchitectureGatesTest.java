@@ -59,10 +59,11 @@ class ArchitectureGatesTest {
 
     /**
      * Every handler declares its authorization: a method- or class-level
-     * {@code @PreAuthorize}, except AuthController's public surface (the
-     * only permitAll-matched controller; new methods there fail this gate
-     * until explicitly allowlisted). Reads carry {@code isAuthenticated()}
-     * rather than relying on the SecurityConfig default silently.
+     * {@code @PreAuthorize}, except AuthController's enumerated public
+     * surface (mirroring the explicit permitAll paths in SecurityConfig,
+     * never a prefix). New methods there fail this gate until explicitly
+     * allowlisted, and authenticated AuthController methods carry
+     * {@code isAuthenticated()} like every other read.
      */
     @Test
     void controllersEnforceAuthorization() {
@@ -147,5 +148,12 @@ class ArchitectureGatesTest {
     }
 
     private static final Set<String> PUBLIC_AUTH_ENDPOINTS = Set.of(
-            "register", "login", "refresh", "logout", "forgotPassword", "resetPassword", "me", "changePassword");
+            "register",
+            "login",
+            "refresh",
+            "logout",
+            "forgotPassword",
+            "resetPassword",
+            "verifyEmail",
+            "resendVerification");
 }

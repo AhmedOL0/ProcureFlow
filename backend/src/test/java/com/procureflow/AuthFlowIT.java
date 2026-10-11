@@ -220,6 +220,18 @@ class AuthFlowIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void unlistedAuthPathsAreAuthenticatedByDefault() {
+        // The public auth surface is enumerated, not prefixed: an unknown
+        // path under /api/v1/auth/** must challenge (401) rather than fall
+        // through to a 404 or, worse, a future public-by-accident handler.
+        ResponseEntity<String> unknown =
+                rest.getForEntity("/api/v1/auth/no-such-endpoint", String.class);
+        assertEquals(HttpStatus.UNAUTHORIZED, unknown.getStatusCode());
+        assertNotNull(unknown.getBody());
+        assertTrue(unknown.getBody().contains("UNAUTHENTICATED"));
+    }
+
+    @Test
     void refreshRotatesAndSpentTokenTriggersTheftResponse() {
         String slug = uniqueSlug("acme");
         AuthResponse auth = register(slug, "ada@" + slug + ".test");
