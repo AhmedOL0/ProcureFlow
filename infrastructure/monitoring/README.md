@@ -9,4 +9,6 @@
 # docker-compose.yml with these files mounted, then open Grafana and import.
 # Planned metric families: HTTP latency/errors, DB pool, JVM, Redis hit
 # rate, domain counters (purchase requests, approvals), AI calls/latency/
-# errors/token usage. Alert rules (`alerts.yml`) arrive with the first SLOs.
+# errors/token usage. Alert rules (`alerts.yml`: overspend spike, 5xx rate,
+# AI failing, AI usage jump) exist as starting-point thresholds; receivers
+# and SLOs arrive together — until then the rules are unexecuted config.

@@ -4,13 +4,9 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 13 — enterprise hardening + directory pagination (in progress).**
-C1 invite-gated join + email verification is merged; C2 server pagination
-is implemented backend + frontend with all gates green (backend 140 IT,
-frontend build + 29 Vitest + 48 Playwright). C3 backup sidecar is drilled
-live; C4 audit-search + inbox-unread filters are implemented with all
-gates green (backend 143 IT, frontend build + 29 Vitest + 48 Playwright)
-and live-probed. Remaining: final push + release notes.
+**Phase 14 — audit remediation, one phase at a time (this change: A docs).**
+PR #14 merged to main. The external audit (68/100, Functional Application,
+0 critical / 4 high) is remediated in small phased PRs with green gates.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:

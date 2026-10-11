@@ -11,7 +11,8 @@ boundaries.
 > Status: **working product, pre-release hardening.** The Angular frontend
 > covers the page map end to end (dashboard, workspace, procurement,
 > fulfillment, budgets, analytics, copilot, admin) against the real API;
-> the backend carries 113 integration tests plus unit/ArchUnit gates.
+> the backend carries 143 integration tests plus unit/ArchUnit gates
+> (measured 2026-10-11; JaCoCo 81.3% line / 63.4% branch over 70/40 floors).
 > Screenshots below are all live captures. See `docs/demo.md` to click
 > through it yourself, and `docs/project-management/sprint-plan.md` for
 > the delivery record.
@@ -98,9 +99,11 @@ cd frontend && npm install && npm start   # http://localhost:4200
 Notes that bite newcomers (full list in `AGENTS.md`): `./mvnw spring-boot:run`
 does **not** read `.env` — export the vars first, or boot with
 `SPRING_DATASOURCE_PASSWORD=… JWT_SECRET=…`; port 8080 is commonly taken
-(local Apache), so the compose stack defaults the backend to `:8081` and the
-`gen:api` script targets `:8081`; `spring-boot:run` serves recompiled
-classes — run `compile` first when in doubt.
+(local Apache), so run manual backends on `:8081`
+(`-Dspring-boot.run.jvmArguments=-Dserver.port=8081`) or set `BACKEND_PORT`
+— compose itself defaults to `:8080`. The `gen:api` script targets `:8081`;
+`spring-boot:run` serves recompiled classes — run `compile` first when
+in doubt.
 
 API docs need the backend up with docs enabled (dev profile):
 `http://localhost:8081/swagger-ui.html` (dev) — disabled by default
@@ -134,27 +137,29 @@ Angular types are generated from the live contract — boot the backend on
 | Frontend | `/login`, `/register`, `/forgot-password`, `/reset-password`, `/dashboard`, `/workspace`, `/suppliers`, `/requests`, `/requests/mine`, `/approvals`, `/orders`, `/invoices`, `/budgets`, `/analytics`, `/copilot`, `/notifications`, `/settings`, `/admin`, `/admin/users`, `/admin/departments`, `/admin/workflows`, `/admin/audit` | Session shell + every workflow screen, all API-backed |
 
 Current contract truths (the conventions doc is aspirational in places):
-lists return full workspace arrays (no pagination envelope yet);
-`Idempotency-Key` is enforced on creation endpoints; there is no `/api/v2`;
-the envelope carries `timestamp` alongside the documented fields.
+directory listings return `Paged` envelopes (`page/size` with `{ content,
+page, size, totalElements, totalPages }`, size 1–100); `Idempotency-Key`
+is enforced on creation endpoints; there is no `/api/v2`; the envelope
+carries `timestamp` alongside the documented fields.
 
 ## Testing strategy
 
 Full picture in `docs/testing/strategy.md`. Local gates (must pass before
 every push):
 
-- Backend: `cd backend && ./mvnw verify` — 113 integration tests
+- Backend: `cd backend && ./mvnw verify` — 143 integration tests
   (Testcontainers over real PostgreSQL 16) plus unit/ArchUnit: auth,
   tenant isolation, suppliers, procurement, approvals (incl. decision
   races), budgets (incl. reservation race), orders, invoices,
   notifications, audit, analytics, copilot, account (incl. token races),
   roles, metrics. JaCoCo floors (line 0.70 / branch 0.40) fail the build
   on regression.
-- Frontend unit: `cd frontend && npm test` (Vitest, 24 tests)
+- Frontend unit: `cd frontend && npm test` (Vitest, 35 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-  (19 tests: auth states, guarded routes, and 11 stubbed critical journeys —
-  request-to-approval, unsaved-draft guard, budget, order, invoice, admin, analytics, copilot
-  success/failure, notifications, settings, session expiry)
+  (52 runs: 26 tests × chromium + firefox — 12 stubbed critical journeys
+  incl. chart drills, 7 auth, 6 axe, 1 smoke: request-to-approval,
+  unsaved-draft guard, budget, order, invoice, admin, analytics,
+  copilot success/failure, notifications, settings, session expiry)
 - API types: regenerate after any API change and commit the result.
 
 ## AI architecture
@@ -216,13 +221,15 @@ what to try per persona, and the reset procedure.
 
 ## Known limitations
 
-- Email delivery unverified live (Brevo credentials pending) — reset flow
-  is proven with mocks + log-mode, not an inbox receipt.
-- No pagination envelopes, no `/api/v2`, no login/AI rate limits (see above).
+- Email delivery blocked live at Brevo auth (credentials wired, `525
+  Unauthorized IP` — source IP allowlisting pending); reset flow is
+  proven with mocks + log-mode, not an inbox receipt.
+- Directory listings are paged server-side; no `/api/v2`. Login, register,
+  refresh, reset and AI usage are rate-limited/capped (see above).
 - Approval inbox resolves decisions per row (N+1 reads) — fine at current
   scale, needs a bulk endpoint before high-volume tenants.
-- Frontend bundle ~1.3MB total / 6KB main across lazy chunks; no perf
-  work beyond measurement yet.
+- Frontend bundle ~1.8MB total JS / 6KB main across lazy chunks (largest
+  lazy chunk 513KB: ECharts); no perf work beyond measurement yet.
 
 ## License
 

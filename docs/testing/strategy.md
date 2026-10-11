@@ -20,7 +20,8 @@
 ## Gates
 
 - `backend-ci`: `mvn verify` (unit + integration + ArchUnit + JaCoCo report).
-  Coverage is reported, not gatekept, until Phase 3; then per-module floors.
+  Coverage is gatekept at line 0.70 / branch 0.40 (measured 0.81 / 0.63);
+  per-module floors remain future work.
 - `frontend-ci`: `npm run build`, `npm test`, `playwright test`.
 - Flaky tests are quarantined the same day they flake; a red main branch
   blocks all merges until green.
