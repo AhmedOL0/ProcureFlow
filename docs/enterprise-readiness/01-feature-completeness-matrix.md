@@ -31,7 +31,7 @@ Status: Verified / Partially verified / Unverified / Missing / Not applicable (s
 | Isolation IT for suppliers/orders/invoices/analytics/AI/notifications | Partially verified | per-module `*InvisibleAcrossTenants` exist; inbox-list/supplier-perf edge untested | unproven corners | Medium | P1 | — | S | add 3-4 negative tests | each module has a cross-tenant read+write test |
 | Scheduler tenant scoping | Partially verified | `EscalationScheduler:21-24` → unscoped `findById` (`ApprovalService:210`) | cross-tenant write path (UUID-gated) | Medium | P0 | — | S | `findByIdAndTenantId` + test | scheduler test with two tenants, no cross-mutation |
 | Permission catalog + 6 roles, additive provisioning | Verified | `PermissionCodes.java`, `RoleProvisioningIT` (4) | — | — | — | — | — | none | — |
-| Per-route authority matrix test | Missing | no matrix test; reads rely on convention | silent privilege drift | Medium | P1 | — | S | table test: route × role → status | CI fails on new unannotated route |
+| Per-route authority matrix test | Fixed 2026-10-11 | `AuthorizationMatrixIT` (10 routes × member/admin/anonymous) + `ArchitectureGatesTest.controllersEnforceAuthorization` | silent privilege drift | Medium | P1 | — | S | done | CI fails on new unannotated route |
 | Backend authoritative (frontend hints only) | Verified | `auth.service.ts:44-71` comment, shell gating | — | — | — | — | — | none | — |
 
 ## C–H. Procurement lifecycle
@@ -105,6 +105,6 @@ Status: Verified / Partially verified / Unverified / Missing / Not applicable (s
 | Secrets: env-only, fail-fast compose | Verified | `docker-compose.yml:81`, `secrets.md` | — | — | — | — | — | none | — |
 | Placeholder JWT boots with public value | Disproven 2026-10-11 | default is 61 chars; length gate refuses it (`JwtServiceTest.documentedPlaceholderRefusesToStart`) | none — boot already fails loudly | Info | — | — | — | none | — |
 | CSP / Referrer-Policy / Permissions-Policy | Missing | HSTS + frame-deny only | XSS impact uncontained | Low | P2 | — | S | add headers, verify e2e | — |
-| Frontend axe tests | Missing | zero axe in CI | a11y regressions undetected | Medium | P1 | — | S | axe-core on 5 key pages in CI | — |
+| Frontend axe tests | Fixed 2026-10-11 | `e2e/a11y.spec.ts` (5 pages, wcag2a+aa) caught + fixed a critical chip-role violation | a11y regressions undetected | Medium | P1 | — | S | done | — |
 | valueChanges unsubscribe hygiene | Partially verified | ~12 never-torn-down subs | slow leaks on navigation | Medium | P2 | — | S | takeUntilDestroyed/async | — |
 | api-types freshness proof | Unverified | no timestamp; spot-checks match | silent drift | Low | P2 | — | S | CI diff job regenerate-and-compare | — |

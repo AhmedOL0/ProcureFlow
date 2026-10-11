@@ -118,31 +118,37 @@ architecture-relevant entries:
    lines, approval steps, analytics aggregation) to freeze current behavior
    before bulk-fetch rewrites.
 
-## 7. Prioritized refactoring plan (Stages B–G)
+## 7. Refactoring plan — executed 2026-10-11 (all stages green)
 
-- **Stage B — boundary definition (no code):** ratify the port-direction
-  rule + supplier/purchaseorder cycle disposition + throttle-unification
-  shape. Risk: none. Acceptance: this assessment's §6 list agreed or amended.
-- **Stage C — pilot refactor (S):** unify the two throttle ledgers behind
-  one port; add the two missing ArchUnit rules from §6.1–6.2. Risk: low
-  (mechanical, covered by `AccountIT`/`AuthFlowIT`). Acceptance: full
-  `verify` green, ledgers documented in `docs/architecture/`.
-- **Stage D — security & integrity (S–M):** per-route auth matrix test;
-  login-throttle follow-ups if probes demand; outbox decision (adopt or
-  formally defer with rationale recorded in an ADR). Risk: medium (touches
-  security posture). Acceptance: matrix green, ADR-010 (outbox) written.
-- **Stage E — incremental adoption (S each):** apply the port-direction
-  rule repo-wide; optional `SupplierOrderUsage` move; N+1 bulk-fetch
-  rewrites behind query-count tests; pagination envelopes per the
-  documented target. Risk: medium (touches hot paths). Each ships with its
-  race/load evidence.
-- **Stage F — frontend alignment:** no structural change proposed — the
-  tree already matches the target shape. Only targeted items: axe CI,
-  Firefox CI, api-types regenerate-and-diff job, `valueChanges`
-  unsubscribe hygiene. Risk: low.
-- **Stage G — verification:** full gates + container boot with AI enabled
-  (regression for this cycle's crash) + docs sync (`docs/architecture/`,
-  ADRs 010+, `enterprise-readiness` updates).
+- **Stage B — boundary definition:** ratified as proposed. Port-direction
+  rule adopted; supplier⇆purchaseorder cycle left as-is (port-to-port,
+  documented in §3); throttle unification approved; outbox deferred.
+- **Stage C — done** (`9069db8`): throttle ledgers unified behind one
+  policy over `auth_throttle` (V16 drops `password_reset_throttle`);
+  `ArchitectureGatesTest` locks both new rules (foreign-infrastructure
+  ban, per-handler authorization with AuthController allowlist). Full
+  `verify` green.
+- **Stage D — done** (`146b98f`): `AuthorizationMatrixIT` pins 403/200/401
+  across 10 routes × member/admin/anonymous (it caught a wrong assumption:
+  MEMBER holds `analytics:read` by design); 12 implicit read endpoints now
+  carry explicit `isAuthenticated()` (behavior-preserving); ADR-010
+  records the outbox deferral with revisit triggers.
+- **Stage E — done in part** (`d4bdb3d`): budget sums collapsed to one
+  GROUP BY for reserve + listing (BudgetIT 10 + ApprovalIT 17 green,
+  incl. the concurrent-hold race). Deferred with rationale: invoice/order/
+  analytics fan-outs, pagination envelopes, and the optional
+  `SupplierOrderUsage` move — each needs its own contract/load evidence
+  and is tracked in `docs/enterprise-readiness/07`.
+- **Stage F — done** (`fbe2483`): axe-core gate on 5 pages (it caught a
+  real critical: `mat-chip-option` requires listbox parent — 6 filter rows
+  fixed), Playwright matrix chromium+firefox (48/48), CI installs both.
+  Deferred: api-types regenerate-and-diff automation (no backend in
+  frontend-ci; manual gate stays), `valueChanges` hygiene (12-file churn,
+  no leaked-behavior evidence).
+- **Stage G — done:** full `verify` 126 IT + unit/arch green with coverage
+  floors; frontend build + 28 Vitest + 48 e2e green; container rebuilt and
+  live-probed (throttle 429, profile 200); AI-enabled boot re-verified
+  after the constructor crash fix.
 
 ## 8. What is explicitly out of scope
 

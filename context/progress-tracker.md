@@ -156,11 +156,20 @@ review, README/portfolio overhaul, demo workspace docs.
   (audited, self-change refused, refresh locked out) with AccountIT
   16→19, AI monthly token cap + provider retry/429 mapping (+7 tests).
   Full `./mvnw -B verify` green (123 IT + unit/arch, floors met);
-  frontend build + 28 Vitest + 19 e2e green; container rebuilt, throttle
+  frontend build + 28 Vitest + 19 e2e green;   container rebuilt, throttle
   and profile live-probed. Two lessons: throttle records need
   REQUIRES_NEW (rollback erases them), and conditional beans escape the
   suite (Groq two-constructor crash caught only by container boot —
   fixed with @Autowired).
+- Architecture stages B–G (2026-10-11, Stage A assessment committed
+  first): throttle ledgers unified (V16 drops the reset table),
+  `ArchitectureGatesTest` (foreign-infra ban + per-handler auth),
+  `AuthorizationMatrixIT` (10 routes × member/admin/anonymous),
+  budget GROUP BY rewrite (BudgetIT + ApprovalIT race green), axe gate
+  on 5 pages (fixed a real critical chip-role violation), Firefox
+  matrix, ADR-010 (outbox deferred with triggers). Full `verify` green
+  (126 IT + unit/arch, floors met); frontend 48 e2e across both
+  browsers. Commits 9069db8, 146b98f, d4bdb3d, fbe2483, all pushed.
 - Enterprise readiness audit (read-only, 2026-10-10): 9-file package in
   `docs/enterprise-readiness/` (executive summary, feature matrix,
   security, architecture/data, UX, testing, DevOps, roadmap, release
