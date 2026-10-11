@@ -148,6 +148,13 @@ review, README/portfolio overhaul, demo workspace docs.
 ## In progress
 
 - Phase 12 review (this pass) on `feature/frontend-operations`.
+- Enterprise readiness audit (read-only, 2026-10-10): 9-file package in
+  `docs/enterprise-readiness/` (executive summary, feature matrix,
+  security, architecture/data, UX, testing, DevOps, roadmap, release
+  checklist). Verdict: strong honest MVP, not yet enterprise-complete;
+  top gaps are login throttling, open slug join, no pagination, unwired
+  ops/backup. Gates re-run green for the audit (115 IT + 16 unit/arch,
+  28 Vitest, 19 e2e).
 - Main has merged PR #12 (account) and PR #13 (hardening) on GitHub;
   this branch just integrated origin/main, so the account endpoints
   (GET/PATCH /users/me, change-password, forgot/reset) and the hardening
