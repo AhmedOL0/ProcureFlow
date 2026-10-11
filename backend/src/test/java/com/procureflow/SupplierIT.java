@@ -2,18 +2,30 @@ package com.procureflow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.procureflow.identity.api.AuthResponse;
 import com.procureflow.identity.application.MailPort;
+import com.procureflow.supplier.domain.SupplierContact;
+import com.procureflow.supplier.infrastructure.SupplierContactRepository;
+import com.procureflow.supplier.infrastructure.SupplierRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -37,6 +49,12 @@ class SupplierIT extends AbstractIntegrationTest {
 
     @MockitoBean
     private MailPort mail;
+
+    @Autowired
+    private SupplierContactRepository contacts;
+
+    @Autowired
+    private SupplierRepository suppliers;
 
     @Test
     void adminCanManageSuppliersEndToEnd() {
@@ -117,6 +135,73 @@ class SupplierIT extends AbstractIntegrationTest {
                 .filter(c -> Boolean.TRUE.equals(((Map<?, ?>) c).get("primary")))
                 .count();
         assertEquals(1, primaries);
+    }
+
+    @Test
+    void concurrentPrimaryContactsYieldOnePrimary() throws Exception {
+        Fixture admin = provision(uniqueSlug("acme"));
+        UUID supplier = createSupplier(admin.token(), "Acme Parts");
+        CountDownLatch gate = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Callable<ResponseEntity<Map>> first = () -> {
+                gate.await(30, TimeUnit.SECONDS);
+                return post(
+                        "/api/v1/suppliers/" + supplier + "/contacts",
+                        admin.token(),
+                        Map.of("name", "Racer One", "primary", true),
+                        Map.class);
+            };
+            Callable<ResponseEntity<Map>> second = () -> {
+                gate.await(30, TimeUnit.SECONDS);
+                return post(
+                        "/api/v1/suppliers/" + supplier + "/contacts",
+                        admin.token(),
+                        Map.of("name", "Racer Two", "primary", true),
+                        Map.class);
+            };
+            Future<ResponseEntity<Map>> racerA = pool.submit(first);
+            Future<ResponseEntity<Map>> racerB = pool.submit(second);
+            gate.countDown();
+
+            // Either serialization (both 201, second unset wins) or a lost
+            // race (201 + 409 from the partial unique index): both converge
+            // on one primary, and neither may fail any other way.
+            var statusA = racerA.get(60, TimeUnit.SECONDS).getStatusCode();
+            var statusB = racerB.get(60, TimeUnit.SECONDS).getStatusCode();
+            assertTrue(statusA == HttpStatus.CREATED || statusA == HttpStatus.CONFLICT);
+            assertTrue(statusB == HttpStatus.CREATED || statusB == HttpStatus.CONFLICT);
+
+            ResponseEntity<List> contacts =
+                    get("/api/v1/suppliers/" + supplier + "/contacts", admin.token(), List.class);
+            assertEquals(HttpStatus.OK, contacts.getStatusCode());
+            assertNotNull(contacts.getBody());
+            long primaries = contacts.getBody().stream()
+                    .filter(c -> Boolean.TRUE.equals(((Map<?, ?>) c).get("primary")))
+                    .count();
+            assertEquals(1, primaries);
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
+    void primaryGuardRejectsDualPrimariesAtTheDatabase() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        UUID supplier = createSupplier(admin.token(), "Acme Parts");
+
+        SupplierContact first =
+                contacts.saveAndFlush(new SupplierContact(suppliers.getReferenceById(supplier), "First"));
+        first.setPrimary(true);
+        contacts.saveAndFlush(first);
+
+        SupplierContact second =
+                contacts.saveAndFlush(new SupplierContact(suppliers.getReferenceById(supplier), "Second"));
+        second.setPrimary(true);
+        var violation = assertThrows(
+                DataIntegrityViolationException.class, () -> contacts.saveAndFlush(second));
+        assertTrue(violation.getMessage() != null
+                && violation.getMessage().contains("uq_supplier_contacts_supplier_primary"));
     }
 
     @Test

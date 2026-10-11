@@ -7,13 +7,14 @@ import com.procureflow.supplier.infrastructure.SupplierContactRepository;
 import com.procureflow.supplier.infrastructure.SupplierRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Contact management inside one supplier. Setting a contact primary unsets
- * every other primary of the same supplier: the invariant holds in code,
- * not just in the UI.
+ * every other primary of the same supplier, and the partial unique index
+ * from V19 makes a concurrent double-primary fail instead of persisting.
  */
 @Service
 @Transactional
@@ -50,7 +51,7 @@ public class ContactService {
             unsetPrimaries(supplierId, null);
         }
         contact.setPrimary(primary);
-        return contacts.save(contact);
+        return persist(contact);
     }
 
     public SupplierContact update(
@@ -80,11 +81,27 @@ public class ContactService {
             }
             contact.setPrimary(primary);
         }
-        return contacts.save(contact);
+        return persist(contact);
     }
 
     public void remove(String tenantSlug, UUID contactId) {
         contacts.delete(scoped(tenantSlug, contactId));
+    }
+
+    /**
+     * Flushes inside the try so a lost primary race surfaces here as a
+     * constraint violation instead of a 500 at commit time. The only
+     * plausible violation on these paths is the V19 partial unique index
+     * (names are DTO-validated, the supplier is scoped above, deletes are
+     * reference-guarded), so it maps to a 409 the caller can retry after.
+     */
+    private SupplierContact persist(SupplierContact contact) {
+        try {
+            return contacts.saveAndFlush(contact);
+        } catch (DataIntegrityViolationException e) {
+            throw ApiException.conflict(
+                    "PRIMARY_CONFLICT", "Another primary contact was set concurrently; reload and retry");
+        }
     }
 
     /**
