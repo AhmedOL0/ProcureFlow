@@ -133,7 +133,8 @@ services:
     depends_on:
       - backend
     ports:
-      - "${FRONTEND_PORT:-4200}:80"
+      # Container serves unprivileged 8080 (non-root image); host stays 4200.
+      - "${FRONTEND_PORT:-4200}:8080"
 
 volumes:
   pgdata:
