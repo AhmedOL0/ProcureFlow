@@ -10,6 +10,7 @@ import com.procureflow.shared.web.ApiException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -58,6 +59,57 @@ class AuthAttemptThrottleTest {
         throttle.checkLogin("Ada@Acme.Test", "10.0.0.3");
         assertTrue(ledger.rows.stream()
                 .noneMatch(row -> row.bucket().contains("ada") || row.bucket().contains("10.0.0.3")));
+    }
+
+    @Test
+    void inviteIssueTripsAfterSixtyPerActor() {
+        UUID actor = UUID.randomUUID();
+        for (int i = 0; i < 60; i++) {
+            throttle.checkInviteIssue(actor);
+        }
+        ApiException throttled = assertThrows(ApiException.class, () -> throttle.checkInviteIssue(actor));
+        assertEquals(429, throttled.getStatus().value());
+        assertEquals("TOO_MANY_REQUESTS", throttled.getCode());
+        // Another actor keeps a full budget.
+        throttle.checkInviteIssue(UUID.randomUUID());
+    }
+
+    @Test
+    void inviteRedeemTripsAfterThirtyPerIp() {
+        for (int i = 0; i < 30; i++) {
+            throttle.checkInviteRedeem("10.0.0.7");
+        }
+        ApiException throttled = assertThrows(ApiException.class, () -> throttle.checkInviteRedeem("10.0.0.7"));
+        assertEquals("TOO_MANY_REQUESTS", throttled.getCode());
+    }
+
+    @Test
+    void verifyRedeemTripsAfterSixtyPerIp() {
+        for (int i = 0; i < 60; i++) {
+            throttle.checkVerifyRedeem("10.0.0.8");
+        }
+        ApiException throttled = assertThrows(ApiException.class, () -> throttle.checkVerifyRedeem("10.0.0.8"));
+        assertEquals("TOO_MANY_REQUESTS", throttled.getCode());
+    }
+
+    @Test
+    void adminCreateTripsAfterTwoHundredPerTenant() {
+        for (int i = 0; i < 200; i++) {
+            throttle.checkAdminCreate("acme");
+        }
+        ApiException throttled = assertThrows(ApiException.class, () -> throttle.checkAdminCreate("acme"));
+        assertEquals("TOO_MANY_REQUESTS", throttled.getCode());
+        throttle.checkAdminCreate("globex");
+    }
+
+    @Test
+    void changePasswordTripsAfterTenPerAccount() {
+        UUID user = UUID.randomUUID();
+        for (int i = 0; i < 10; i++) {
+            throttle.checkChangePassword(user);
+        }
+        ApiException throttled = assertThrows(ApiException.class, () -> throttle.checkChangePassword(user));
+        assertEquals("TOO_MANY_REQUESTS", throttled.getCode());
     }
 
     private static class MemoryLedger implements AttemptLedger {

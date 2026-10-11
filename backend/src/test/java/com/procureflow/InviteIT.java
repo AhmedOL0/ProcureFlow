@@ -79,6 +79,28 @@ class InviteIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void inviteIssueThrottledAfterSixtyPerHour() {
+        String slug = uniqueSlug("inv");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+
+        for (int invite = 0; invite < 60; invite++) {
+            ResponseEntity<Map> created =
+                    inviteRaw(admin.accessToken(), "seat-" + invite + "@" + slug + ".test", List.of("MEMBER"));
+            assertEquals(HttpStatus.CREATED, created.getStatusCode());
+        }
+        HttpHeaders headers = bearer(admin.accessToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ResponseEntity<String> throttled = rest.exchange(
+                "/api/v1/invites",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("email", "seat-60@" + slug + ".test", "roleNames", List.of("MEMBER")), headers),
+                String.class);
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, throttled.getStatusCode());
+        assertNotNull(throttled.getBody());
+        assertTrue(throttled.getBody().contains("TOO_MANY_REQUESTS"));
+    }
+
+    @Test
     void inviteJoinAssignsRolesAndVerifies() {
         String slug = uniqueSlug("inv");
         AuthResponse admin = register(slug, "boss@" + slug + ".test");

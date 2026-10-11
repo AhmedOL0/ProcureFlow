@@ -90,7 +90,7 @@ public class AuthService {
             // Joining is invite-only: the token binds address, workspace and
             // role set, and redemption itself proves the mailbox.
             tenantId = tenants.requireTenantId(slug);
-            roleNames = invites.redeem(slug, email, cmd.inviteToken());
+            roleNames = invites.redeem(slug, email, cmd.inviteToken(), clientIp);
             verified = true;
         } else {
             if (cmd.tenantName() == null || cmd.tenantName().isBlank()) {
@@ -177,6 +177,7 @@ public class AuthService {
      * logs in again with the new password.
      */
     public void changePassword(UUID userId, String tenantSlug, String currentPassword, String newPassword) {
+        attempts.checkChangePassword(userId);
         User user = users
                 .findDetailedById(userId)
                 .filter(candidate -> candidate.getTenant().getSlug().equals(tenantSlug))
