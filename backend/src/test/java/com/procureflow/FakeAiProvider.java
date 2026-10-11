@@ -3,14 +3,19 @@ package com.procureflow;
 import com.procureflow.ai.application.AiCompletionRequest;
 import com.procureflow.ai.application.AiCompletionResult;
 import com.procureflow.ai.application.AiProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 /**
  * Test double for the AI provider: deterministic answers per feature, real
  * token accounting, never any network. Lives in test sources so production
  * still boots with zero provider beans unless {@code AI_ENABLED=true}.
+ * Backs off when AI is enabled so exactly one provider bean exists in every
+ * profile — otherwise enabling AI alongside test sources breaks wiring with
+ * NoUniqueBeanDefinitionException.
  */
 @Service
+@ConditionalOnProperty(name = "app.ai.enabled", havingValue = "false", matchIfMissing = true)
 public class FakeAiProvider implements AiProvider {
 
     @Override

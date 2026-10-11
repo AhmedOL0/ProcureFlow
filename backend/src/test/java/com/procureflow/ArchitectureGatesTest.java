@@ -7,10 +7,13 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -83,6 +86,55 @@ class ArchitectureGatesTest {
             }
         }
         assertTrue(violations.isEmpty(), "handlers without authorization: " + violations);
+    }
+
+    /**
+     * Spring injects a single constructor implicitly, but with two or more
+     * it needs exactly one {@code @Autowired} marker — otherwise the bean
+     * fails at boot with "No default constructor found", a failure the
+     * suite never sees when the bean is conditional and absent in tests
+     * (lived once as a crash-looping AI-enabled container).
+     */
+    @Test
+    void multiConstructorBeansDeclareAnAutowiredConstructor() {
+        JavaClasses classes = new ClassFileImporter().importPackages("com.procureflow");
+        List<String> violations = new ArrayList<>();
+        for (JavaClass clazz : classes) {
+            if (!isBean(clazz)) {
+                continue;
+            }
+            Class<?> reflected;
+            try {
+                reflected = clazz.reflect();
+            } catch (Exception e) {
+                continue;
+            }
+            List<Constructor<?>> declared = new ArrayList<>();
+            for (Constructor<?> ctor : reflected.getDeclaredConstructors()) {
+                if (!ctor.isSynthetic()) {
+                    declared.add(ctor);
+                }
+            }
+            if (declared.size() < 2) {
+                continue;
+            }
+            long marked = declared.stream().filter(c -> c.isAnnotationPresent(Autowired.class)).count();
+            if (marked != 1) {
+                violations.add(
+                        clazz.getName() + " has " + declared.size() + " constructors, " + marked + " autowired");
+            }
+        }
+        assertTrue(violations.isEmpty(), "ambiguous bean constructors: " + violations);
+    }
+
+    private static boolean isBean(JavaClass clazz) {
+        return clazz.isAnnotatedWith("org.springframework.stereotype.Component")
+                || clazz.isAnnotatedWith("org.springframework.stereotype.Service")
+                || clazz.isAnnotatedWith("org.springframework.stereotype.Repository")
+                || clazz.isAnnotatedWith("org.springframework.stereotype.Controller")
+                || clazz.isAnnotatedWith("org.springframework.web.bind.annotation.RestController")
+                || clazz.isAnnotatedWith(
+                        "org.springframework.boot.autoconfigure.condition.ConditionalOnProperty");
     }
 
     private static boolean isHandler(JavaMethod method) {
