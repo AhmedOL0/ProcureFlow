@@ -6,11 +6,14 @@ import com.procureflow.procurement.domain.PurchaseRequestItem;
 import com.procureflow.procurement.infrastructure.PurchaseRequestItemRepository;
 import com.procureflow.procurement.infrastructure.PurchaseRequestRepository;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,11 +70,14 @@ public class PurchaseRequestService {
     }
 
     @Transactional(readOnly = true)
-    public List<PurchaseRequest> list(String tenantSlug, PurchaseRequest.Status status) {
-        if (status == null) {
-            return requests.findAllByTenantSlug(tenantSlug);
-        }
-        return requests.findAllByTenantSlugAndStatus(tenantSlug, status);
+    public Paged<PurchaseRequest> page(
+            String tenantSlug, PurchaseRequest.Status status, String query, int page, int size) {
+        String terms = query == null || query.isBlank() ? "" : query;
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<PurchaseRequest> found = status == null
+                ? requests.findPageByTenantSlug(tenantSlug, terms, pageable)
+                : requests.findPageByTenantSlugAndStatus(tenantSlug, status, terms, pageable);
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     @Transactional(readOnly = true)

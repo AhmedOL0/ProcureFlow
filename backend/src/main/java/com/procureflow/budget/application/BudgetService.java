@@ -6,6 +6,7 @@ import com.procureflow.budget.infrastructure.BudgetRepository;
 import com.procureflow.budget.infrastructure.BudgetReservationRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import com.procureflow.audit.application.AuditTrailLogged;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.LocalDate;
@@ -18,6 +19,8 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,14 +127,35 @@ public class BudgetService implements BudgetReservationPort {
         }
     }
 
+    /**
+     * Paged pot listing with one grouped reservation sum for the page (see
+     * {@link #views}). Replaces the unbounded list: pots grow every month.
+     */
     @Transactional(readOnly = true)
-    public List<Budget> list(String tenantSlug, String period) {
+    public Paged<BudgetView> pagedViews(
+            String tenantSlug, String period, String query, int page, int size) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
+        String terms = query == null || query.isBlank() ? "" : query;
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<Budget> found;
         if (period == null) {
-            return budgets.findAllByTenantIdOrderByPeriodDescNameAsc(tenantId);
+            found = budgets.findAllByTenantIdAndNameContainingIgnoreCaseOrderByPeriodDescNameAsc(
+                    tenantId, terms, pageable);
+        } else {
+            requirePeriod(period);
+            found = budgets.findAllByTenantIdAndPeriodAndNameContainingIgnoreCaseOrderByNameAsc(
+                    tenantId, period, terms, pageable);
         }
-        requirePeriod(period);
-        return budgets.findAllByTenantIdAndPeriodOrderByNameAsc(tenantId, period);
+        Map<UUID, Long> reserved = found.getContent().isEmpty()
+                ? Map.of()
+                : reservedByBudget(found.getContent().stream().map(Budget::getId).toList());
+        return Paged.of(
+                found.getContent().stream()
+                        .map(pot -> view(pot, reserved.getOrDefault(pot.getId(), 0L)))
+                        .toList(),
+                page,
+                size,
+                found.getTotalElements());
     }
 
     @Transactional(readOnly = true)
@@ -167,18 +191,6 @@ public class BudgetService implements BudgetReservationPort {
      * query per row. Pots with no reservations are absent from the map and
      * read as zero, exactly like the single-pot path.
      */
-    @Transactional(readOnly = true)
-    public List<BudgetView> views(String tenantSlug, String period) {
-        List<Budget> pots = list(tenantSlug, period);
-        if (pots.isEmpty()) {
-            return List.of();
-        }
-        Map<UUID, Long> reserved = reservedByBudget(pots.stream().map(Budget::getId).toList());
-        return pots.stream()
-                .map(pot -> view(pot, reserved.getOrDefault(pot.getId(), 0L)))
-                .toList();
-    }
-
     private BudgetView view(Budget budget, long reserved) {
         return new BudgetView(
                 budget.getId(),

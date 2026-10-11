@@ -4,6 +4,8 @@ import com.procureflow.supplier.domain.Supplier;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,16 +22,18 @@ public interface SupplierRepository extends JpaRepository<Supplier, UUID> {
     @Query("select s from Supplier s where s.tenant.slug = :slug"
             + " and lower(s.name) like lower(concat('%', :query, '%'))"
             + " order by s.name")
-    List<Supplier> findAllByTenantSlug(@Param("slug") String slug, @Param("query") String query);
+    Page<Supplier> findPageByTenantSlug(
+            @Param("slug") String slug, @Param("query") String query, Pageable pageable);
 
     @EntityGraph(attributePaths = {"tenant"})
     @Query("select s from Supplier s where s.tenant.slug = :slug and s.status = :status"
             + " and lower(s.name) like lower(concat('%', :query, '%'))"
             + " order by s.name")
-    List<Supplier> searchByStatus(
+    Page<Supplier> findPageByTenantSlugAndStatus(
             @Param("slug") String slug,
             @Param("status") Supplier.Status status,
-            @Param("query") String query);
+            @Param("query") String query,
+            Pageable pageable);
 
     @EntityGraph(attributePaths = {"tenant"})
     @Query("select s from Supplier s where s.id = :id and s.tenant.slug = :slug")

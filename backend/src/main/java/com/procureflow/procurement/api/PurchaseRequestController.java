@@ -8,6 +8,7 @@ import com.procureflow.procurement.application.PurchaseRequestService.ItemInput;
 import com.procureflow.procurement.domain.PurchaseRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -68,13 +69,16 @@ public class PurchaseRequestController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "List requests of the current workspace, newest first")
-    public ResponseEntity<List<PurchaseRequestResponse>> list(
+    @Operation(summary = "Paged requests of the current workspace, newest first")
+    public ResponseEntity<Paged<PurchaseRequestResponse>> list(
             @AuthenticationPrincipal AuthenticatedUser principal,
-            @RequestParam(required = false) PurchaseRequest.Status status) {
-        return ResponseEntity.ok(requests.list(principal.tenantId(), status).stream()
-                .map(this::toResponse)
-                .toList());
+            @RequestParam(required = false) PurchaseRequest.Status status,
+            @RequestParam(required = false, name = "q") String query,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(requests
+                .page(principal.tenantId(), status, query, Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(this::toResponse));
     }
 
     @GetMapping("/{id}")

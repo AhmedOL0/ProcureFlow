@@ -4,6 +4,8 @@ import com.procureflow.procurement.domain.PurchaseRequest;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -17,11 +19,22 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug order by r.createdAt desc")
     List<PurchaseRequest> findAllByTenantSlug(@Param("slug") String slug);
 
+
+
+    @EntityGraph(attributePaths = {"tenant", "items"})
+    @Query("select r from PurchaseRequest r where r.tenant.slug = :slug"
+            + " and lower(r.title) like lower(concat('%', :query, '%')) order by r.createdAt desc")
+    Page<PurchaseRequest> findPageByTenantSlug(
+            @Param("slug") String slug, @Param("query") String query, Pageable pageable);
+
     @EntityGraph(attributePaths = {"tenant", "items"})
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.status = :status"
-            + " order by r.createdAt desc")
-    List<PurchaseRequest> findAllByTenantSlugAndStatus(
-            @Param("slug") String slug, @Param("status") PurchaseRequest.Status status);
+            + " and lower(r.title) like lower(concat('%', :query, '%')) order by r.createdAt desc")
+    Page<PurchaseRequest> findPageByTenantSlugAndStatus(
+            @Param("slug") String slug,
+            @Param("status") PurchaseRequest.Status status,
+            @Param("query") String query,
+            Pageable pageable);
 
     @EntityGraph(attributePaths = {"tenant", "items"})
     @Query("select r from PurchaseRequest r where r.id = :id and r.tenant.slug = :slug")

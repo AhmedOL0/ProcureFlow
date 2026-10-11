@@ -7,6 +7,7 @@ import com.procureflow.purchaseorder.domain.PurchaseOrder;
 import com.procureflow.purchaseorder.infrastructure.OrderItemRepository;
 import com.procureflow.purchaseorder.infrastructure.PurchaseOrderRepository;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import com.procureflow.supplier.application.SupplierLookup;
 import com.procureflow.audit.application.AuditTrailLogged;
 import java.util.HashMap;
@@ -15,6 +16,8 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,12 +87,13 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<PurchaseOrder> list(String tenantSlug, PurchaseOrder.Status status) {
+    public Paged<PurchaseOrder> page(String tenantSlug, PurchaseOrder.Status status, int page, int size) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
-        if (status == null) {
-            return orders.findAllByTenantIdOrderByCreatedAtDesc(tenantId);
-        }
-        return orders.findAllByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, status);
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<PurchaseOrder> found = status == null
+                ? orders.findAllByTenantIdOrderByCreatedAtDesc(tenantId, pageable)
+                : orders.findAllByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, status, pageable);
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     @Transactional(readOnly = true)

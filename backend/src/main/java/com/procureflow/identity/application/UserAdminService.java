@@ -6,6 +6,7 @@ import com.procureflow.identity.domain.User;
 import com.procureflow.identity.infrastructure.RefreshTokenRepository;
 import com.procureflow.identity.infrastructure.UserRepository;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.organization.domain.Tenant;
 import jakarta.persistence.EntityManager;
@@ -16,6 +17,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,8 +61,10 @@ public class UserAdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<User> list(String tenantSlug) {
-        return users.findAllByTenantSlug(tenantSlug);
+    public Paged<User> page(String tenantSlug, String query, int page, int size) {
+        String terms = query == null || query.isBlank() ? "" : query;
+        Page<User> found = users.findPageByTenantSlug(tenantSlug, terms, PageRequest.of(page, size));
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     @Transactional(readOnly = true)

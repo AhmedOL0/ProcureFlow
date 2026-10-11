@@ -141,10 +141,10 @@ class BudgetIT extends AbstractIntegrationTest {
         assertEquals(
                 HttpStatus.NOT_FOUND, get("/api/v1/budgets/" + budget, tenantB.token(), String.class).getStatusCode());
 
-        ResponseEntity<List> list = get("/api/v1/budgets", tenantB.token(), List.class);
+        ResponseEntity<Map> list = get("/api/v1/budgets", tenantB.token(), Map.class);
         assertEquals(HttpStatus.OK, list.getStatusCode());
         assertNotNull(list.getBody());
-        assertTrue(list.getBody().isEmpty());
+        assertTrue(((List<?>) list.getBody().get("content")).isEmpty());
 
         UUID foreign = submitted(tenantB.token());
         assertEquals(HttpStatus.CREATED, decide(tenantB.token(), foreign, "APPROVED").getStatusCode());

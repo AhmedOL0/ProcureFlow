@@ -163,10 +163,10 @@ class InvoiceIT extends AbstractIntegrationTest {
                     (statusA == HttpStatus.CREATED && statusB == HttpStatus.CONFLICT)
                             || (statusA == HttpStatus.CONFLICT && statusB == HttpStatus.CREATED));
 
-            ResponseEntity<List> list = get("/api/v1/invoices", admin.token(), List.class);
+            ResponseEntity<Map> list = get("/api/v1/invoices", admin.token(), Map.class);
             assertEquals(HttpStatus.OK, list.getStatusCode());
             assertNotNull(list.getBody());
-            assertEquals(1, list.getBody().size());
+            assertEquals(1, ((List<?>) list.getBody().get("content")).size());
         } finally {
             pool.shutdownNow();
         }
@@ -220,10 +220,10 @@ class InvoiceIT extends AbstractIntegrationTest {
         assertEquals(
                 HttpStatus.NOT_FOUND,
                 get("/api/v1/invoices/" + invoice, tenantB.token(), String.class).getStatusCode());
-        ResponseEntity<List> list = get("/api/v1/invoices", tenantB.token(), List.class);
+        ResponseEntity<Map> list = get("/api/v1/invoices", tenantB.token(), Map.class);
         assertEquals(HttpStatus.OK, list.getStatusCode());
         assertNotNull(list.getBody());
-        assertTrue(list.getBody().isEmpty());
+        assertTrue(((List<?>) list.getBody().get("content")).isEmpty());
 
         UUID ownOrder = sentOrder(tenantB.token()).order();
         assertEquals(

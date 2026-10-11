@@ -4,6 +4,7 @@ import com.procureflow.budget.application.BudgetService;
 import com.procureflow.identity.application.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,12 +54,17 @@ public class BudgetController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('budget:read')")
-    @Operation(summary = "List pots of the current workspace, newest period first")
-    public ResponseEntity<List<BudgetResponse>> list(
-            @AuthenticationPrincipal AuthenticatedUser principal, @RequestParam(required = false) String period) {
-        return ResponseEntity.ok(budgets.views(principal.tenantId(), period).stream()
-                .map(BudgetResponse::from)
-                .toList());
+    @Operation(summary = "Paged pots of the current workspace, newest period first")
+    public ResponseEntity<Paged<BudgetResponse>> list(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false, name = "q") String query,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(budgets
+                .pagedViews(
+                        principal.tenantId(), period, query, Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(BudgetResponse::from));
     }
 
     @GetMapping("/{id}")

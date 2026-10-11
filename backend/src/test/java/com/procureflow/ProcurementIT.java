@@ -1,6 +1,7 @@
 package com.procureflow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -84,13 +85,41 @@ class ProcurementIT extends AbstractIntegrationTest {
                     (statusA == HttpStatus.CREATED && statusB == HttpStatus.OK)
                             || (statusA == HttpStatus.OK && statusB == HttpStatus.CREATED));
 
-            ResponseEntity<List> list = get("/api/v1/purchase-requests", admin.token(), List.class);
+            ResponseEntity<Map> list = get("/api/v1/purchase-requests", admin.token(), Map.class);
             assertEquals(HttpStatus.OK, list.getStatusCode());
             assertNotNull(list.getBody());
-            assertEquals(1, list.getBody().size());
+            assertEquals(1, ((List<?>) list.getBody().get("content")).size());
         } finally {
             pool.shutdownNow();
         }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void requestsPaginateAndSearchByTitle() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        createId(admin.token(), "Laptops North", null);
+        createId(admin.token(), "Laptops South", null);
+        createId(admin.token(), "Monitors East", null);
+
+        ResponseEntity<Map> page0 = get("/api/v1/purchase-requests?q=Laptops&size=1", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, page0.getStatusCode());
+        assertNotNull(page0.getBody());
+        assertEquals(1, ((List<?>) page0.getBody().get("content")).size());
+        assertEquals(2L, ((Number) page0.getBody().get("totalElements")).longValue());
+        assertEquals(2L, ((Number) page0.getBody().get("totalPages")).longValue());
+
+        ResponseEntity<Map> page1 =
+                get("/api/v1/purchase-requests?q=Laptops&size=1&page=1", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, page1.getStatusCode());
+        List<Map<String, Object>> rows0 = (List<Map<String, Object>>) page0.getBody().get("content");
+        List<Map<String, Object>> rows1 = (List<Map<String, Object>>) page1.getBody().get("content");
+        assertEquals(1, rows1.size());
+        assertNotEquals(rows0.get(0).get("id"), rows1.get(0).get("id"));
+
+        ResponseEntity<Map> monitors = get("/api/v1/purchase-requests?q=monitors", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, monitors.getStatusCode());
+        assertEquals(1, ((List<?>) monitors.getBody().get("content")).size());
     }
 
     @Test
@@ -196,10 +225,10 @@ class ProcurementIT extends AbstractIntegrationTest {
         assertEquals(
                 HttpStatus.NOT_FOUND, get("/api/v1/purchase-requests/" + id, tenantB.token(), String.class).getStatusCode());
 
-        ResponseEntity<List> list = get("/api/v1/purchase-requests", tenantB.token(), List.class);
+        ResponseEntity<Map> list = get("/api/v1/purchase-requests", tenantB.token(), Map.class);
         assertEquals(HttpStatus.OK, list.getStatusCode());
         assertNotNull(list.getBody());
-        assertTrue(list.getBody().isEmpty());
+        assertTrue(((List<?>) list.getBody().get("content")).isEmpty());
     }
 
     private Fixture provision(String slug) {

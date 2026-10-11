@@ -202,10 +202,10 @@ class OrderIT extends AbstractIntegrationTest {
         assertEquals(
                 HttpStatus.NOT_FOUND,
                 get("/api/v1/purchase-orders/" + order, tenantB.token(), String.class).getStatusCode());
-        ResponseEntity<List> list = get("/api/v1/purchase-orders", tenantB.token(), List.class);
+        ResponseEntity<Map> list = get("/api/v1/purchase-orders", tenantB.token(), Map.class);
         assertEquals(HttpStatus.OK, list.getStatusCode());
         assertNotNull(list.getBody());
-        assertTrue(list.getBody().isEmpty());
+        assertTrue(((List<?>) list.getBody().get("content")).isEmpty());
 
         assertEquals(
                 HttpStatus.NOT_FOUND,
