@@ -88,6 +88,17 @@ class JwtServiceTest {
     }
 
     @Test
+    void documentedPlaceholderRefusesToStart() {
+        // The application.yml placeholder is 61 chars: a missing JWT_SECRET
+        // already fails loudly on the length gate, never boots insecure.
+        IllegalStateException failure = assertThrows(
+                IllegalStateException.class,
+                () -> new JwtServiceImpl(
+                        "change-me-min-64-chars-for-hs512-signing-key-please-rotate-me", 900_000));
+        assertTrue(failure.getMessage().contains("64"));
+    }
+
+    @Test
     void garbageIsRejected() {
         assertThrows(ApiException.class, () -> jwt.parseAccessToken("not-a-token"));
     }

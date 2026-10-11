@@ -157,6 +157,41 @@ class OrderIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void concurrentReceiptsAdmitNoOverReceive() throws Exception {
+        Fixture admin = provision(uniqueSlug("acme"));
+        UUID supplier = createSupplier(admin.token(), "Acme Parts");
+        UUID order = ordered(admin.token(), supplier, approved(admin.token()));
+        UUID line = lineId(admin.token(), order, 0);
+        CountDownLatch gate = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Callable<ResponseEntity<Map>> attempt = () -> {
+                gate.await(30, TimeUnit.SECONDS);
+                return receive(admin.token(), order, List.of(Map.of("itemId", line, "quantity", 2)));
+            };
+            Future<ResponseEntity<Map>> attemptA = pool.submit(attempt);
+            Future<ResponseEntity<Map>> attemptB = pool.submit(attempt);
+            gate.countDown();
+
+            var statusA = attemptA.get(60, TimeUnit.SECONDS).getStatusCode();
+            var statusB = attemptB.get(60, TimeUnit.SECONDS).getStatusCode();
+            assertTrue(
+                    (statusA == HttpStatus.OK && statusB == HttpStatus.CONFLICT)
+                            || (statusA == HttpStatus.CONFLICT && statusB == HttpStatus.OK));
+
+            ResponseEntity<Map> fetched = get("/api/v1/purchase-orders/" + order, admin.token(), Map.class);
+            assertEquals(HttpStatus.OK, fetched.getStatusCode());
+            assertNotNull(fetched.getBody());
+            List<Map<String, Object>> lines = (List<Map<String, Object>>) fetched.getBody().get("lines");
+            assertNotNull(lines);
+            assertEquals(2, ((Number) lines.get(0).get("receivedQty")).intValue());
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
     void ordersAreInvisibleAcrossTenants() {
         Fixture tenantA = provision(uniqueSlug("acme"));
         Fixture tenantB = provision(uniqueSlug("globex"));

@@ -28,7 +28,7 @@ None proven. The highest-chain issue (unstuffed login + open join + no suspend) 
 ### H4. Placeholder JWT secret boots with a public value
 - Evidence: `application.yml:72` default is itself ≥64 chars, so the boot-length check (`JwtServiceImpl.java:31-39`) passes and tokens sign with a value published in the repo.
 - Impact: any deployment that forgets `JWT_SECRET` mints forgeable tokens.
-- Remediation: refuse the literal placeholder at boot (fail loudly). Effort S (one condition + test). Priority P0.
+- Correction 2026-10-11: disproven by execution — the default is 61 chars, so the boot length gate already refuses it (`JwtServiceTest.documentedPlaceholderRefusesToStart`). No action. The remaining hardening here is login throttling (H1).
 
 ## Medium
 

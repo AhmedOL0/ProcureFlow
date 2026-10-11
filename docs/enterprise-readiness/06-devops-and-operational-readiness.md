@@ -30,7 +30,7 @@
 ## What "production-ready" still needs (ordered)
 
 1. Backup sidecar + restore drill + runbook (P0/S).
-2. Login throttling + placeholder-secret refusal (P0/S) — counted in `02`, repeated here because ops owns the deploy env.
+2. Login throttling (P0/S) — counted in `02`, repeated here because ops owns the deploy env. (Placeholder-secret refusal dropped: disproven, boot already refuses.)
 3. Versioned image tags + rollback note (P1/S).
 4. Prometheus/Alertmanager in compose + request IDs (P1/M).
 5. Backend/frontend healthchecks + `depends_on` conditions (P1/S).

@@ -12,7 +12,7 @@ Three gates: **Demo** (recruiters/portfolio today) → **Test env** (shared, fri
 
 ## Test-env gate (friendly users, non-sensitive data)
 
-- [ ] P0 security closed: login throttling, placeholder-secret refusal, join policy documented or invite-gated.
+- [ ] P0 security closed: login throttling, join policy documented or invite-gated.
 - [ ] Backup sidecar running + one restore rehearsal recorded.
 - [ ] Versioned image tags (no `:latest` ambiguity); rollback = previous tag.
 - [ ] Prometheus + Alertmanager receiver firing on synthetic 5xx drill.

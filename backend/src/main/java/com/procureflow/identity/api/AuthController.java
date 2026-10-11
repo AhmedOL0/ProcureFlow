@@ -8,6 +8,7 @@ import com.procureflow.identity.application.PasswordResetService;
 import com.procureflow.identity.application.Registration;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -38,28 +39,33 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register (creates or joins a workspace)")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(
+            @Valid @RequestBody RegisterRequest request, HttpServletRequest http) {
         AuthResult result = auth.register(new Registration(
                 request.email(),
                 request.password(),
                 request.firstName(),
                 request.lastName(),
                 request.tenantSlug(),
-                request.tenantName()));
+                request.tenantName()),
+                clientIp(http));
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(result));
     }
 
     @PostMapping("/login")
     @Operation(summary = "Log in with email and password")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResult result = auth.login(new Credentials(request.email(), request.password(), request.tenantSlug()));
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request, HttpServletRequest http) {
+        AuthResult result = auth.login(
+                new Credentials(request.email(), request.password(), request.tenantSlug()), clientIp(http));
         return ResponseEntity.ok(toResponse(result));
     }
 
     @PostMapping("/refresh")
     @Operation(summary = "Rotate a refresh token into a new pair")
-    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest request) {
-        return ResponseEntity.ok(toResponse(auth.refresh(request.refreshToken())));
+    public ResponseEntity<AuthResponse> refresh(
+            @Valid @RequestBody RefreshRequest request, HttpServletRequest http) {
+        return ResponseEntity.ok(toResponse(auth.refresh(request.refreshToken(), clientIp(http))));
     }
 
     @PostMapping("/logout")
@@ -106,6 +112,17 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         passwordResets.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * TCP peer address for throttle buckets. Deliberately not
+     * X-Forwarded-For: that header is client-controlled without a trusted
+     * proxy, and trusting it would let callers rotate their own bucket.
+     * Deployments behind a proxy must front this with RemoteIpValve.
+     */
+    private static String clientIp(HttpServletRequest http) {
+        String remote = http == null ? null : http.getRemoteAddr();
+        return remote == null || remote.isBlank() ? "unknown" : remote;
     }
 
     private AuthResponse toResponse(AuthResult result) {

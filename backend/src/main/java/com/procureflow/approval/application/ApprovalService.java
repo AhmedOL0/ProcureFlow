@@ -207,7 +207,14 @@ public class ApprovalService {
         if (!assignment.isOverdue(now)) {
             return false;
         }
-        Optional<ApprovalWorkflow> workflow = workflows.findById(assignment.getWorkflowId());
+        // Tenant-scoped lookup: the scheduler sweeps all tenants, so a bare
+        // findById could escalate one tenant's assignment under another
+        // tenant's lane. A foreign workflow answers empty and skips.
+        // Tenant-scoped lookup: the scheduler sweeps all tenants, so a bare
+        // findById could escalate one tenant's assignment under another
+        // tenant's lane. A foreign workflow answers empty and skips.
+        Optional<ApprovalWorkflow> workflow =
+                workflows.findByIdAndTenantId(assignment.getWorkflowId(), assignment.getTenantId());
         if (workflow.isEmpty()) {
             return false;
         }

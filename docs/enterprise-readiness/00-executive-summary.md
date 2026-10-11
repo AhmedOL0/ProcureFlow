@@ -31,7 +31,7 @@ No fabricated completeness was found: documented stubs (log-mode mail, logging n
 
 ## Top five immediate actions
 
-1. Throttle login/refresh/register (bucket per IP+account) + refuse the literal placeholder JWT secret at boot. (Security, S)
+1. Throttle login/refresh/register (bucket per IP+account). (Security, S; the placeholder-secret scare was disproven — the default is 61 chars and the boot length gate already refuses it.)
 2. Close or gate workspace join: invite-token or admin-approval flow; add suspend/disable + role-update endpoints with tests. (Security/ops, M)
 3. Paginate list endpoints (envelope `{content,page,size,totalElements,totalPages}` already documented as the target in `docs/api/README.md`) starting with audit/notifications/requests. (Scalability, M)
 4. Scope the scheduler path by tenant (`findByIdAndTenantId`, test) + add the 4 missing composite indexes (budgets tenant+period, requests tenant+status, category-links reverse, invoice-line FK or documented decision). (Correctness/perf, S)

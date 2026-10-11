@@ -28,6 +28,27 @@ class AuthFlowIT extends AbstractIntegrationTest {
     static final PostgreSQLContainer<?> POSTGRES = postgresContainer();
 
     @Test
+    void loginThrottledAfterRepeatedFailures() {
+        // Unknown account: the throttle fires before the lookup, so no
+        // setup is needed and nothing about the account leaks either way.
+        String email = "stuffed-" + uniqueSlug("acme") + "@test.local";
+        for (int i = 0; i < 10; i++) {
+            assertEquals(
+                    HttpStatus.UNAUTHORIZED,
+                    rest.postForEntity(
+                                    "/api/v1/auth/login",
+                                    Map.of("email", email, "password", "wrong-password-1"),
+                                    String.class)
+                            .getStatusCode());
+        }
+        ResponseEntity<String> throttled = rest.postForEntity(
+                "/api/v1/auth/login", Map.of("email", email, "password", "wrong-password-1"), String.class);
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, throttled.getStatusCode());
+        assertNotNull(throttled.getBody());
+        assertTrue(throttled.getBody().contains("TOO_MANY_REQUESTS"));
+    }
+
+    @Test
     void registerCreatesTenantAndAdminWithTokens() {
         String slug = uniqueSlug("acme");
 

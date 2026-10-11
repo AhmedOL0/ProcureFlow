@@ -4,7 +4,7 @@ Staging: MVP (now) → First-tenant hardening (P0/P1) → Growth (P2) → Enterp
 
 ## Phase 1 — first-tenant hardening (P0/P1)
 
-1. **Login/refresh/register throttling + secret-startup refusal** — stops credential stuffing; all users. Required for any exposed deploy. Fits existing throttle pattern. S. No deps.
+1. **Login/refresh/register throttling** — stops credential stuffing; all users. Required for any exposed deploy. Fits existing throttle pattern. S. No deps.
 2. **Invite-gated join + suspend + role update + email verification** — makes workspaces operable (HR join/leaver, least privilege). Required for real B2B. Fits services + audit. M. Deps: mail delivery live.
 3. **Live Brevo proof** — resets must arrive. Required. S. Deps: confirmed sender/key (blocked on credentials, pre-existing).
 4. **Pagination envelopes** (audit/notifications/requests first) — unbounded reads are the first outage shape. Required. M. No deps (documented target already).

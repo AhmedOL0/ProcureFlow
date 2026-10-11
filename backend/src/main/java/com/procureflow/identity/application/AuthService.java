@@ -45,6 +45,7 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final EntityManager entities;
+    private final AuthAttemptThrottle attempts;
 
     @Value("${app.jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
@@ -56,7 +57,8 @@ public class AuthService {
             RoleProvisioningService roleProvisioning,
             PasswordEncoder encoder,
             JwtService jwt,
-            EntityManager entities) {
+            EntityManager entities,
+            AuthAttemptThrottle attempts) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.tenants = tenants;
@@ -64,9 +66,11 @@ public class AuthService {
         this.encoder = encoder;
         this.jwt = jwt;
         this.entities = entities;
+        this.attempts = attempts;
     }
 
-    public AuthResult register(Registration cmd) {
+    public AuthResult register(Registration cmd, String clientIp) {
+        attempts.checkRegister(clientIp);
         PasswordPolicy.requireValid(cmd.password());
         String email = normalize(cmd.email());
         String slug = normalize(cmd.tenantSlug());
@@ -94,7 +98,10 @@ public class AuthService {
         return new AuthResult(user, issueTokens(user));
     }
 
-    public AuthResult login(Credentials cmd) {
+    public AuthResult login(Credentials cmd, String clientIp) {
+        // Throttle before the lookup so timing and counting reveal nothing
+        // about which accounts exist; failures stay generic below.
+        attempts.checkLogin(cmd.email(), clientIp);
         String email = normalize(cmd.email());
         List<User> candidates = users.findAllByEmail(email);
         User user;
@@ -118,7 +125,8 @@ public class AuthService {
         return new AuthResult(user, issueTokens(user));
     }
 
-    public AuthResult refresh(String presentedToken) {
+    public AuthResult refresh(String presentedToken, String clientIp) {
+        attempts.checkRefresh(clientIp);
         RefreshToken presented = refreshTokens
                 .findByTokenHash(hash(presentedToken))
                 .orElseThrow(() -> ApiException.unauthorized("INVALID_REFRESH_TOKEN", "Refresh token is invalid"));

@@ -265,6 +265,57 @@ class ApprovalIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void escalationNeverCrossesTenants() {
+        Fixture tenantA = provision(uniqueSlug("acme"));
+        Fixture firstA = join(tenantA.slug());
+        Fixture secondA = join(tenantA.slug());
+        UUID laneA = createWorkflow(tenantA.token(), "Standard", 0L, null, 3);
+        addStep(tenantA.token(), laneA, 1, firstA.userId(), HttpStatus.CREATED);
+        addStep(tenantA.token(), laneA, 2, secondA.userId(), HttpStatus.CREATED);
+
+        Fixture tenantB = provision(uniqueSlug("globex"));
+        Fixture firstB = join(tenantB.slug());
+        Fixture secondB = join(tenantB.slug());
+        UUID laneB = createWorkflow(tenantB.token(), "Standard", 0L, null, 3);
+        addStep(tenantB.token(), laneB, 1, firstB.userId(), HttpStatus.CREATED);
+        addStep(tenantB.token(), laneB, 2, secondB.userId(), HttpStatus.CREATED);
+
+        UUID requestA = submitted(tenantA);
+        attach(tenantA.token(), requestA);
+        backdateDueAt(requestA);
+
+        UUID requestB = submitted(tenantB);
+        attach(tenantB.token(), requestB);
+        backdateDueAt(requestB);
+
+        // Fabricate the collision the scheduler must survive: B's
+        // assignment now points at A's lane. The tenant-scoped lookup must
+        // skip it instead of escalating B under A's policy.
+        assertEquals(
+                1,
+                jdbc.update(
+                        "UPDATE approval_assignments SET workflow_id = ? WHERE request_id = ?",
+                        laneA,
+                        requestB));
+
+        assertEquals(1, approvals.escalateOverdue(Instant.now()));
+
+        ResponseEntity<Map> stateA =
+                get("/api/v1/approvals/state?requestId=" + requestA, tenantA.token(), Map.class);
+        assertEquals(HttpStatus.OK, stateA.getStatusCode());
+        assertNotNull(stateA.getBody());
+        assertEquals(2, ((Number) stateA.getBody().get("stepOrder")).intValue());
+        assertEquals(Boolean.TRUE, stateA.getBody().get("escalated"));
+
+        ResponseEntity<Map> stateB =
+                get("/api/v1/approvals/state?requestId=" + requestB, tenantB.token(), Map.class);
+        assertEquals(HttpStatus.OK, stateB.getStatusCode());
+        assertNotNull(stateB.getBody());
+        assertEquals(1, ((Number) stateB.getBody().get("stepOrder")).intValue());
+        assertEquals(Boolean.FALSE, stateB.getBody().get("escalated"));
+    }
+
+    @Test
     void unmatchedRequestsKeepTheLegacyApproverRule() {
         Fixture admin = provision(uniqueSlug("acme"));
         createWorkflow(admin.token(), "Huge only", 99999999L, null, 3);

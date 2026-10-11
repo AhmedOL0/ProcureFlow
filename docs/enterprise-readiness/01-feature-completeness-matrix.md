@@ -97,13 +97,13 @@ Status: Verified / Partially verified / Unverified / Missing / Not applicable (s
 |---|---|---|---|---|---|---|---|---|---|
 | ArchUnit module boundaries (4 rules) | Verified | `ArchitectureRulesTest`, green | — | — | — | — | — | none | — |
 | Outbox for domain events | Missing | in-process Spring events only | lost notifications on crash between commit and listener | Medium | P2 | — | M | outbox table + relay | kill-9 test: no lost event |
-| Missing composite indexes (4) | Verified | §3 data report (budgets, requests, links, invoice FK) | slow month-end queries | Medium | P1 | — | S | V14 migration + EXPLAIN | seq-scan-free on hot paths |
+| Missing composite indexes (4) | Fixed 2026-10-11 | V15 migration (budgets, requests, links, invoice FK) | slow month-end queries | Medium | P1 | — | S | done; EXPLAIN on hot paths | seq-scan-free on hot paths |
 | N+1 fan-outs (budget sums, invoice lines, approval steps, analytics) | Verified | §3 data report | latency at scale | Medium | P1 | pagination | M | bulk-fetch rewrites | query-countasserted tests |
 | Structured logs / correlation IDs | Missing | text logs, traceId only on 500s | un-debuggable incidents | Medium | P2 | — | S | MDC request id + JSON option | — |
 | Prometheus wired + alerts firing | Partially verified | configs + `alerts.yml` exist, unwired | blind ops | Medium | P1 | compose service | M | add service, receiver, drill | alert fires on synthetic 5xx |
 | pg backup + restore test | Missing | volumes only | data loss | High | P0 | — | S | nightly dump sidecar + quarterly restore drill | restore rehearsal recorded |
 | Secrets: env-only, fail-fast compose | Verified | `docker-compose.yml:81`, `secrets.md` | — | — | — | — | — | none | — |
-| Placeholder JWT boots with public value | Partially verified | `application.yml:72` ≥64-char default | prod misconfig silently insecure | High | P0 | — | S | refuse literal placeholder at boot | boot fails loudly without JWT_SECRET |
+| Placeholder JWT boots with public value | Disproven 2026-10-11 | default is 61 chars; length gate refuses it (`JwtServiceTest.documentedPlaceholderRefusesToStart`) | none — boot already fails loudly | Info | — | — | — | none | — |
 | CSP / Referrer-Policy / Permissions-Policy | Missing | HSTS + frame-deny only | XSS impact uncontained | Low | P2 | — | S | add headers, verify e2e | — |
 | Frontend axe tests | Missing | zero axe in CI | a11y regressions undetected | Medium | P1 | — | S | axe-core on 5 key pages in CI | — |
 | valueChanges unsubscribe hygiene | Partially verified | ~12 never-torn-down subs | slow leaks on navigation | Medium | P2 | — | S | takeUntilDestroyed/async | — |
