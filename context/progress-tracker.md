@@ -148,6 +148,19 @@ review, README/portfolio overhaul, demo workspace docs.
 ## In progress
 
 - Phase 12 review (this pass) on `feature/frontend-operations`.
+- Phase 1 hardening attack (2026-10-11, commits 65cb7ff..798e434, all
+  pushed): auth throttling (per-account 10/min + per-IP budgets, 429s,
+  live-probed), scheduler tenant scoping (+ regression test, proven red),
+  V14 auth_throttle ledger, V15 hot-path indexes + invoice-line FK,
+  invoice/order race tests, suspend/reactivate + role-update endpoints
+  (audited, self-change refused, refresh locked out) with AccountIT
+  16→19, AI monthly token cap + provider retry/429 mapping (+7 tests).
+  Full `./mvnw -B verify` green (123 IT + unit/arch, floors met);
+  frontend build + 28 Vitest + 19 e2e green; container rebuilt, throttle
+  and profile live-probed. Two lessons: throttle records need
+  REQUIRES_NEW (rollback erases them), and conditional beans escape the
+  suite (Groq two-constructor crash caught only by container boot —
+  fixed with @Autowired).
 - Enterprise readiness audit (read-only, 2026-10-10): 9-file package in
   `docs/enterprise-readiness/` (executive summary, feature matrix,
   security, architecture/data, UX, testing, DevOps, roadmap, release
