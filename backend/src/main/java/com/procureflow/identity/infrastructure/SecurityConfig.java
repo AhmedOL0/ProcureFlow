@@ -56,8 +56,23 @@ public class SecurityConfig {
                         // request still authenticates and authorizes normally.
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
+                        // Public auth surface, enumerated explicitly: a future
+                        // handler under /api/v1/auth/** must NOT inherit
+                        // public access by prefix accident. Everything else
+                        // under /api/v1/auth/** (today: /me, /change-password)
+                        // falls through to authenticated() below.
                         .requestMatchers(
-                                "/api/v1/auth/**",
+                                HttpMethod.POST,
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/auth/verify-email",
+                                "/api/v1/auth/resend-verification")
+                        .permitAll()
+                        .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
