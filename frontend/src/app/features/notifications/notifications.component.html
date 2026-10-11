@@ -15,14 +15,14 @@
 
   <div class="pf-table-card">
     <div class="pf-chips">
-      <mat-chip-set aria-label="Read filter">
+      <mat-chip-listbox aria-label="Read filter">
         <mat-chip-option [selected]="!unreadOnly()" (click)="showAll()">
           All ({{ inbox.items().length }})
         </mat-chip-option>
         <mat-chip-option [selected]="unreadOnly()" (click)="showUnread()">
           Unread ({{ inbox.unread() }})
         </mat-chip-option>
-      </mat-chip-set>
+      </mat-chip-listbox>
     </div>
 
     @if (inbox.loading() && inbox.items().length === 0) {

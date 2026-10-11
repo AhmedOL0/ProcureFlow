@@ -59,7 +59,7 @@
     </div>
 
     <div class="pf-chips">
-      <mat-chip-set aria-label="Period filter">
+      <mat-chip-listbox aria-label="Period filter">
         <mat-chip-option [selected]="periodFilter.value === null" (click)="setPeriod(null)">
           All periods
         </mat-chip-option>
@@ -68,7 +68,7 @@
             {{ period }}
           </mat-chip-option>
         }
-      </mat-chip-set>
+      </mat-chip-listbox>
       <div class="pf-count">
         <span>Showing {{ pageRows().length }} of {{ filtered().length }} pots</span>
         <button mat-button (click)="resetFilters()">Reset filters</button>

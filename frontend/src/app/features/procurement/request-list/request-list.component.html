@@ -36,7 +36,7 @@
     </div>
 
     <div class="pf-chips">
-      <mat-chip-set aria-label="Status filter">
+      <mat-chip-listbox aria-label="Status filter">
         <mat-chip-option [selected]="statusFilter.value === null" (click)="setStatusFilter(null)">
           All
         </mat-chip-option>
@@ -48,7 +48,7 @@
             {{ status }} ({{ counts().get(status) ?? 0 }})
           </mat-chip-option>
         }
-      </mat-chip-set>
+      </mat-chip-listbox>
       <span class="pf-count"
         >Showing {{ pageRows().length }} of {{ filtered().length }} requests</span
       >

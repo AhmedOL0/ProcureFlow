@@ -6,13 +6,13 @@
   />
 
   <div class="copilot-modes">
-    <mat-chip-set aria-label="Copilot workflows">
+    <mat-chip-listbox aria-label="Copilot workflows">
       @for (entry of modes; track entry.id) {
         <mat-chip-option [selected]="mode() === entry.id" (click)="setMode(entry.id)">
           {{ entry.label }}
         </mat-chip-option>
       }
-    </mat-chip-set>
+    </mat-chip-listbox>
   </div>
 
   @if (mode() === 'chat') {

@@ -30,6 +30,7 @@
     "@angular/build": "^21.2.26",
     "@angular/cli": "^21.2.26",
     "@angular/compiler-cli": "^21.2.0",
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.64.0",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.8.1",
