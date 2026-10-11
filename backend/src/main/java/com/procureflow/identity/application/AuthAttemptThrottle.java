@@ -3,6 +3,7 @@ package com.procureflow.identity.application;
 import com.procureflow.shared.web.ApiException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,11 @@ public class AuthAttemptThrottle {
     static final int LOGIN_MAX_PER_IP_PER_HOUR = 120;
     static final int REGISTER_MAX_PER_IP_PER_HOUR = 60;
     static final int REFRESH_MAX_PER_IP_PER_HOUR = 600;
+    static final int INVITE_ISSUE_MAX_PER_ACTOR_PER_HOUR = 60;
+    static final int INVITE_REDEEM_MAX_PER_IP_PER_HOUR = 30;
+    static final int VERIFY_REDEEM_MAX_PER_IP_PER_HOUR = 60;
+    static final int ADMIN_CREATE_MAX_PER_TENANT_PER_HOUR = 200;
+    static final int CHANGE_PASSWORD_MAX_PER_ACCOUNT_PER_MINUTE = 10;
 
     private final AttemptLedger ledger;
 
@@ -58,6 +64,61 @@ public class AuthAttemptThrottle {
                 "refresh:ip:" + AuthService.hash(normalizeIp(clientIp)),
                 REFRESH_MAX_PER_IP_PER_HOUR,
                 Duration.ofHours(1));
+    }
+
+    /**
+     * Invite issue: per-actor hourly budget. Admins mint seats, not tenants,
+     * so the budget follows the actor rather than the source address.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void checkInviteIssue(UUID actorId) {
+        check(
+                "invite-issue:actor:" + AuthService.hash(String.valueOf(actorId)),
+                INVITE_ISSUE_MAX_PER_ACTOR_PER_HOUR,
+                Duration.ofHours(1));
+    }
+
+    /**
+     * Invite redeem: per-IP hourly budget, deliberately tighter than
+     * registration — joins are rarer than sign-ups, and this is the
+     * unauthenticated token-guessing surface.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void checkInviteRedeem(String clientIp) {
+        check(
+                "invite-redeem:ip:" + AuthService.hash(normalizeIp(clientIp)),
+                INVITE_REDEEM_MAX_PER_IP_PER_HOUR,
+                Duration.ofHours(1));
+    }
+
+    /** Mailbox-verification redeem: per-IP hourly budget on the guessing surface. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void checkVerifyRedeem(String clientIp) {
+        check(
+                "verify-redeem:ip:" + AuthService.hash(normalizeIp(clientIp)),
+                VERIFY_REDEEM_MAX_PER_IP_PER_HOUR,
+                Duration.ofHours(1));
+    }
+
+    /**
+     * Admin seat creation: per-tenant hourly flood guard. Roomy on purpose —
+     * this damps bulk abuse, it does not second-guess legitimate provisioning.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void checkAdminCreate(String tenantSlug) {
+        check(
+                "admin-create:tenant:" + AuthService.hash(tenantSlug == null ? "" : tenantSlug),
+                ADMIN_CREATE_MAX_PER_TENANT_PER_HOUR,
+                Duration.ofHours(1));
+    }
+
+    /** Password change: per-account minute budget, mirroring login. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void checkChangePassword(UUID userId) {
+        check(
+                "change-password:account:" + AuthService.hash(String.valueOf(userId)),
+                CHANGE_PASSWORD_MAX_PER_ACCOUNT_PER_MINUTE,
+                Duration.ofMinutes(1));
     }
 
     /**

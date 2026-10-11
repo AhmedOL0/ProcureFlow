@@ -84,7 +84,8 @@ public class EmailVerificationService {
     }
 
     /** Redeems a link: unknown tokens 404, spent or expired ones 410. */
-    public void verify(String rawToken) {
+    public void verify(String rawToken, String clientIp) {
+        attempts.checkVerifyRedeem(clientIp);
         String hash = AuthService.hash(rawToken == null ? "" : rawToken);
         EmailVerificationToken token = tokens
                 .findByTokenHash(hash)

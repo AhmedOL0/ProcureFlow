@@ -40,6 +40,7 @@ public class UserAdminService {
     private final EntityManager entities;
     private final ApplicationEventPublisher events;
     private final EmailVerificationService verification;
+    private final AuthAttemptThrottle attempts;
 
     public UserAdminService(
             UserRepository users,
@@ -49,7 +50,8 @@ public class UserAdminService {
             RefreshTokenRepository refreshTokens,
             EntityManager entities,
             ApplicationEventPublisher events,
-            EmailVerificationService verification) {
+            EmailVerificationService verification,
+            AuthAttemptThrottle attempts) {
         this.users = users;
         this.roleProvisioning = roleProvisioning;
         this.tenants = tenants;
@@ -58,6 +60,7 @@ public class UserAdminService {
         this.entities = entities;
         this.events = events;
         this.verification = verification;
+        this.attempts = attempts;
     }
 
     @Transactional(readOnly = true)
@@ -82,6 +85,7 @@ public class UserAdminService {
             String firstName,
             String lastName,
             Set<String> roleNames) {
+        attempts.checkAdminCreate(tenantSlug);
         PasswordPolicy.requireValid(password);
         String normalized = email.trim().toLowerCase();
         if (users.findByTenantSlugAndEmail(tenantSlug, normalized).isPresent()) {

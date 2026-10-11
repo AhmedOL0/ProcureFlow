@@ -36,6 +36,7 @@ public class InviteService {
     private final UserRepository users;
     private final TenantProvisioning tenants;
     private final RoleProvisioningService roleProvisioning;
+    private final AuthAttemptThrottle attempts;
     private final MailPort mail;
     private final String frontendUrl;
 
@@ -44,17 +45,20 @@ public class InviteService {
             UserRepository users,
             TenantProvisioning tenants,
             RoleProvisioningService roleProvisioning,
+            AuthAttemptThrottle attempts,
             MailPort mail,
             @Value("${app.frontend.url:http://localhost:4200}") String frontendUrl) {
         this.invites = invites;
         this.users = users;
         this.tenants = tenants;
         this.roleProvisioning = roleProvisioning;
+        this.attempts = attempts;
         this.mail = mail;
         this.frontendUrl = frontendUrl;
     }
 
     public Invite invite(String tenantSlug, UUID actorId, String email, Set<String> roleNames) {
+        attempts.checkInviteIssue(actorId);
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         String normalized = email == null ? "" : email.trim().toLowerCase();
         if (!normalized.contains("@")) {
@@ -92,7 +96,8 @@ public class InviteService {
      * Redeems a live invite for an address: exactly one winner per token
      * under concurrency. Returns the invite's role names.
      */
-    public Set<String> redeem(String tenantSlug, String email, String rawToken) {
+    public Set<String> redeem(String tenantSlug, String email, String rawToken, String clientIp) {
+        attempts.checkInviteRedeem(clientIp);
         String hash = AuthService.hash(rawToken == null ? "" : rawToken);
         UUID tenantId = tenants.requireTenantId(tenantSlug);
         String normalized = email == null ? "" : email.trim().toLowerCase();

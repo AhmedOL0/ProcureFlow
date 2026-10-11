@@ -124,8 +124,9 @@ public class AuthController {
 
     @PostMapping("/verify-email")
     @Operation(summary = "Redeem a mailbox-verification link")
-    public ResponseEntity<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
-        verification.verify(request.token());
+    public ResponseEntity<Void> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request, HttpServletRequest http) {
+        verification.verify(request.token(), clientIp(http));
         return ResponseEntity.noContent().build();
     }
 
