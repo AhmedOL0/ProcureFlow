@@ -38,7 +38,7 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_PASSWORD: contract-test-only
-          POSTGRES_DB: procurflow
+          POSTGRES_DB: procureflow
         ports:
           - 5432:5432
         options: >-
@@ -92,3 +92,7 @@ jobs:
             echo 'api-types.gen.ts is stale: run npm run gen:api against a dev backend and commit the result.'
             exit 1
           )
+
+      - name: Show backend boot log on failure
+        if: failure()
+        run: tail -60 /tmp/boot.log
