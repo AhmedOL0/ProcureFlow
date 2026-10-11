@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { averageOnTime, enrichSuppliers, initialsFor, latestScoreOf } from './supplier-rows';
 import type { SuppliersService } from './suppliers.service';
@@ -42,6 +42,30 @@ describe('supplier-rows', () => {
         categories: [],
         latestScore: { period: '2026-01', onTimeRate: 80 },
         averageOnTime: 80,
+      },
+    ]);
+  });
+
+  it('keeps the row when a section fails or misbehaves', () => {
+    const service = {
+      contacts: vi.fn().mockReturnValue(of({ content: [], totalElements: 0 })),
+      categoriesOf: vi.fn().mockReturnValue(throwError(() => new Error('down'))),
+      performances: vi.fn().mockReturnValue(of([])),
+    } as unknown as SuppliersService;
+    let result: unknown;
+    let failed = false;
+    enrichSuppliers(service, [{ id: 's1', name: 'Acme' }] as never[]).subscribe({
+      next: (rows) => (result = rows),
+      error: () => (failed = true),
+    });
+    expect(failed).toBe(false);
+    expect(result).toEqual([
+      {
+        supplier: { id: 's1', name: 'Acme' },
+        primaryContact: null,
+        categories: [],
+        latestScore: null,
+        averageOnTime: null,
       },
     ]);
   });

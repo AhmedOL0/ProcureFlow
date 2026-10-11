@@ -22,7 +22,7 @@
     />
   } @else {
     <section class="pf-panel" aria-label="Departments">
-      <h2>Departments ({{ departments().length }})</h2>
+      <h2>Departments ({{ deptPage().length }})</h2>
       @if (departments().length === 0) {
         <pf-empty-state
           [icon]="icons.building"
@@ -61,10 +61,18 @@
           </button>
         </div>
       }
+      <mat-paginator
+        [length]="deptPage().length"
+        [pageIndex]="deptPage().pageIndex"
+        [pageSize]="deptPage().pageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onDeptPage($event)"
+        aria-label="Department pages"
+      />
     </section>
 
     <section class="pf-panel" aria-label="Memberships">
-      <h2>Memberships ({{ memberships().length }})</h2>
+      <h2>Memberships ({{ memberPage().length }})</h2>
       @if (memberships().length === 0) {
         <p class="pf-muted">Nobody assigned to departments yet.</p>
       } @else {
@@ -111,6 +119,14 @@
           </button>
         </div>
       }
+      <mat-paginator
+        [length]="memberPage().length"
+        [pageIndex]="memberPage().pageIndex"
+        [pageSize]="memberPage().pageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onMemberPage($event)"
+        aria-label="Membership pages"
+      />
     </section>
   }
 </div>

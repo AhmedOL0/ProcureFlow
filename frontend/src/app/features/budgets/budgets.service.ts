@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
@@ -8,6 +8,11 @@ import { components } from '../../../lib/api-types.gen';
 export type Budget = components['schemas']['BudgetResponse'];
 export type Reservation = components['schemas']['ReservationResponse'];
 export type CreateBudget = components['schemas']['CreateBudgetRequest'];
+
+export interface BudgetPage {
+  rows: Budget[];
+  total: number;
+}
 
 /**
  * Full pot management over the budgets contract. Reads need budget:read,
@@ -20,12 +25,22 @@ export class BudgetsService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/api/v1`;
 
-  list(period: string | null): Observable<Budget[]> {
-    let params = new HttpParams();
+  list(
+    period: string | null,
+    query: string | null,
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<BudgetPage> {
+    let params = new HttpParams().set('page', pageIndex).set('size', pageSize);
     if (period) {
       params = params.set('period', period);
     }
-    return this.http.get<Budget[]>(`${this.base}/budgets`, { params });
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get<components['schemas']['PagedBudgetResponse']>(`${this.base}/budgets`, { params })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
   }
 
   get(id: string): Observable<Budget> {

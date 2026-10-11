@@ -13,7 +13,7 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -93,38 +93,35 @@ export class SupplierListComponent {
     return this.rows().filter((row) => !category || row.categories.some((c) => c.id === category));
   });
 
-  protected readonly counts = computed(() => {
-    const all = this.rows();
-    return {
-      all: all.length,
-      active: all.filter((r) => r.supplier.status === 'ACTIVE').length,
-      inactive: all.filter((r) => r.supplier.status === 'INACTIVE').length,
-      suspended: all.filter((r) => r.supplier.status === 'SUSPENDED').length,
-    };
-  });
+  /**
+   * Status totals come from size-1 server reads so chips and KPIs stay exact
+   * at any scale; the on-time average covers the loaded page (scorecards
+   * would need a full scan otherwise) and says so.
+   */
+  protected readonly totals = signal({ all: 0, active: 0, inactive: 0, suspended: 0 });
 
   protected readonly kpis = computed<Kpi[]>(() => {
-    const all = this.rows();
-    const scored = all.map((r) => r.averageOnTime).filter((v): v is number => v !== null);
+    const rows = this.rows();
+    const scored = rows.map((r) => r.averageOnTime).filter((v): v is number => v !== null);
     const avg = scored.length > 0 ? scored.reduce((a, b) => a + b, 0) / scored.length : null;
-    const withScores = all.filter((r) => r.averageOnTime !== null).length;
+    const totals = this.totals();
     return [
       {
         label: 'Total suppliers',
-        value: `${all.length}`,
-        sub: `${this.counts().active} active`,
-        bar: all.length > 0 ? (this.counts().active / all.length) * 100 : null,
+        value: `${totals.all}`,
+        sub: `${totals.active} active`,
+        bar: totals.all > 0 ? (totals.active / totals.all) * 100 : null,
       },
       {
         label: 'Avg on-time delivery',
         value: avg === null ? '—' : `${avg.toFixed(1)}%`,
-        sub: `${withScores} with scorecards`,
+        sub: 'across this page',
         bar: avg,
       },
       {
         label: 'Suspended',
-        value: `${this.counts().suspended}`,
-        sub: this.counts().suspended === 1 ? 'needs review' : 'need review',
+        value: `${totals.suspended}`,
+        sub: totals.suspended === 1 ? 'needs review' : 'need review',
         bar: null,
       },
       {
@@ -136,21 +133,19 @@ export class SupplierListComponent {
     ];
   });
 
-  protected readonly pageRows = computed(() => {
-    const sorted = [...this.filtered()].sort(compareRows(this.sort()));
-    const { pageIndex, pageSize } = this.page();
-    return sorted.slice(pageIndex * pageSize, pageIndex * pageSize + pageSize);
-  });
+  protected readonly pageRows = computed(() => [...this.filtered()].sort(compareRows(this.sort())));
 
   constructor() {
     this.reload();
     this.searchBox.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe(() => this.reload());
-    this.statusFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
-    // Category filters client-side: nudge paging so the computed rows re-run.
-    this.categoryFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.page.update((p) => ({ ...p, length: this.filtered().length, pageIndex: 0 }));
+      .subscribe(() => {
+        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+        this.reload();
+      });
+    this.statusFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.page.update((p) => ({ ...p, pageIndex: 0 }));
+      this.reload();
     });
     this.suppliers.catalog().subscribe({ next: (rows) => this.catalog.set(rows ?? []) });
   }
@@ -158,12 +153,14 @@ export class SupplierListComponent {
   reload(): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.suppliers.search(this.statusFilter.value, this.searchBox.value).subscribe({
-      next: (suppliers) => {
-        enrichSuppliers(this.suppliers, suppliers ?? []).subscribe({
+    const { pageIndex, pageSize } = this.page();
+    const query = this.searchBox.value;
+    this.suppliers.search(this.statusFilter.value, query, pageIndex, pageSize).subscribe({
+      next: (result) => {
+        enrichSuppliers(this.suppliers, result.rows).subscribe({
           next: (rows) => {
             this.rows.set(rows);
-            this.page.update((p) => ({ ...p, length: this.filtered().length, pageIndex: 0 }));
+            this.page.update((p) => ({ ...p, length: result.total }));
             this.loading.set(false);
           },
           error: (error: unknown) => {
@@ -171,11 +168,31 @@ export class SupplierListComponent {
             this.loading.set(false);
           },
         });
+        this.refreshTotals(query);
       },
       error: (error: unknown) => {
         this.failure.set(parseApiFailure(error));
         this.loading.set(false);
       },
+    });
+  }
+
+  private refreshTotals(query: string): void {
+    forkJoin({
+      all: this.suppliers.search(null, query, 0, 1),
+      active: this.suppliers.search('ACTIVE', query, 0, 1),
+      inactive: this.suppliers.search('INACTIVE', query, 0, 1),
+      suspended: this.suppliers.search('SUSPENDED', query, 0, 1),
+    }).subscribe({
+      next: (totals) => {
+        this.totals.set({
+          all: totals.all.total,
+          active: totals.active.total,
+          inactive: totals.inactive.total,
+          suspended: totals.suspended.total,
+        });
+      },
+      error: () => undefined,
     });
   }
 
@@ -195,6 +212,7 @@ export class SupplierListComponent {
 
   onPage(page: PageEvent): void {
     this.page.set(page);
+    this.reload();
   }
 
   openCreate(): void {

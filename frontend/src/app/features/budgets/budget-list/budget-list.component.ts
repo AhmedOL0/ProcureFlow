@@ -25,11 +25,11 @@ import { Budget, BudgetsService } from '../budgets.service';
 import { BudgetFormDialogComponent } from '../dialogs/budget-form.dialog';
 
 /**
- * Budgets & spend: every pot in the workspace with allocation, reservation
- * and remainder. Period filtering is server-side (?period=); name search,
- * sorting and paging stay client-side. Money sums across pots only when
- * the pots share one currency — mixed-currency workspaces see per-pot
- * figures instead of a misleading total.
+ * Budgets & spend: pots with allocation, reservation and remainder, paged
+ * server-side with period and name filters. Totals count pots exactly;
+ * money sums cover the loaded page (labeled as such) — a workspace-wide
+ * rollup would need a dedicated aggregate. Sorting orders the loaded page.
+ * Money sums across pots only when the pots share one currency.
  */
 @Component({
   selector: 'app-budget-list',
@@ -69,55 +69,47 @@ export class BudgetListComponent {
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
   private readonly rows = signal<Budget[]>([]);
-  private readonly query = signal('');
   private readonly sort = signal<Sort>({ active: '', direction: '' });
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
 
-  protected readonly filtered = computed(() => {
-    const query = this.query().trim().toLowerCase();
-    return this.rows().filter((row) => !query || (row.name ?? '').toLowerCase().includes(query));
-  });
-
   protected readonly totals = computed(() => {
-    const all = this.filtered();
-    const currencies = new Set(all.map((row) => row.currency ?? 'MAD'));
+    const page = this.rows();
+    const currencies = new Set(page.map((row) => row.currency ?? 'MAD'));
     const sum = (pick: (row: Budget) => number): number =>
-      all.reduce((acc, row) => acc + (pick(row) ?? 0), 0);
+      page.reduce((acc, row) => acc + (pick(row) ?? 0), 0);
     return {
-      pots: all.length,
-      committed: all.filter((row) => (row.remainingMinor ?? 0) <= 0).length,
-      singleCurrency: currencies.size === 1 ? [...currencies][0] : null,
+      pots: this.page().length,
+      committed: page.filter((row) => (row.remainingMinor ?? 0) <= 0).length,
+      singleCurrency: currencies.size <= 1 ? [...currencies][0] ?? 'MAD' : null,
       allocated: sum((row) => row.amountMinor ?? 0),
       reserved: sum((row) => row.reservedMinor ?? 0),
     };
   });
 
-  protected readonly pageRows = computed(() => {
-    const sorted = [...this.filtered()].sort(compareBudgets(this.sort()));
-    const { pageIndex, pageSize } = this.page();
-    return sorted.slice(pageIndex * pageSize, pageIndex * pageSize + pageSize);
-  });
+  protected readonly pageRows = computed(() => [...this.rows()].sort(compareBudgets(this.sort())));
 
   constructor() {
     this.reload();
-    // FormControls are not signals: mirror the query into one so the
-    // client-side filter re-runs on every keystroke.
     this.searchBox.valueChanges
       .pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((value) => {
-        this.query.set(value);
-        this.page.update((p) => ({ ...p, length: this.filtered().length, pageIndex: 0 }));
+      .subscribe(() => {
+        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+        this.reload();
       });
-    this.periodFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
+    this.periodFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.page.update((p) => ({ ...p, pageIndex: 0 }));
+      this.reload();
+    });
   }
 
   reload(): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.budgets.list(this.periodFilter.value).subscribe({
-      next: (rows) => {
-        this.rows.set(rows ?? []);
-        this.page.update((p) => ({ ...p, length: this.filtered().length, pageIndex: 0 }));
+    const { pageIndex, pageSize } = this.page();
+    this.budgets.list(this.periodFilter.value, this.searchBox.value, pageIndex, pageSize).subscribe({
+      next: (result) => {
+        this.rows.set(result.rows);
+        this.page.update((p) => ({ ...p, length: result.total }));
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -142,6 +134,7 @@ export class BudgetListComponent {
 
   onPage(page: PageEvent): void {
     this.page.set(page);
+    this.reload();
   }
 
   utilization(row: Budget): number {

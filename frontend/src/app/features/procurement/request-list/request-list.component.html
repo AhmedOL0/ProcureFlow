@@ -45,13 +45,11 @@
             [selected]="statusFilter.value === status"
             (click)="setStatusFilter(status)"
           >
-            {{ status }} ({{ counts().get(status) ?? 0 }})
+            {{ status }}
           </mat-chip-option>
         }
       </mat-chip-listbox>
-      <span class="pf-count"
-        >Showing {{ pageRows().length }} of {{ filtered().length }} requests</span
-      >
+      <span class="pf-count">Showing {{ pageRows().length }} of {{ page().length }} requests</span>
     </div>
 
     @if (loading()) {
@@ -72,7 +70,7 @@
           (retry)="reload()"
         />
       }
-    } @else if (filtered().length === 0) {
+    } @else if (pageRows().length === 0) {
       <pf-empty-state
         [icon]="icons.file"
         title="No requests match"
@@ -123,7 +121,7 @@
         </table>
       </div>
       <mat-paginator
-        [length]="filtered().length"
+        [length]="page().length"
         [pageIndex]="page().pageIndex"
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"

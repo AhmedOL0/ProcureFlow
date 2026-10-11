@@ -58,29 +58,29 @@
     <div class="pf-chips">
       <mat-chip-listbox aria-label="Quick filters">
         <mat-chip-option [selected]="statusFilter.value === null" (click)="setStatusFilter(null)">
-          All ({{ counts().all }})
+          All ({{ totals().all }})
         </mat-chip-option>
         <mat-chip-option
           [selected]="statusFilter.value === 'ACTIVE'"
           (click)="setStatusFilter('ACTIVE')"
         >
-          Active ({{ counts().active }})
+          Active ({{ totals().active }})
         </mat-chip-option>
         <mat-chip-option
           [selected]="statusFilter.value === 'INACTIVE'"
           (click)="setStatusFilter('INACTIVE')"
         >
-          Inactive ({{ counts().inactive }})
+          Inactive ({{ totals().inactive }})
         </mat-chip-option>
         <mat-chip-option
           [selected]="statusFilter.value === 'SUSPENDED'"
           (click)="setStatusFilter('SUSPENDED')"
         >
-          Suspended ({{ counts().suspended }})
+          Suspended ({{ totals().suspended }})
         </mat-chip-option>
       </mat-chip-listbox>
       <div class="pf-count">
-        <span>Showing {{ pageRows().length }} of {{ filtered().length }} suppliers</span>
+        <span>Showing {{ pageRows().length }} of {{ page().length }} suppliers</span>
         <button mat-button (click)="resetFilters()">Reset filters</button>
       </div>
     </div>
@@ -197,7 +197,7 @@
         </table>
       </div>
       <mat-paginator
-        [length]="filtered().length"
+        [length]="page().length"
         [pageIndex]="page().pageIndex"
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"

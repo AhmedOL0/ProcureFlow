@@ -49,8 +49,9 @@ export class RequestItemDialogComponent {
   readonly failure = signal<string | null>(null);
 
   constructor() {
-    this.suppliers.search(null, null).subscribe({
-      next: (rows) => this.options.set(rows ?? []),
+    // Dropdown scope: first supplier page (bounded read, not the directory).
+    this.suppliers.search(null, '', 0, 100).subscribe({
+      next: (result) => this.options.set(result.rows),
       error: () => undefined,
     });
   }

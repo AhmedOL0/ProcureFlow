@@ -27,6 +27,8 @@ interface DecidedRow {
  * queue; deciding stays on the dossier, where assignment and delegation
  * are adjudicated by the backend (403s surface with a message).
  * Already-decided rows never offer actions — stale verdicts are impossible.
+ * Both sections read bounded first pages (pending 100, decided 25+25) with
+ * server totals, so the queue stays complete without unbounded reads.
  */
 @Component({
   selector: 'app-approval-inbox',
@@ -49,6 +51,7 @@ export class ApprovalInboxComponent {
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly pending = signal<PurchaseRequest[]>([]);
+  protected readonly pendingTotal = signal(0);
   protected readonly decided = signal<DecidedRow[]>([]);
   protected readonly columns = ['title', 'priority', 'total', 'submitted', 'actions'];
   protected readonly decidedColumns = ['title', 'verdict', 'decidedAt', 'actions'];
@@ -60,9 +63,10 @@ export class ApprovalInboxComponent {
   reload(): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.requests.list('SUBMITTED').subscribe({
-      next: (rows) => {
-        this.pending.set(rows ?? []);
+    this.requests.list('SUBMITTED', '', 0, 100).subscribe({
+      next: (result) => {
+        this.pending.set(result.rows);
+        this.pendingTotal.set(result.total);
         this.loadDecided();
       },
       error: (error: unknown) => {
@@ -73,9 +77,12 @@ export class ApprovalInboxComponent {
   }
 
   private loadDecided(): void {
-    forkJoin([this.requests.list('APPROVED'), this.requests.list('REJECTED')]).subscribe({
+    forkJoin([
+      this.requests.list('APPROVED', '', 0, 25),
+      this.requests.list('REJECTED', '', 0, 25),
+    ]).subscribe({
       next: ([approved, rejected]) => {
-        const rows = [...(approved ?? []), ...(rejected ?? [])];
+        const rows = [...approved.rows, ...rejected.rows];
         if (rows.length === 0) {
           this.decided.set([]);
           this.loading.set(false);

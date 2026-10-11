@@ -30,8 +30,18 @@ export class OrganizationService {
     return this.http.patch<Tenant>(`${this.base}/tenants/current`, { name });
   }
 
-  departments(): Observable<Department[]> {
-    return this.http.get<Department[]>(`${this.base}/departments`);
+  departments(
+    query: string | null,
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<{ rows: Department[]; total: number }> {
+    let params = new HttpParams().set('page', pageIndex).set('size', pageSize);
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get<components['schemas']['PagedDepartmentResponse']>(`${this.base}/departments`, { params })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
   }
 
   createDepartment(name: string): Observable<Department> {
@@ -46,8 +56,14 @@ export class OrganizationService {
     return this.http.delete<void>(`${this.base}/departments/${id}`);
   }
 
-  memberships(): Observable<Membership[]> {
-    return this.http.get<Membership[]>(`${this.base}/memberships`);
+  memberships(
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<{ rows: Membership[]; total: number }> {
+    const params = new HttpParams().set('page', pageIndex).set('size', pageSize);
+    return this.http
+      .get<components['schemas']['PagedMembershipResponse']>(`${this.base}/memberships`, { params })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
   }
 
   addMembership(userId: string, departmentId: string): Observable<Membership> {
@@ -58,8 +74,18 @@ export class OrganizationService {
     return this.http.delete<void>(`${this.base}/memberships/${id}`);
   }
 
-  users(): Observable<WorkspaceUser[]> {
-    return this.http.get<WorkspaceUser[]>(`${this.base}/users`);
+  users(
+    query: string | null,
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<{ rows: WorkspaceUser[]; total: number }> {
+    let params = new HttpParams().set('page', pageIndex).set('size', pageSize);
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get<components['schemas']['PagedUserResponse']>(`${this.base}/users`, { params })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
   }
 
   createUser(body: components['schemas']['CreateUserRequest']): Observable<WorkspaceUser> {

@@ -11,7 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List users of the current workspace */
+        /** Paged users of the current workspace */
         get: operations["list"];
         put?: never;
         /** Create a user in the current workspace */
@@ -46,7 +46,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search suppliers of the current workspace */
+        /** Search suppliers of the current workspace (paged) */
         get: operations["search"];
         put?: never;
         /** Create a supplier */
@@ -136,7 +136,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List requests of the current workspace, newest first */
+        /** Paged requests of the current workspace, newest first */
         get: operations["list_2"];
         put?: never;
         /** Create a draft (idempotent per Idempotency-Key) */
@@ -205,7 +205,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List orders of the current workspace, newest first */
+        /** Paged orders of the current workspace, newest first */
         get: operations["list_3"];
         put?: never;
         /** Start a draft order from one approved request */
@@ -309,7 +309,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List invoices of the current workspace, newest first */
+        /** Paged invoices of the current workspace, newest first */
         get: operations["list_5"];
         put?: never;
         /** Book an invoice against a sent order (over-invoicing rejected) */
@@ -380,7 +380,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List pots of the current workspace, newest period first */
+        /** Paged pots of the current workspace, newest period first */
         get: operations["list_8"];
         put?: never;
         /** Open a named pot for one month (YYYY-MM) */
@@ -932,6 +932,23 @@ export interface paths {
         head?: never;
         /** Rename, retime or activate/deactivate a lane (null fields unchanged) */
         patch: operations["updateWorkflow"];
+        trace?: never;
+    };
+    "/api/v1/purchase-requests/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Paged requests raised by the caller, newest first */
+        get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/purchase-orders/{id}": {
@@ -1737,8 +1754,96 @@ export interface components {
             escalateAfterDays?: number;
             active?: boolean;
         };
+        PagedUserResponse: {
+            content?: components["schemas"]["UserResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedSupplierResponse: {
+            content?: components["schemas"]["SupplierResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedPurchaseRequestResponse: {
+            content?: components["schemas"]["PurchaseRequestResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedOrderResponse: {
+            content?: components["schemas"]["OrderResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
         PagedNotificationResponse: {
             content?: components["schemas"]["NotificationResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedMembershipResponse: {
+            content?: components["schemas"]["MembershipResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedInvoiceResponse: {
+            content?: components["schemas"]["InvoiceResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedDepartmentResponse: {
+            content?: components["schemas"]["DepartmentResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedBudgetResponse: {
+            content?: components["schemas"]["BudgetResponse"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
@@ -1863,7 +1968,11 @@ export type $defs = Record<string, never>;
 export interface operations {
     list: {
         parameters: {
-            query?: never;
+            query?: {
+                q?: string;
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1876,7 +1985,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["UserResponse"][];
+                    "*/*": components["schemas"]["PagedUserResponse"];
                 };
             };
         };
@@ -1934,6 +2043,8 @@ export interface operations {
             query?: {
                 status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
                 q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -1947,7 +2058,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SupplierResponse"][];
+                    "*/*": components["schemas"]["PagedSupplierResponse"];
                 };
             };
         };
@@ -2168,6 +2279,9 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "ORDERED" | "CANCELLED";
+                q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2181,7 +2295,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PurchaseRequestResponse"][];
+                    "*/*": components["schemas"]["PagedPurchaseRequestResponse"];
                 };
             };
         };
@@ -2286,6 +2400,8 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "DRAFT" | "SENT" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CLOSED" | "CANCELLED";
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2299,7 +2415,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["OrderResponse"][];
+                    "*/*": components["schemas"]["PagedOrderResponse"];
                 };
             };
         };
@@ -2422,7 +2538,10 @@ export interface operations {
     };
     list_4: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2435,7 +2554,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["MembershipResponse"][];
+                    "*/*": components["schemas"]["PagedMembershipResponse"];
                 };
             };
         };
@@ -2468,6 +2587,9 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "UNPAID" | "PARTIAL" | "PAID";
+                q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2481,7 +2603,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["InvoiceResponse"][];
+                    "*/*": components["schemas"]["PagedInvoiceResponse"];
                 };
             };
         };
@@ -2582,7 +2704,11 @@ export interface operations {
     };
     list_7: {
         parameters: {
-            query?: never;
+            query?: {
+                q?: string;
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2595,7 +2721,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["DepartmentResponse"][];
+                    "*/*": components["schemas"]["PagedDepartmentResponse"];
                 };
             };
         };
@@ -2628,6 +2754,9 @@ export interface operations {
         parameters: {
             query?: {
                 period?: string;
+                q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2641,7 +2770,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["BudgetResponse"][];
+                    "*/*": components["schemas"]["PagedBudgetResponse"];
                 };
             };
         };
@@ -3756,6 +3885,31 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["WorkflowResponse"];
+                };
+            };
+        };
+    };
+    mine: {
+        parameters: {
+            query?: {
+                status?: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "ORDERED" | "CANCELLED";
+                q?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedPurchaseRequestResponse"];
                 };
             };
         };

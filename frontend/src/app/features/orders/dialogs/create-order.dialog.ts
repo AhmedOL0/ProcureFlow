@@ -40,12 +40,13 @@ export class CreateOrderDialogComponent {
   readonly failure = signal<string | null>(null);
 
   constructor() {
-    this.requests.list('APPROVED').subscribe({
-      next: (rows) => this.approved.set(rows ?? []),
+    // Dropdown scope: first pages (bounded reads, not the directories).
+    this.requests.list('APPROVED', '', 0, 100).subscribe({
+      next: (result) => this.approved.set(result.rows),
       error: (error: unknown) => this.failure.set(userMessageFor(parseApiFailure(error))),
     });
-    this.suppliers.search(null, null).subscribe({
-      next: (rows) => this.vendors.set(rows ?? []),
+    this.suppliers.search(null, '', 0, 100).subscribe({
+      next: (result) => this.vendors.set(result.rows),
       error: () => undefined,
     });
   }

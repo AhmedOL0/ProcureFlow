@@ -37,6 +37,26 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
             Pageable pageable);
 
     @EntityGraph(attributePaths = {"tenant", "items"})
+    @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.requester.id = :requesterId"
+            + " and lower(r.title) like lower(concat('%', :query, '%')) order by r.createdAt desc")
+    Page<PurchaseRequest> findPageByRequester(
+            @Param("slug") String slug,
+            @Param("requesterId") UUID requesterId,
+            @Param("query") String query,
+            Pageable pageable);
+
+    @EntityGraph(attributePaths = {"tenant", "items"})
+    @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.requester.id = :requesterId"
+            + " and r.status = :status and lower(r.title) like lower(concat('%', :query, '%'))"
+            + " order by r.createdAt desc")
+    Page<PurchaseRequest> findPageByRequesterAndStatus(
+            @Param("slug") String slug,
+            @Param("requesterId") UUID requesterId,
+            @Param("status") PurchaseRequest.Status status,
+            @Param("query") String query,
+            Pageable pageable);
+
+    @EntityGraph(attributePaths = {"tenant", "items"})
     @Query("select r from PurchaseRequest r where r.id = :id and r.tenant.slug = :slug")
     Optional<PurchaseRequest> findByIdAndTenantSlug(@Param("id") UUID id, @Param("slug") String slug);
 

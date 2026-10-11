@@ -26,7 +26,7 @@
   } @else {
     <section class="pf-table-card" aria-label="Pending approvals">
       <div class="pf-card-head">
-        <div class="pf-section-head"><h2>Pending ({{ pending().length }})</h2></div>
+        <div class="pf-section-head"><h2>Pending ({{ pendingTotal() }})</h2></div>
       </div>
       @if (pending().length === 0) {
         <pf-empty-state

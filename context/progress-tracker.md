@@ -4,7 +4,11 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 12 — production release & portfolio readiness (this review).**
+**Phase 13 — enterprise hardening + directory pagination (in progress).**
+C1 invite-gated join + email verification is merged; C2 server pagination
+is implemented backend + frontend with all gates green (backend 140 IT,
+frontend build + 29 Vitest + 48 Playwright). Remaining: C3 backup drill,
+C4 audit-search/unread filters, final push + live probes.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:
@@ -12,6 +16,29 @@ regression gates, security/a11y/perf review with evidence, infra + CI
 review, README/portfolio overhaul, demo workspace docs.
 
 ## Completed
+
+### Phase 13a — C1 invite-gated join + email verification (merged)
+- V17 invites (single-use atomic redeem) + V18 email verification
+  (24h TTL) + `users.verified` (grandfathered true); known-slug join
+  without a live invite answers 403 `INVITE_REQUIRED`; forgot-password
+  skips unverified addresses with the generic reply.
+- `InviteIT` 6 + AccountIT verification tests; all IT `join()` helpers
+  go through captured-mail invites. Frontend: register `inviteToken`,
+  `/verify-email` route, settings banner + resend, admin invite console.
+- Verified: backend 140 IT green, frontend build + e2e green.
+
+### Phase 13b — C2 directory pagination (this change)
+- Backend: `Paged<T>` envelopes (size 1..100) on requests (+`/mine`
+  with `q`), suppliers, orders, invoices, budgets, departments, users,
+  memberships; unbounded list methods removed; paging/search IT.
+- Frontend: all directories + dialogs + dashboard + workspace on server
+  paging; supplier KPIs via size-1 total reads; `api-types.gen.ts` regen.
+- Hardening found by the migration: `enrichSuppliers` now isolates
+  per-section failures (catchError + array guards, Vitest-locked) instead
+  of failing the whole row.
+- E2E doubles fixed for envelopes: `/suppliers?` disambiguation,
+  `/categories` + `/invites` stubs, Users-region scoping.
+- Verified: tsc 0, build 0, 29 Vitest, 48/48 Playwright (chromium+firefox).
 
 ### Phase 1 — Foundation (commit 2e2a26c)
 - Repo skeleton, 12 module boundaries + layer contracts, ArchUnit gates.

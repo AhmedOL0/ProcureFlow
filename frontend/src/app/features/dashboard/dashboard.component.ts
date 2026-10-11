@@ -20,7 +20,6 @@ import {
   SpendResponse,
 } from '../analytics/analytics.service';
 import { Budget, BudgetsService } from '../budgets/budgets.service';
-import { Invoice, InvoiceService } from '../invoices/invoices.service';
 import { OrderService } from '../orders/orders.service';
 import { ProcurementService, PurchaseRequest } from '../procurement/procurement.service';
 import { SuppliersService } from '../suppliers/suppliers.service';
@@ -36,9 +35,9 @@ interface Kpi {
  * (requests, approvals, suppliers, orders) loads for every member; the
  * financial pulse (spend, outstanding, budget) and the approval-flow strip
  * load only when the caller holds the matching authority — a missing grant
- * hides its section instead of failing the page. Every figure names its
- * source; outstanding sums the complete workspace invoice list (the
- * contract returns it unpaged), never a sampled page.
+ * hides its section instead of failing the page. Counts come from server
+ * totals and rows from small first pages; outstanding reads invoiced
+ * minus paid off the spend aggregates, never a sampled page.
  */
 @Component({
   selector: 'app-dashboard',
@@ -59,7 +58,6 @@ export class DashboardComponent {
   private readonly requests = inject(ProcurementService);
   private readonly suppliers = inject(SuppliersService);
   private readonly orders = inject(OrderService);
-  private readonly invoices = inject(InvoiceService);
   private readonly budgets = inject(BudgetsService);
   private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
@@ -74,30 +72,29 @@ export class DashboardComponent {
 
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
-  private readonly allRequests = signal<PurchaseRequest[]>([]);
-  private readonly submitted = signal<PurchaseRequest[]>([]);
+  private readonly openTotal = signal(0);
+  private readonly submittedTotal = signal(0);
+  protected readonly awaiting = signal<PurchaseRequest[]>([]);
+  protected readonly recent = signal<PurchaseRequest[]>([]);
   private readonly activeSuppliers = signal<number | null>(null);
   private readonly openOrders = signal<number | null>(null);
   protected readonly spend = signal<SpendResponse | null>(null);
   protected readonly approvalKpis = signal<ApprovalKpi | null>(null);
   private readonly monthPots = signal<Budget[]>([]);
   protected readonly monthPotMissing = signal(false);
-  private readonly invoiceRows = signal<Invoice[]>([]);
   protected readonly financeFailed = signal(false);
 
   protected readonly kpis = computed<Kpi[]>(() => {
-    const open = this.allRequests().filter(
-      (r) => r.status === 'DRAFT' || r.status === 'SUBMITTED',
-    ).length;
+    const open = this.openTotal();
     return [
       {
         label: 'Open requests',
         value: `${open}`,
-        sub: `${this.submitted().length} awaiting approval`,
+        sub: `${this.submittedTotal()} awaiting approval`,
       },
       {
         label: 'Pending approvals',
-        value: `${this.submitted().length}`,
+        value: `${this.submittedTotal()}`,
         sub: open === 0 ? 'queue is clear' : 'in the approval queue',
       },
       {
@@ -168,21 +165,21 @@ export class DashboardComponent {
   }
 
   private outstandingLabel(): { value: string; sub: string } {
+    // Outstanding = invoiced minus paid from the server aggregates (single
+    // currency per workspace, as the contract documents) — no invoice-list
+    // scan, bounded at any scale.
     if (!this.canSeeInvoices) {
       return { value: '—', sub: 'no invoice access' };
     }
-    const open = this.invoiceRows().filter(
-      (row) => row.status === 'UNPAID' || row.status === 'PARTIAL',
-    );
-    if (open.length === 0) {
+    const flow = this.spend();
+    if (!flow) {
+      return { value: '—', sub: 'figures unavailable' };
+    }
+    const due = (flow.invoicedMinor ?? 0) - (flow.paidMinor ?? 0);
+    if (due <= 0) {
       return { value: formatMinor(0), sub: 'nothing outstanding' };
     }
-    const currencies = new Set(open.map((row) => row.currency ?? 'MAD'));
-    if (currencies.size !== 1) {
-      return { value: `${open.length} open`, sub: 'mixed currencies' };
-    }
-    const due = open.reduce((acc, row) => acc + (row.totalMinor ?? 0) - (row.paidMinor ?? 0), 0);
-    return { value: formatMinor(due, [...currencies][0]), sub: `${open.length} awaiting payment` };
+    return { value: formatMinor(due), sub: 'awaiting payment' };
   }
 
   private budgetLabel(): { value: string; sub: string } {
@@ -213,14 +210,6 @@ export class DashboardComponent {
     this.trend().reduce((max, row) => Math.max(max, row.orderedMinor ?? 0), 0),
   );
 
-  protected readonly awaiting = computed(() => this.submitted().slice(0, 3));
-
-  protected readonly recent = computed(() =>
-    [...this.allRequests()]
-      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
-      .slice(0, 5),
-  );
-
   constructor() {
     this.reload();
   }
@@ -229,20 +218,23 @@ export class DashboardComponent {
     this.loading.set(true);
     this.failure.set(null);
     this.financeFailed.set(false);
+    // Counts come from server totals (size-1 reads), rows from small first
+    // pages — no unbounded list is ever loaded for this overview.
     forkJoin({
-      all: this.requests.list(null),
-      submitted: this.requests.list('SUBMITTED'),
-      suppliers: this.suppliers.search('ACTIVE', null),
-      orders: this.orders.list(null),
+      draft: this.requests.list('DRAFT', '', 0, 1),
+      submitted: this.requests.list('SUBMITTED', '', 0, 3),
+      recent: this.requests.list(null, '', 0, 5),
+      suppliers: this.suppliers.search('ACTIVE', null, 0, 1),
+      sent: this.orders.list('SENT', 0, 1),
+      partial: this.orders.list('PARTIALLY_RECEIVED', 0, 1),
     }).subscribe({
-      next: ({ all, submitted, suppliers: found, orders: orderRows }) => {
-        this.allRequests.set(all ?? []);
-        this.submitted.set(submitted ?? []);
-        this.activeSuppliers.set((found ?? []).length);
-        this.openOrders.set(
-          (orderRows ?? []).filter((o) => o.status === 'SENT' || o.status === 'PARTIALLY_RECEIVED')
-            .length,
-        );
+      next: ({ draft, submitted, recent, suppliers: found, sent, partial }) => {
+        this.openTotal.set(draft.total + submitted.total);
+        this.submittedTotal.set(submitted.total);
+        this.awaiting.set(submitted.rows);
+        this.recent.set(recent.rows);
+        this.activeSuppliers.set(found.total);
+        this.openOrders.set(sent.total + partial.total);
         this.loading.set(false);
         this.loadFinance();
       },
@@ -258,23 +250,21 @@ export class DashboardComponent {
     forkJoin({
       spend: this.canSeeFinance ? this.analytics.spend(null) : of(null),
       approvals: this.canSeeFinance ? this.analytics.approvalKpis() : of(null),
-      pots: this.canSeeBudgets ? this.budgets.list(period) : of(null),
-      invoices: this.canSeeInvoices ? this.invoices.list(null) : of(null),
+      pots: this.canSeeBudgets ? this.budgets.list(period, '', 0, 100) : of(null),
     })
       .pipe(
         catchError(() => {
           this.financeFailed.set(true);
-          return of({ spend: null, approvals: null, pots: null, invoices: null });
+          return of({ spend: null, approvals: null, pots: null });
         }),
       )
       .subscribe({
-        next: ({ spend, approvals, pots, invoices }) => {
+        next: ({ spend, approvals, pots }) => {
           this.spend.set(spend);
           this.approvalKpis.set(approvals);
-          const rows = pots ?? [];
+          const rows = pots?.rows ?? [];
           this.monthPots.set(rows);
           this.monthPotMissing.set(this.canSeeBudgets && rows.length === 0);
-          this.invoiceRows.set(invoices ?? []);
         },
       });
   }

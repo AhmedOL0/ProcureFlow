@@ -1,12 +1,15 @@
 import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { LucideAngularModule } from 'lucide-angular';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
@@ -30,6 +33,7 @@ import { OrganizationService, WorkspaceInvite, WorkspaceUser } from './organizat
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatPaginatorModule,
     MatSelectModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
@@ -51,6 +55,7 @@ export class UsersComponent {
   protected readonly users = signal<WorkspaceUser[]>([]);
   protected readonly invites = signal<WorkspaceInvite[]>([]);
   protected readonly notice = signal<string | null>(null);
+  protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
 
   readonly newEmail = new FormControl('', {
     nonNullable: true,
@@ -62,6 +67,7 @@ export class UsersComponent {
   });
   readonly newRoles = new FormControl<string[]>([], { nonNullable: true });
   readonly roleOptions = ['TENANT_ADMIN', 'APPROVER', 'FINANCE', 'OFFICER', 'AUDITOR', 'MEMBER'];
+  readonly searchBox = new FormControl('', { nonNullable: true });
   readonly inviteEmail = new FormControl('', {
     nonNullable: true,
     validators: [Validators.required, Validators.email],
@@ -70,15 +76,23 @@ export class UsersComponent {
 
   constructor() {
     this.reload();
+    this.searchBox.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(() => {
+        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+        this.reload();
+      });
   }
 
   reload(): void {
     this.loading.set(true);
     this.failure.set(null);
     this.notice.set(null);
-    this.org.users().subscribe({
-      next: (rows) => {
-        this.users.set(rows ?? []);
+    const { pageIndex, pageSize } = this.page();
+    this.org.users(this.searchBox.value, pageIndex, pageSize).subscribe({
+      next: (result) => {
+        this.users.set(result.rows);
+        this.page.update((p) => ({ ...p, length: result.total }));
         if (this.canManageUsers) {
           this.loadInvites();
         } else {
@@ -90,6 +104,11 @@ export class UsersComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  onPage(page: PageEvent): void {
+    this.page.set(page);
+    this.reload();
   }
 
   private loadInvites(): void {

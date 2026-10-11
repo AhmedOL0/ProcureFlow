@@ -112,12 +112,13 @@ export class WorkflowsComponent {
     forkJoin({
       lanes: this.policies.workflows(),
       delegations: this.policies.delegations(),
-      users: this.canSeeUsers ? this.org.users() : of([]),
+      // Approver picker: first user page (bounded read, not the directory).
+      users: this.canSeeUsers ? this.org.users('', 0, 100) : of({ rows: [], total: 0 }),
     }).subscribe({
       next: ({ lanes, delegations, users }) => {
         this.lanes.set(lanes ?? []);
         this.delegations.set(delegations ?? []);
-        this.users.set(users ?? []);
+        this.users.set(users.rows);
         const selected = this.selectedLane();
         const kept = (lanes ?? []).find((lane) => lane.id === selected?.id) ?? null;
         this.selectedLane.set(kept);

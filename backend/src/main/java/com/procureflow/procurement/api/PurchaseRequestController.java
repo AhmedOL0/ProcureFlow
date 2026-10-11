@@ -81,6 +81,26 @@ public class PurchaseRequestController {
                 .map(this::toResponse));
     }
 
+    @GetMapping("/mine")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Paged requests raised by the caller, newest first")
+    public ResponseEntity<Paged<PurchaseRequestResponse>> mine(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) PurchaseRequest.Status status,
+            @RequestParam(required = false, name = "q") String query,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(requests
+                .pageMine(
+                        principal.tenantId(),
+                        principal.userId(),
+                        status,
+                        query,
+                        Paged.pageOrThrow(page),
+                        Paged.sizeOrThrow(size))
+                .map(this::toResponse));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get one request with its items and total")

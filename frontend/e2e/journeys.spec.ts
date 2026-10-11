@@ -50,6 +50,11 @@ interface Stub {
   handle?: (url: string, payload: Record<string, unknown>) => { status: number; body: unknown };
 }
 
+/** Directory endpoints answer paged envelopes; tests wrap their live arrays. */
+function asPage(rows: Record<string, unknown>[]) {
+  return { content: rows, page: 0, size: 20, totalElements: rows.length, totalPages: 1 };
+}
+
 async function stubApi(page: Page, stubs: Stub[]): Promise<void> {
   const ordered = [...stubs].sort((a, b) => b.match.length - a.match.length);
   await page.route('**/api/v1/**', async (route) => {
@@ -111,8 +116,12 @@ function baseStubs(state: {
     },
     { method: 'POST', match: '/auth/reset-password', status: 204, body: {} },
     { method: 'POST', match: '/auth/change-password', status: 204, body: {} },
-    { method: 'GET', match: '/suppliers', body: state.suppliers },
-    { method: 'GET', match: '/orders', body: state.orders },
+    // The list match carries its query delimiter so sub-resource fan-out
+    // (/suppliers/{id}/contacts, .../categories, .../performances) never
+    // collides with the directory envelope under substring matching.
+    { method: 'GET', match: '/suppliers?', handle: () => ({ status: 200, body: asPage(state.suppliers) }) },
+    { method: 'GET', match: '/orders', handle: () => ({ status: 200, body: asPage(state.orders) }) },
+    { method: 'GET', match: '/invites', body: [] },
     { method: 'GET', match: '/supplier-categories', body: [] },
     {
       method: 'GET',
@@ -130,7 +139,7 @@ function baseStubs(state: {
       handle: (url) => {
         const status = new URL(url).searchParams.get('status');
         const rows = status ? state.requests.filter((r) => r['status'] === status) : state.requests;
-        return { status: 200, body: rows };
+        return { status: 200, body: asPage(rows) };
       },
     },
     {
@@ -223,8 +232,9 @@ test.describe('critical journeys', () => {
         users: [],
         notifications: [],
       }),
-      { method: 'GET', match: '/suppliers', body: suppliers },
+      { method: 'GET', match: '/suppliers?', handle: () => ({ status: 200, body: asPage(suppliers) }) },
       { method: 'GET', match: '/contacts', body: [] },
+      { method: 'GET', match: '/categories', body: [] },
       { method: 'GET', match: '/performances', body: [] },
       {
         method: 'POST',
@@ -338,7 +348,7 @@ test.describe('critical journeys', () => {
         users: [],
         notifications: [],
       }),
-      { method: 'GET', match: '/budgets', body: budgets },
+      { method: 'GET', match: '/budgets', handle: () => ({ status: 200, body: asPage(budgets) }) },
       {
         method: 'POST',
         match: '/budgets',
@@ -470,9 +480,13 @@ test.describe('critical journeys', () => {
         users,
         notifications: [],
       }),
-      { method: 'GET', match: '/departments', body: departments },
-      { method: 'GET', match: '/memberships', body: [] },
-      { method: 'GET', match: '/users', body: users },
+      { method: 'GET', match: '/departments', handle: () => ({ status: 200, body: asPage(departments) }) },
+      {
+        method: 'GET',
+        match: '/memberships',
+        handle: () => ({ status: 200, body: asPage([]) }),
+      },
+      { method: 'GET', match: '/users', handle: () => ({ status: 200, body: asPage(users) }) },
       {
         method: 'POST',
         match: '/departments',
@@ -504,9 +518,10 @@ test.describe('critical journeys', () => {
     await expect(page.getByText('Engineering')).toBeVisible({ timeout: 10000 });
 
     await page.goto('/admin/users');
-    await page.getByLabel(/^email/i).fill('min@acme.test');
-    await page.getByLabel(/password/i).fill('correct-horse-123');
-    await page.getByLabel(/roles/i).click();
+    const usersPanel = page.getByRole('region', { name: 'Users' });
+    await usersPanel.getByLabel(/^email/i).fill('min@acme.test');
+    await usersPanel.getByLabel(/password/i).fill('correct-horse-123');
+    await usersPanel.getByLabel(/roles/i).click();
     await page.getByRole('option', { name: 'MEMBER' }).click();
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Create user' }).click();

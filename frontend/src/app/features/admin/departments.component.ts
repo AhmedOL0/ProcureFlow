@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { LucideAngularModule } from 'lucide-angular';
@@ -35,6 +36,7 @@ import { Department, Membership, OrganizationService, WorkspaceUser } from './or
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatPaginatorModule,
     MatSelectModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
@@ -59,6 +61,8 @@ export class DepartmentsComponent {
   protected readonly memberships = signal<Membership[]>([]);
   protected readonly users = signal<WorkspaceUser[]>([]);
   protected readonly notice = signal<string | null>(null);
+  protected readonly deptPage = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
+  protected readonly memberPage = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
 
   readonly departmentName = new FormControl('', {
     nonNullable: true,
@@ -81,17 +85,22 @@ export class DepartmentsComponent {
     this.loading.set(true);
     this.failure.set(null);
     this.notice.set(null);
+    const dept = this.deptPage();
+    const member = this.memberPage();
     forkJoin({
-      departments: this.org.departments(),
-      memberships: this.org.memberships(),
+      departments: this.org.departments('', dept.pageIndex, dept.pageSize),
+      memberships: this.org.memberships(member.pageIndex, member.pageSize),
       // The member picker resolves names only for user managers; the list
-      // below falls back to id prefixes for everyone else.
-      users: this.canSeeUsers ? this.org.users() : of([]),
+      // below falls back to id prefixes for everyone else. First user page
+      // feeds the picker; the users screen owns the full directory.
+      users: this.canSeeUsers ? this.org.users('', 0, 100) : of({ rows: [], total: 0 }),
     }).subscribe({
       next: ({ departments, memberships, users }) => {
-        this.departments.set(departments ?? []);
-        this.memberships.set(memberships ?? []);
-        this.users.set(users ?? []);
+        this.departments.set(departments.rows);
+        this.deptPage.update((p) => ({ ...p, length: departments.total }));
+        this.memberships.set(memberships.rows);
+        this.memberPage.update((p) => ({ ...p, length: memberships.total }));
+        this.users.set(users.rows);
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -99,6 +108,16 @@ export class DepartmentsComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  onDeptPage(page: PageEvent): void {
+    this.deptPage.set(page);
+    this.reload();
+  }
+
+  onMemberPage(page: PageEvent): void {
+    this.memberPage.set(page);
+    this.reload();
   }
 
   protected userEmail(userId: string | null | undefined): string {

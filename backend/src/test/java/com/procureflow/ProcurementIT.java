@@ -96,6 +96,26 @@ class ProcurementIT extends AbstractIntegrationTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void mineListsOnlyCallerRequests() {
+        Fixture tenantA = provision(uniqueSlug("acme"));
+        createId(tenantA.token(), "Laptops North", null);
+        createId(tenantA.token(), "Laptops South", null);
+        Fixture tenantB = provision(uniqueSlug("globex"));
+        createId(tenantB.token(), "Other", null);
+
+        ResponseEntity<Map> mine = get("/api/v1/purchase-requests/mine", tenantA.token(), Map.class);
+        assertEquals(HttpStatus.OK, mine.getStatusCode());
+        assertNotNull(mine.getBody());
+        assertEquals(2, ((List<?>) mine.getBody().get("content")).size());
+        assertEquals(2L, ((Number) mine.getBody().get("totalElements")).longValue());
+
+        ResponseEntity<Map> foreign = get("/api/v1/purchase-requests/mine", tenantB.token(), Map.class);
+        assertEquals(HttpStatus.OK, foreign.getStatusCode());
+        assertEquals(1, ((List<?>) foreign.getBody().get("content")).size());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void requestsPaginateAndSearchByTitle() {
         Fixture admin = provision(uniqueSlug("acme"));
         createId(admin.token(), "Laptops North", null);

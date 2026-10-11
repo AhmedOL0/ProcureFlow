@@ -29,7 +29,15 @@
     }
   } @else {
     <section class="pf-panel" aria-label="Users">
-      <h2>Users ({{ users().length }})</h2>
+      <div class="pf-panel__head">
+        <h2>Users ({{ page().length }})</h2>
+      </div>
+      <div class="pf-form-row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Search email</mat-label>
+          <input matInput [formControl]="searchBox" placeholder="boss@acme.test" />
+        </mat-form-field>
+      </div>
       <ul class="pf-list">
         @for (user of users(); track user.id) {
           <li class="pf-list__row">
@@ -72,6 +80,14 @@
           Roles assign at creation, and change through the admin console — self-change is refused.
         </p>
       }
+      <mat-paginator
+        [length]="page().length"
+        [pageIndex]="page().pageIndex"
+        [pageSize]="page().pageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onPage($event)"
+        aria-label="User pages"
+      />
     </section>
 
     @if (canManageUsers) {

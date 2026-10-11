@@ -31,9 +31,10 @@ import { CreateOrderDialogComponent, CreateOrderDialogResult } from '../dialogs/
 const STATUSES = ['DRAFT', 'SENT', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CLOSED', 'CANCELLED'] as const;
 
 /**
- * Purchase-order directory: server status filter, client supplier search,
- * sort and paging. Creation starts from an approved request — approving
- * never creates the order by itself.
+ * Purchase-order directory: server status filter and paging; supplier-name
+ * search and sorting cover the loaded page (supplier names resolve per
+ * row, so a server search would join across modules). Creation starts from
+ * an approved request — approving never creates the order by itself.
  */
 @Component({
   selector: 'app-order-list',
@@ -111,12 +112,13 @@ export class OrderListComponent {
   reload(): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.orders.list(this.statusFilter.value).subscribe({
-      next: (rows) => {
-        this.rows.set(rows ?? []);
-        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+    const { pageIndex, pageSize } = this.page();
+    this.orders.list(this.statusFilter.value, pageIndex, pageSize).subscribe({
+      next: (result) => {
+        this.rows.set(result.rows);
+        this.page.update((p) => ({ ...p, length: result.total }));
         this.loading.set(false);
-        this.resolveSupplierNames(rows ?? []);
+        this.resolveSupplierNames(result.rows);
       },
       error: (error: unknown) => {
         this.failure.set(parseApiFailure(error));
@@ -155,6 +157,7 @@ export class OrderListComponent {
 
   onPage(page: PageEvent): void {
     this.page.set(page);
+    this.reload();
   }
 
   openCreate(): void {

@@ -29,7 +29,7 @@
             Mixed currencies
           }
         </div>
-        <div class="pf-kpi__sub">across pots in view</div>
+        <div class="pf-kpi__sub">across this page</div>
       </div>
       <div class="pf-kpi">
         <span class="pf-kpi__label">Reserved</span>
@@ -70,7 +70,7 @@
         }
       </mat-chip-listbox>
       <div class="pf-count">
-        <span>Showing {{ pageRows().length }} of {{ filtered().length }} pots</span>
+        <span>Showing {{ pageRows().length }} of {{ page().length }} pots</span>
         <button mat-button (click)="resetFilters()">Reset filters</button>
       </div>
     </div>
@@ -93,7 +93,7 @@
           (retry)="reload()"
         />
       }
-    } @else if (filtered().length === 0) {
+    } @else if (pageRows().length === 0) {
       <pf-empty-state
         [icon]="icons.wallet"
         title="No pots match"
@@ -158,7 +158,7 @@
         </table>
       </div>
       <mat-paginator
-        [length]="filtered().length"
+        [length]="page().length"
         [pageIndex]="page().pageIndex"
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"

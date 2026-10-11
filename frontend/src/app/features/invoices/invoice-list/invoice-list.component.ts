@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -15,11 +16,12 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { Router } from '@angular/router';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { FileText, Plus } from '../../../shared/icons';
+import { FileText, Plus, Search } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
 import { formatMinor } from '../../../shared/utils/money';
 import { Invoice, InvoiceService } from '../invoices.service';
@@ -28,14 +30,15 @@ import { CreateInvoiceDialogComponent, CreateInvoiceDialogResult } from '../dial
 const STATUSES = ['UNPAID', 'PARTIAL', 'PAID'] as const;
 
 /**
- * Invoice directory: server status filter, client number search, sort and
- * paging. Status is read, never edited — payments move it, and overpaying
- * is rejected. This screen tracks payment status; it never moves money.
+ * Invoice directory: server status filter, number search and paging; sort
+ * covers the loaded page. Status is read, never edited — payments move it,
+ * and overpaying is rejected. This screen tracks payment status; it never
+ * moves money.
  */
 @Component({
   selector: 'app-invoice-list',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatChipsModule, MatFormFieldModule,
+    RouterLink, ReactiveFormsModule, MatButtonModule, MatChipsModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatTableModule, MatSortModule, MatPaginatorModule, MatProgressSpinnerModule,
     LucideAngularModule, PageHeaderComponent, StatusBadgeComponent, EmptyStateComponent, ErrorStateComponent,
   ],
@@ -47,10 +50,11 @@ export class InvoiceListComponent {
   private readonly dialogs = inject(MatDialog);
   private readonly router = inject(Router);
 
-  protected readonly icons = { file: FileText, plus: Plus };
+  protected readonly icons = { file: FileText, plus: Plus, search: Search };
   protected readonly formatMinor = formatMinor;
   protected readonly canWrite = this.auth.hasAuthority('invoice:write');
 
+  readonly searchBox = new FormControl('', { nonNullable: true });
   readonly statusFilter = new FormControl<string | null>(null);
   readonly columns = ['number', 'status', 'total', 'paid', 'actions'];
 
@@ -60,18 +64,18 @@ export class InvoiceListComponent {
   private readonly sort = signal<Sort>({ active: '', direction: '' });
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
 
-  protected readonly total = computed(() => this.rows().length);
-
   protected readonly statuses = STATUSES;
 
-  protected readonly pageRows = computed(() => {
-    const sorted = [...this.rows()].sort(compareInvoices(this.sort()));
-    const { pageIndex, pageSize } = this.page();
-    return sorted.slice(pageIndex * pageSize, pageIndex * pageSize + pageSize);
-  });
+  protected readonly pageRows = computed(() => [...this.rows()].sort(compareInvoices(this.sort())));
 
   constructor() {
     this.reload();
+    this.searchBox.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(() => {
+        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+        this.reload();
+      });
     this.statusFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.page.update((p) => ({ ...p, pageIndex: 0 }));
       this.reload();
@@ -81,10 +85,11 @@ export class InvoiceListComponent {
   reload(): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.invoices.list(this.statusFilter.value).subscribe({
-      next: (rows) => {
-        this.rows.set(rows ?? []);
-        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+    const { pageIndex, pageSize } = this.page();
+    this.invoices.list(this.statusFilter.value, this.searchBox.value, pageIndex, pageSize).subscribe({
+      next: (result) => {
+        this.rows.set(result.rows);
+        this.page.update((p) => ({ ...p, length: result.total }));
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -104,6 +109,7 @@ export class InvoiceListComponent {
 
   onPage(page: PageEvent): void {
     this.page.set(page);
+    this.reload();
   }
 
   openCreate(): void {

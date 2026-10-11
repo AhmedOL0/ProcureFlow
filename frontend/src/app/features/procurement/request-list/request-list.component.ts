@@ -27,12 +27,11 @@ import { ProcurementService, PurchaseRequest } from '../procurement.service';
 const STATUSES = ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'ORDERED', 'CANCELLED'] as const;
 
 /**
- * Purchase-request directory: server status filter, client title search,
- * sort and paging (the contract filters by status only). Route data
- * `mode: 'mine'` narrows to requests raised by the caller — matched on
- * requesterId against both session shapes (/login returns id, /me returns
- * userId). Rows open dossiers where the request → approval → order story
- * continues.
+ * Purchase-request directory: status, title search and paging all run
+ * server-side. Route data `mode: 'mine'` hits /purchase-requests/mine,
+ * which forces the requester from the session — no caller id crosses the
+ * wire. Client sorting orders the loaded page only. Rows open dossiers
+ * where the request → approval → order story continues.
  */
 @Component({
   selector: 'app-request-list',
@@ -80,43 +79,16 @@ export class RequestListComponent {
 
   protected readonly statuses = STATUSES;
 
-  protected readonly filtered = computed(() => {
-    const query = this.searchBox.value.trim().toLowerCase();
-    const mine = this.myUserId();
-    return this.rows().filter(
-      (row) =>
-        (!this.mineOnly || (row.requesterId ?? '') === mine) &&
-        (!query || (row.title ?? '').toLowerCase().includes(query)),
-    );
-  });
-
-  /** Caller id across both session shapes (login/register vs /me restore). */
-  private readonly myUserId = computed(() => {
-    const user = this.auth.currentUser() as { id?: string; userId?: string } | null;
-    return user?.id ?? user?.userId ?? '';
-  });
-
-  protected readonly counts = computed(() => {
-    const counts = new Map<string, number>();
-    for (const row of this.rows()) {
-      counts.set(row.status ?? '?', (counts.get(row.status ?? '?') ?? 0) + 1);
-    }
-    return counts;
-  });
-
-  protected readonly pageRows = computed(() => {
-    const sorted = [...this.filtered()].sort(compareRequests(this.sort()));
-    const { pageIndex, pageSize } = this.page();
-    return sorted.slice(pageIndex * pageSize, pageIndex * pageSize + pageSize);
-  });
+  protected readonly pageRows = computed(() => [...this.rows()].sort(compareRequests(this.sort())));
 
   constructor() {
     this.reload();
     this.searchBox.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => {
-      this.page.update((p) => ({ ...p, pageIndex: 0 }));
-    });
+        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+        this.reload();
+      });
     this.statusFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.page.update((p) => ({ ...p, pageIndex: 0 }));
       this.reload();
@@ -126,10 +98,14 @@ export class RequestListComponent {
   reload(): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.requests.list(this.statusFilter.value).subscribe({
-      next: (rows) => {
-        this.rows.set(rows ?? []);
-        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+    const { pageIndex, pageSize } = this.page();
+    const query = this.mineOnly
+      ? this.requests.mine(this.statusFilter.value, this.searchBox.value, pageIndex, pageSize)
+      : this.requests.list(this.statusFilter.value, this.searchBox.value, pageIndex, pageSize);
+    query.subscribe({
+      next: (result) => {
+        this.rows.set(result.rows);
+        this.page.update((p) => ({ ...p, length: result.total }));
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -149,6 +125,7 @@ export class RequestListComponent {
 
   onPage(page: PageEvent): void {
     this.page.set(page);
+    this.reload();
   }
 }
 

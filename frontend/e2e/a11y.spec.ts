@@ -37,11 +37,11 @@ async function stubApi(page: Page, token: string): Promise<void> {
     } else if (method === 'GET' && url.includes('/users/me')) {
       await json(ME);
     } else if (method === 'GET' && url.includes('/purchase-requests')) {
-      await json([]);
+      await json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
     } else if (method === 'GET' && url.includes('/suppliers')) {
-      await json([]);
+      await json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
     } else if (method === 'GET' && url.includes('/orders')) {
-      await json([]);
+      await json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
     } else if (method === 'GET' && url.includes('/supplier-categories')) {
       await json([]);
     } else if (method === 'GET' && url.includes('/notifications')) {

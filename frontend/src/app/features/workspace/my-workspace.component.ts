@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
+import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
@@ -17,9 +18,10 @@ import { ProcurementService, PurchaseRequest } from '../procurement/procurement.
 
 /**
  * My workspace: the caller's own slice — requests they raised, unread
- * notifications, and the next action. Everything filters client-side over
- * the same contracts the directories use; assignments and delegations
- * stay on the approval dossier and inbox, which adjudicate server-side.
+ * notifications, and the next action. The slice comes from the server-side
+ * /mine contract (the requester is forced from the session); assignments
+ * and delegations stay on the approval dossier and inbox, which adjudicate
+ * server-side.
  */
 @Component({
   selector: 'app-my-workspace',
@@ -47,27 +49,11 @@ export class MyWorkspaceComponent {
 
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
-  private readonly allRequests = signal<PurchaseRequest[]>([]);
+  private readonly mineRows = signal<PurchaseRequest[]>([]);
+  protected readonly mineTotal = signal(0);
+  protected readonly openTotal = signal(0);
 
-  private readonly myUserId = computed(() => {
-    const user = this.user() as { id?: string; userId?: string } | null;
-    return user?.id ?? user?.userId ?? '';
-  });
-
-  protected readonly mine = computed(() => {
-    const mine = this.myUserId();
-    return this.allRequests().filter((row) => (row.requesterId ?? '') === mine);
-  });
-
-  protected readonly openMine = computed(() =>
-    this.mine().filter((row) => row.status === 'DRAFT' || row.status === 'SUBMITTED'),
-  );
-
-  protected readonly recentMine = computed(() =>
-    [...this.mine()]
-      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
-      .slice(0, 3),
-  );
+  protected readonly recentMine = computed(() => this.mineRows());
 
   protected readonly latestUnread = computed(() =>
     this.inbox
@@ -84,9 +70,15 @@ export class MyWorkspaceComponent {
   reload(): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.requests.list(null).subscribe({
-      next: (rows) => {
-        this.allRequests.set(rows ?? []);
+    forkJoin({
+      rows: this.requests.mine(null, '', 0, 5),
+      draft: this.requests.mine('DRAFT', '', 0, 1),
+      submitted: this.requests.mine('SUBMITTED', '', 0, 1),
+    }).subscribe({
+      next: ({ rows, draft, submitted }) => {
+        this.mineRows.set(rows.rows);
+        this.mineTotal.set(rows.total);
+        this.openTotal.set(draft.total + submitted.total);
         this.loading.set(false);
       },
       error: (error: unknown) => {

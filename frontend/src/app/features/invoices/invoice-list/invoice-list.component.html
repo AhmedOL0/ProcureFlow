@@ -15,6 +15,11 @@
 
   <div class="pf-table-card">
     <div class="pf-filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Search invoice number</mat-label>
+        <input matInput [formControl]="searchBox" placeholder="INV-001" />
+        <lucide-angular matSuffix [img]="icons.search" [size]="18" />
+      </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pf-filter-sm">
         <mat-label>Status</mat-label>
         <mat-select [formControl]="statusFilter">
@@ -103,7 +108,7 @@
         </table>
       </div>
       <mat-paginator
-        [length]="total()"
+        [length]="page().length"
         [pageIndex]="page().pageIndex"
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"

@@ -39,9 +39,10 @@ export class CreateInvoiceDialogComponent {
   readonly failure = signal<string | null>(null);
 
   constructor() {
-    this.orders.list(null).subscribe({
-      next: (rows) => {
-        const open = (rows ?? []).filter((o) => INVOICABLE.includes(o.status ?? ''));
+    // Dropdown scope: first page (bounded read, not the directory).
+    this.orders.list(null, 0, 100).subscribe({
+      next: (result) => {
+        const open = result.rows.filter((o) => INVOICABLE.includes(o.status ?? ''));
         this.candidates.set(open);
         if (open.length === 1 && open[0]?.id) {
           this.orderControl.setValue(open[0]?.id ?? '');

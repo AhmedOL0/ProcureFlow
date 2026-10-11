@@ -80,6 +80,22 @@ public class PurchaseRequestService {
         return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
+    /**
+     * The caller's own slice: the requester is forced server-side from the
+     * principal, never trusted from a query param, so one tenant's members
+     * cannot enumerate each other's drafts by guessing ids.
+     */
+    @Transactional(readOnly = true)
+    public Paged<PurchaseRequest> pageMine(
+            String tenantSlug, UUID requesterId, PurchaseRequest.Status status, String query, int page, int size) {
+        String terms = query == null || query.isBlank() ? "" : query;
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<PurchaseRequest> found = status == null
+                ? requests.findPageByRequester(tenantSlug, requesterId, terms, pageable)
+                : requests.findPageByRequesterAndStatus(tenantSlug, requesterId, status, terms, pageable);
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
+    }
+
     @Transactional(readOnly = true)
     public PurchaseRequest get(String tenantSlug, UUID id) {
         return scoped(tenantSlug, id);
