@@ -28,11 +28,16 @@ import { Budget, BudgetsService, Reservation } from '../budgets.service';
 @Component({
   selector: 'app-budget-detail',
   imports: [
-    RouterLink, MatButtonModule, MatTableModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    MatButtonModule,
+    MatTableModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './budget-detail.component.html',
-  styleUrl: './budget-detail.component.scss',
 })
 export class BudgetDetailComponent {
   private readonly budgets = inject(BudgetsService);
@@ -69,7 +74,8 @@ export class BudgetDetailComponent {
     });
   }
 
-  utilization(): number {    const pot = this.pot();
+  utilization(): number {
+    const pot = this.pot();
     const amount = pot?.amountMinor ?? 0;
     if (!pot || amount <= 0) {
       return 0;
@@ -81,7 +87,8 @@ export class BudgetDetailComponent {
     void this.router.navigate(['/budgets']);
   }
 
-  confirmDelete(): void {    const pot = this.pot();
+  confirmDelete(): void {
+    const pot = this.pot();
     if (!pot?.id || this.deleting()) {
       return;
     }

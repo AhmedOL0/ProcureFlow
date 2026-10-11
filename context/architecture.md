@@ -1,7 +1,7 @@
 # ProcureFlow — Architecture
 
 Deep reference: `docs/architecture/` (overview, modular-monolith,
-multi-tenancy, security) and `docs/decisions/ADR-001..007`.
+multi-tenancy, security) and `docs/decisions/ADR-001..009`.
 
 ## System structure
 
@@ -57,9 +57,9 @@ Dependency policy (ArchUnit-enforced in CI):
 ## AI invariants
 
 - Angular never calls Groq and never holds keys. Flow: Angular → Spring
-  Boot → `ai` module (prompts, validation, auth, metering) → Groq.
-- `AiProvider` port only; no implementation exists before Phase 6.
-  `AI_ENABLED=false` until prompts, validation and budgets are real.
+  Boot → `ai` module (prompts, validation, auth, usage metering) → Groq.
+- `GroqAiProvider` is live (`openai/gpt-oss-120b`); the module stays safe
+  without credentials (`AI_ENABLED=false` → 503 per use case).
 
 ## Observability
 

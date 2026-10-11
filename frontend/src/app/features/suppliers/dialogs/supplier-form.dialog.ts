@@ -20,7 +20,6 @@ export interface SupplierFormData {
   selector: 'app-supplier-form-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './supplier-form.dialog.html',
-  styleUrl: './dialogs.scss',
 })
 export class SupplierFormDialogComponent {
   private readonly suppliers = inject(SuppliersService);

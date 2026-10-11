@@ -23,7 +23,6 @@ export interface ContactDialogData {
   selector: 'app-contact-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatProgressSpinnerModule],
   templateUrl: './contact.dialog.html',
-  styleUrl: './dialogs.scss',
 })
 export class ContactDialogComponent {
   private readonly suppliers = inject(SuppliersService);

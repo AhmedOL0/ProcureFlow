@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -11,9 +11,15 @@ import { CircleAlert } from '../../../shared/icons';
 @Component({
   selector: 'pf-error-state',
   imports: [MatButtonModule, LucideAngularModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="pf-state" role="alert">
-      <lucide-angular [img]="icon" [size]="28" class="pf-state__icon pf-state__icon--danger" />
+      <lucide-angular
+        [img]="icon"
+        [size]="28"
+        class="pf-state__icon pf-state__icon--danger"
+        aria-hidden="true"
+      />
       <p class="pf-state__title">{{ title() }}</p>
       <p class="pf-state__message">{{ message() }}</p>
       @if (retryLabel()) {

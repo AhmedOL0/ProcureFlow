@@ -85,7 +85,10 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER:-procureflow}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
-      AI_ENABLED: "false"
+      AI_ENABLED: ${AI_ENABLED:-false}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
+      AI_MONTHLY_TOKEN_CAP: ${AI_MONTHLY_TOKEN_CAP:-1000000}
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:4200}
       MAIL_PROVIDER: ${MAIL_PROVIDER:-log}
       MAIL_HOST: ${MAIL_HOST:-}
@@ -95,6 +98,29 @@ services:
       MAIL_FROM: ${MAIL_FROM:-no-reply@example.com}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+
+  # ---- Nightly database dumps (opt-in: not part of the default stack) ----
+  # One-shot: docker compose --profile backup run --rm db-backup sh /backup.sh once
+  # Scheduled sidecar: docker compose --profile backup up -d db-backup
+  db-backup:
+    image: postgres:16-alpine
+    container_name: procureflow-backup
+    profiles: [backup]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-procureflow}
+      PGUSER: ${POSTGRES_USER:-procureflow}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (see .env.example)}
+      BACKUP_RETENTION: ${BACKUP_RETENTION:-7}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - pgbackups:/backups
+      - ./infrastructure/docker/backup/backup.sh:/backup.sh:ro
+    command: ["sh", "/backup.sh", "loop"]
 
   frontend:
     build:
@@ -113,3 +139,4 @@ volumes:
   pgdata:
   redisdata:
   rabbitdata:
+  pgbackups:

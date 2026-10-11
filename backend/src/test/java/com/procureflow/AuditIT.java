@@ -1,21 +1,29 @@
 package com.procureflow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.procureflow.identity.api.AuthResponse;
+import com.procureflow.identity.application.MailPort;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+
+import static org.mockito.Mockito.verify;
 
 /**
  * Append-only audit trail: decisions, order transitions, invoices and
@@ -27,6 +35,9 @@ class AuditIT extends AbstractIntegrationTest {
     @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES = postgresContainer();
+
+    @MockitoBean
+    private MailPort mail;
 
     @Test
     void decideWritesAuditRow() {
@@ -86,7 +97,7 @@ class AuditIT extends AbstractIntegrationTest {
     @Test
     void readsAreAdminOnlyAndTenantScoped() {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture worker = join(admin.slug());
+        Fixture worker = join(admin);
         Fixture tenantB = provision(uniqueSlug("globex"));
         approved(admin.token());
 
@@ -94,15 +105,82 @@ class AuditIT extends AbstractIntegrationTest {
                 HttpStatus.FORBIDDEN,
                 get("/api/v1/audit-events", worker.token(), String.class).getStatusCode());
 
-        ResponseEntity<List> own = trailRaw(admin.token(), null, null);
+        ResponseEntity<Map> own = trailRaw(admin.token(), null, null);
         assertEquals(HttpStatus.OK, own.getStatusCode());
         assertNotNull(own.getBody());
-        assertTrue(own.getBody().size() >= 1);
+        assertTrue(((List<?>) own.getBody().get("content")).size() >= 1);
+        assertTrue(((Number) own.getBody().get("totalElements")).longValue() >= 1);
 
-        ResponseEntity<List> foreign = trailRaw(tenantB.token(), null, null);
+        ResponseEntity<Map> foreign = trailRaw(tenantB.token(), null, null);
         assertEquals(HttpStatus.OK, foreign.getStatusCode());
         assertNotNull(foreign.getBody());
-        assertTrue(foreign.getBody().isEmpty());
+        assertTrue(((List<?>) foreign.getBody().get("content")).isEmpty());
+        assertEquals(0L, ((Number) foreign.getBody().get("totalElements")).longValue());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void trailPaginatesAndValidatesBounds() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        approved(admin.token());
+        approved(admin.token());
+
+        ResponseEntity<Map> page0 = get("/api/v1/audit-events?size=1", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, page0.getStatusCode());
+        assertNotNull(page0.getBody());
+        assertEquals(1, ((List<?>) page0.getBody().get("content")).size());
+        assertTrue(((Number) page0.getBody().get("totalElements")).longValue() >= 2);
+        assertTrue(((Number) page0.getBody().get("totalPages")).longValue() >= 2);
+        assertEquals(0, ((Number) page0.getBody().get("page")).intValue());
+
+        ResponseEntity<Map> page1 = get("/api/v1/audit-events?size=1&page=1", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, page1.getStatusCode());
+        List<Map<String, Object>> rows0 = (List<Map<String, Object>>) page0.getBody().get("content");
+        List<Map<String, Object>> rows1 = (List<Map<String, Object>>) page1.getBody().get("content");
+        assertEquals(1, rows1.size());
+        assertNotEquals(rows0.get(0).get("id"), rows1.get(0).get("id"));
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                get("/api/v1/audit-events?page=-1", admin.token(), String.class).getStatusCode());
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                get("/api/v1/audit-events?size=0", admin.token(), String.class).getStatusCode());
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                get("/api/v1/audit-events?size=101", admin.token(), String.class).getStatusCode());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void trailSearchesActionsAndTypesServerSide() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        approved(admin.token());
+        approved(admin.token());
+
+        ResponseEntity<Map> byAction = get("/api/v1/audit-events?q=REQUEST_DECIDED", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, byAction.getStatusCode());
+        assertNotNull(byAction.getBody());
+        assertTrue(((List<?>) byAction.getBody().get("content")).size() >= 2);
+        assertTrue(((Number) byAction.getBody().get("totalElements")).longValue() >= 2);
+
+        ResponseEntity<Map> byType = get("/api/v1/audit-events?q=purchase_request", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, byType.getStatusCode());
+        assertNotNull(byType.getBody());
+        assertTrue(((List<?>) byType.getBody().get("content")).size() >= 2);
+
+        ResponseEntity<Map> miss = get("/api/v1/audit-events?q=NO_SUCH_ACTION", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, miss.getStatusCode());
+        assertNotNull(miss.getBody());
+        assertTrue(((List<?>) miss.getBody().get("content")).isEmpty());
+        assertEquals(0L, ((Number) miss.getBody().get("totalElements")).longValue());
+
+        // Literal space: RestTemplate encodes it; a pre-encoded %20 would
+        // double-encode and arrive as a real search term instead of blank.
+        ResponseEntity<Map> blank = get("/api/v1/audit-events?q= ", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, blank.getStatusCode());
+        assertNotNull(blank.getBody());
+        assertTrue(((Number) blank.getBody().get("totalElements")).longValue() >= 2);
     }
 
     private Fixture provision(String slug) {
@@ -120,28 +198,51 @@ class AuditIT extends AbstractIntegrationTest {
         return new Fixture(slug, response.getBody().accessToken(), response.getBody().user().id());
     }
 
-    private Fixture join(String slug) {
+    private Fixture join(Fixture admin) {
+        String email =
+                "worker-" + UUID.randomUUID().toString().substring(0, 8) + "@" + admin.slug() + ".test";
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",
                 Map.of(
-                        "email", "worker-" + UUID.randomUUID().toString().substring(0, 8) + "@" + slug + ".test",
+                        "email", email,
                         "password", "correct-horse-123",
-                        "tenantSlug", slug),
+                        "tenantSlug", admin.slug(),
+                        "inviteToken", inviteToken(admin.token(), email)),
                 AuthResponse.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        return new Fixture(slug, response.getBody().accessToken(), null);
+        return new Fixture(admin.slug(), response.getBody().accessToken(), null);
+    }
+
+    private String inviteToken(String adminToken, String email) {
+        ResponseEntity<Map> invited = rest.exchange(
+                "/api/v1/invites",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("email", email, "roleNames", List.of("MEMBER")), bearer(adminToken)),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, invited.getStatusCode());
+        ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
+        verify(mail, org.mockito.Mockito.atLeastOnce()).send(sent.capture());
+        return sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email))
+                .reduce((first, second) -> second)
+                .map(message -> {
+                    Matcher matcher = Pattern.compile("invite=([A-Za-z0-9_-]+)").matcher(message.textBody());
+                    assertTrue(matcher.find());
+                    return matcher.group(1);
+                })
+                .orElseThrow();
     }
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> trail(String token, String entityType, UUID entityId) {
-        ResponseEntity<List> response = trailRaw(token, entityType, entityId);
+        ResponseEntity<Map> response = trailRaw(token, entityType, entityId);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        return (List<Map<String, Object>>) (List<?>) response.getBody();
+        return (List<Map<String, Object>>) response.getBody().get("content");
     }
 
-    private ResponseEntity<List> trailRaw(String token, String entityType, UUID entityId) {
+    private ResponseEntity<Map> trailRaw(String token, String entityType, UUID entityId) {
         String url = "/api/v1/audit-events";
         if (entityType != null) {
             url += "?entityType=" + entityType;
@@ -149,7 +250,7 @@ class AuditIT extends AbstractIntegrationTest {
                 url += "&entityId=" + entityId;
             }
         }
-        return get(url, token, List.class);
+        return get(url, token, Map.class);
     }
 
     private UUID submitted(String token) {

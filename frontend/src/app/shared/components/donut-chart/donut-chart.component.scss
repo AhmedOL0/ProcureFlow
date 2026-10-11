@@ -1,0 +1,67 @@
+// Category donut on ECharts: fixed-height canvas plus the value legend.
+// Segment fills come from the token system (resolved in the component,
+// not copied here) — the swatches below mirror the same six steps.
+.donut-chart {
+  padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
+}
+
+.donut-chart__stage {
+  height: 240px;
+}
+
+.donut-chart__legend {
+  list-style: none;
+  margin: var(--pf-space-md) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-sm);
+  min-width: 0;
+  font: var(--pf-label-lg);
+  color: var(--pf-text);
+}
+
+.donut-chart__legend li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pf-space-sm);
+  min-width: 0;
+}
+
+.donut-chart__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--pf-radius-sm);
+  flex-shrink: 0;
+  align-self: center;
+  &.donut-segment--0 {
+    background: var(--pf-navy);
+  }
+  &.donut-segment--1 {
+    background: var(--pf-blue);
+  }
+  &.donut-segment--2 {
+    background: var(--pf-teal);
+  }
+  &.donut-segment--3 {
+    background: var(--pf-copper);
+  }
+  &.donut-segment--4 {
+    background: var(--pf-slate);
+  }
+  &.donut-segment--5 {
+    background: var(--pf-info-text);
+  }
+}
+
+.donut-chart__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donut-chart__value {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--pf-slate);
+}

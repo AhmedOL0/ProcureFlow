@@ -20,7 +20,8 @@ import org.springframework.stereotype.Component;
 /**
  * HS512 JWT implementation. The secret must be at least 64 characters; the
  * bean refuses to start otherwise so a weak key can never reach production
- * silently.
+ * silently. The documented placeholder is only 61 characters, so a missing
+ * JWT_SECRET already fails loudly on this length gate (verified by test).
  */
 @Component
 public class JwtServiceImpl implements JwtService {

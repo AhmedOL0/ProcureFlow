@@ -4,6 +4,8 @@ import com.procureflow.purchaseorder.domain.PurchaseOrder;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +18,10 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, UU
 
     List<PurchaseOrder> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);
 
-    List<PurchaseOrder> findAllByTenantIdAndStatusOrderByCreatedAtDesc(UUID tenantId, PurchaseOrder.Status status);
+    Page<PurchaseOrder> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId, Pageable pageable);
+
+    Page<PurchaseOrder> findAllByTenantIdAndStatusOrderByCreatedAtDesc(
+            UUID tenantId, PurchaseOrder.Status status, Pageable pageable);
 
     boolean existsByRequestId(UUID requestId);
 

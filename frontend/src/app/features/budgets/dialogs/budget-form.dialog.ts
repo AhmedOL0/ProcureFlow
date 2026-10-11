@@ -16,11 +16,14 @@ import { parseApiFailure, userMessageFor } from '../../../shared/utils/api-error
 @Component({
   selector: 'app-budget-form-dialog',
   imports: [
-    ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule,
-    MatInputModule, MatProgressSpinnerModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
   ],
   templateUrl: './budget-form.dialog.html',
-  styleUrl: './budget-dialogs.scss',
 })
 export class BudgetFormDialogComponent {
   private readonly budgets = inject(BudgetsService);

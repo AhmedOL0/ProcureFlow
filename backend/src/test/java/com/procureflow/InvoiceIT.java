@@ -8,6 +8,12 @@ import com.procureflow.identity.api.AuthResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
@@ -125,6 +131,85 @@ class InvoiceIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void concurrentInvoiceBookingsAdmitNoOverInvoice() throws Exception {
+        Fixture admin = provision(uniqueSlug("acme"));
+        Flow flow = sentOrder(admin.token());
+        CountDownLatch gate = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Callable<ResponseEntity<Map>> first = () -> {
+                gate.await(30, TimeUnit.SECONDS);
+                return invoice(
+                        admin.token(),
+                        flow.order(),
+                        "INV-R1",
+                        List.of(Map.of("orderItemId", flow.line(), "quantity", 2)));
+            };
+            Callable<ResponseEntity<Map>> second = () -> {
+                gate.await(30, TimeUnit.SECONDS);
+                return invoice(
+                        admin.token(),
+                        flow.order(),
+                        "INV-R2",
+                        List.of(Map.of("orderItemId", flow.line(), "quantity", 2)));
+            };
+            Future<ResponseEntity<Map>> attemptA = pool.submit(first);
+            Future<ResponseEntity<Map>> attemptB = pool.submit(second);
+            gate.countDown();
+
+            var statusA = attemptA.get(60, TimeUnit.SECONDS).getStatusCode();
+            var statusB = attemptB.get(60, TimeUnit.SECONDS).getStatusCode();
+            assertTrue(
+                    (statusA == HttpStatus.CREATED && statusB == HttpStatus.CONFLICT)
+                            || (statusA == HttpStatus.CONFLICT && statusB == HttpStatus.CREATED));
+
+            ResponseEntity<Map> list = get("/api/v1/invoices", admin.token(), Map.class);
+            assertEquals(HttpStatus.OK, list.getStatusCode());
+            assertNotNull(list.getBody());
+            assertEquals(1, ((List<?>) list.getBody().get("content")).size());
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
+    void concurrentPaymentsAdmitNoOverpay() throws Exception {
+        Fixture admin = provision(uniqueSlug("acme"));
+        Flow flow = sentOrder(admin.token());
+        UUID invoice = invoiceId(
+                admin.token(), flow.order(), "INV-001", List.of(Map.of("orderItemId", flow.line(), "quantity", 2)));
+        CountDownLatch gate = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Callable<ResponseEntity<Map>> attempt = () -> {
+                gate.await(30, TimeUnit.SECONDS);
+                return rest.exchange(
+                        "/api/v1/invoices/" + invoice + "/payments",
+                        HttpMethod.POST,
+                        new HttpEntity<>(Map.of("amountMinor", 179800L), bearer(admin.token())),
+                        Map.class);
+            };
+            Future<ResponseEntity<Map>> attemptA = pool.submit(attempt);
+            Future<ResponseEntity<Map>> attemptB = pool.submit(attempt);
+            gate.countDown();
+
+            var statusA = attemptA.get(60, TimeUnit.SECONDS).getStatusCode();
+            var statusB = attemptB.get(60, TimeUnit.SECONDS).getStatusCode();
+            assertTrue(
+                    (statusA == HttpStatus.OK && statusB == HttpStatus.CONFLICT)
+                            || (statusA == HttpStatus.CONFLICT && statusB == HttpStatus.OK));
+
+            ResponseEntity<Map> fetched = get("/api/v1/invoices/" + invoice, admin.token(), Map.class);
+            assertEquals(HttpStatus.OK, fetched.getStatusCode());
+            assertNotNull(fetched.getBody());
+            assertEquals("PAID", fetched.getBody().get("status"));
+            assertEquals(179800L, ((Number) fetched.getBody().get("paidMinor")).longValue());
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
     void invoicesAreInvisibleAcrossTenants() {
         Fixture tenantA = provision(uniqueSlug("acme"));
         Fixture tenantB = provision(uniqueSlug("globex"));
@@ -135,10 +220,10 @@ class InvoiceIT extends AbstractIntegrationTest {
         assertEquals(
                 HttpStatus.NOT_FOUND,
                 get("/api/v1/invoices/" + invoice, tenantB.token(), String.class).getStatusCode());
-        ResponseEntity<List> list = get("/api/v1/invoices", tenantB.token(), List.class);
+        ResponseEntity<Map> list = get("/api/v1/invoices", tenantB.token(), Map.class);
         assertEquals(HttpStatus.OK, list.getStatusCode());
         assertNotNull(list.getBody());
-        assertTrue(list.getBody().isEmpty());
+        assertTrue(((List<?>) list.getBody().get("content")).isEmpty());
 
         UUID ownOrder = sentOrder(tenantB.token()).order();
         assertEquals(

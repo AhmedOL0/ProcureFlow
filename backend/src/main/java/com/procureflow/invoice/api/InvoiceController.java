@@ -5,6 +5,7 @@ import com.procureflow.invoice.application.InvoiceService;
 import com.procureflow.invoice.domain.Invoice;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -54,13 +55,17 @@ public class InvoiceController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('invoice:read')")
-    @Operation(summary = "List invoices of the current workspace, newest first")
-    public ResponseEntity<List<InvoiceResponse>> list(
+    @Operation(summary = "Paged invoices of the current workspace, newest first")
+    public ResponseEntity<Paged<InvoiceResponse>> list(
             @AuthenticationPrincipal AuthenticatedUser principal,
-            @RequestParam(required = false) Invoice.Status status) {
-        return ResponseEntity.ok(invoices.list(principal.tenantId(), status).stream()
-                .map(invoice -> InvoiceResponse.from(invoices.match(principal.tenantId(), invoice.getId())))
-                .toList());
+            @RequestParam(required = false) Invoice.Status status,
+            @RequestParam(required = false, name = "q") String query,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        // Match enrichment runs per page row, bounded by the page size.
+        return ResponseEntity.ok(invoices
+                .page(principal.tenantId(), status, query, Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(invoice -> InvoiceResponse.from(invoices.match(principal.tenantId(), invoice.getId()))));
     }
 
     @GetMapping("/{id}")

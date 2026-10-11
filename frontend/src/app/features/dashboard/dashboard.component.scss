@@ -1,69 +1,75 @@
-.dashboard-loading {
-  display: flex;
-  justify-content: center;
-  padding: var(--pf-space-2xl);
-}
-
-.dashboard-columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--pf-space-md);
-  align-items: start;
-}
-@media (max-width: 1023px) {
-  .dashboard-columns {
-    grid-template-columns: 1fr;
-  }
-}
-
-.dashboard-card-head {
-  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
-  border-bottom: 1px solid var(--pf-border);
-}
-
-.dashboard-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.dashboard-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--pf-space-md);
-  padding: var(--pf-space-md) var(--pf-space-lg);
-  border-bottom: 1px solid var(--pf-row-border);
-}
-.dashboard-row:last-child {
-  border-bottom: none;
-}
-.dashboard-row:hover {
-  background: var(--pf-row-hover);
-}
-
-.dashboard-row__main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.dashboard-row__title {
-  font-weight: 500;
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dashboard-row__title:hover {
-  text-decoration: underline;
-}
-
-.dashboard-row__meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+// Dashboard: finance note, audit banner and the approval-flow strip.
+// Loading, columns, card heads and rows are the global pf-* primitives
+// in styles.scss; charts come from the shared chart components.
+.dashboard-note {
   font: var(--pf-body-sm);
   color: var(--pf-slate);
+  margin: 0;
+}
+
+.dashboard-audit {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pf-space-md);
+  background: var(--pf-info-bg);
+  border: 1px solid var(--pf-info-border);
+  border-radius: var(--pf-radius-lg);
+  padding: var(--pf-space-md) var(--pf-space-lg);
+}
+.dashboard-audit lucide-angular {
+  color: var(--pf-info-text);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.dashboard-audit p {
+  font: var(--pf-body-md);
+  color: var(--pf-text);
+  margin: 0;
+}
+.dashboard-audit strong {
+  color: var(--pf-info-text);
+}
+
+.dashboard-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  box-shadow: var(--pf-shadow-1);
+  padding: var(--pf-space-md) var(--pf-space-lg);
+  overflow-x: auto;
+}
+.dashboard-flow__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-xs);
+  padding: 0 var(--pf-space-lg);
+  min-width: max-content;
+}
+.dashboard-flow__stat:first-child {
+  padding-left: 0;
+}
+.dashboard-flow__stat + .dashboard-flow__stat {
+  border-left: 1px solid var(--pf-border);
+}
+.dashboard-flow__value {
+  font: var(--pf-headline-md);
+  color: var(--pf-navy);
+}
+.dashboard-flow__label {
+  font: var(--pf-label-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pf-slate);
+}
+.dashboard-flow a {
+  margin-left: auto;
+  font: var(--pf-label-lg);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dashboard-flow a:hover {
+  text-decoration: underline;
 }

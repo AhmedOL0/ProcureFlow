@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -18,7 +19,6 @@ const INVOICABLE = ['SENT', 'PARTIALLY_RECEIVED', 'RECEIVED'];
   selector: 'app-create-invoice-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './create-invoice.dialog.html',
-  styleUrl: './invoice-dialogs.scss',
 })
 export class CreateInvoiceDialogComponent {
   private readonly invoices = inject(InvoiceService);
@@ -39,9 +39,10 @@ export class CreateInvoiceDialogComponent {
   readonly failure = signal<string | null>(null);
 
   constructor() {
-    this.orders.list(null).subscribe({
-      next: (rows) => {
-        const open = (rows ?? []).filter((o) => INVOICABLE.includes(o.status ?? ''));
+    // Dropdown scope: first page (bounded read, not the directory).
+    this.orders.list(null, 0, 100).subscribe({
+      next: (result) => {
+        const open = result.rows.filter((o) => INVOICABLE.includes(o.status ?? ''));
         this.candidates.set(open);
         if (open.length === 1 && open[0]?.id) {
           this.orderControl.setValue(open[0]?.id ?? '');
@@ -49,7 +50,7 @@ export class CreateInvoiceDialogComponent {
       },
       error: (error: unknown) => this.failure.set(userMessageFor(parseApiFailure(error))),
     });
-    this.orderControl.valueChanges.subscribe((id) => this.loadLines(id));
+    this.orderControl.valueChanges.pipe(takeUntilDestroyed()).subscribe((id) => this.loadLines(id));
   }
 
   private loadLines(orderId: string): void {

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
@@ -10,6 +10,7 @@ export type Department = components['schemas']['DepartmentResponse'];
 export type Membership = components['schemas']['MembershipResponse'];
 export type WorkspaceUser = components['schemas']['UserResponse'];
 export type AuditEvent = components['schemas']['AuditEventResponse'];
+export type WorkspaceInvite = components['schemas']['InviteResponse'];
 
 /**
  * Thin typed clients over organization and audit contracts. Role assignment
@@ -29,8 +30,18 @@ export class OrganizationService {
     return this.http.patch<Tenant>(`${this.base}/tenants/current`, { name });
   }
 
-  departments(): Observable<Department[]> {
-    return this.http.get<Department[]>(`${this.base}/departments`);
+  departments(
+    query: string | null,
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<{ rows: Department[]; total: number }> {
+    let params = new HttpParams().set('page', pageIndex).set('size', pageSize);
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get<components['schemas']['PagedDepartmentResponse']>(`${this.base}/departments`, { params })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
   }
 
   createDepartment(name: string): Observable<Department> {
@@ -45,8 +56,14 @@ export class OrganizationService {
     return this.http.delete<void>(`${this.base}/departments/${id}`);
   }
 
-  memberships(): Observable<Membership[]> {
-    return this.http.get<Membership[]>(`${this.base}/memberships`);
+  memberships(
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<{ rows: Membership[]; total: number }> {
+    const params = new HttpParams().set('page', pageIndex).set('size', pageSize);
+    return this.http
+      .get<components['schemas']['PagedMembershipResponse']>(`${this.base}/memberships`, { params })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
   }
 
   addMembership(userId: string, departmentId: string): Observable<Membership> {
@@ -57,29 +74,80 @@ export class OrganizationService {
     return this.http.delete<void>(`${this.base}/memberships/${id}`);
   }
 
-  users(): Observable<WorkspaceUser[]> {
-    return this.http.get<WorkspaceUser[]>(`${this.base}/users`);
+  users(
+    query: string | null,
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<{ rows: WorkspaceUser[]; total: number }> {
+    let params = new HttpParams().set('page', pageIndex).set('size', pageSize);
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get<components['schemas']['PagedUserResponse']>(`${this.base}/users`, { params })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
   }
 
   createUser(body: components['schemas']['CreateUserRequest']): Observable<WorkspaceUser> {
     return this.http.post<WorkspaceUser>(`${this.base}/users`, body);
   }
+
+  updateProfile(id: string, firstName: string | null, lastName: string | null): Observable<WorkspaceUser> {
+    return this.http.patch<WorkspaceUser>(`${this.base}/users/${id}`, { firstName, lastName });
+  }
+
+  resetPassword(id: string, password: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/users/${id}/password`, { password });
+  }
+
+  invites(): Observable<WorkspaceInvite[]> {
+    return this.http.get<WorkspaceInvite[]>(`${this.base}/invites`);
+  }
+
+  invite(email: string, roleNames: string[]): Observable<WorkspaceInvite> {
+    return this.http.post<WorkspaceInvite>(`${this.base}/invites`, { email, roleNames });
+  }
+
+  revokeInvite(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/invites/${id}`);
+  }
 }
 
-/** Append-only trail reads. The backend offers no mutation endpoints. */
+export interface AuditPage {
+  rows: AuditEvent[];
+  total: number;
+}
+
+/** Append-only trail reads, paged server-side. The backend offers no mutation endpoints. */
 @Injectable({ providedIn: 'root' })
 export class AuditService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/api/v1`;
 
-  list(entityType: string | null, entityId: string | null): Observable<AuditEvent[]> {
-    let params = new HttpParams();
+  page(
+    entityType: string | null,
+    entityId: string | null,
+    query: string | null,
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<AuditPage> {
+    let params = new HttpParams().set('page', pageIndex).set('size', pageSize);
     if (entityType) {
       params = params.set('entityType', entityType);
     }
     if (entityId) {
       params = params.set('entityId', entityId);
     }
-    return this.http.get<AuditEvent[]>(`${this.base}/audit-events`, { params });
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get<components['schemas']['PagedAuditEventResponse']>(`${this.base}/audit-events`, { params })
+      .pipe(
+        map((result) => ({
+          rows: result?.content ?? [],
+          total: result?.totalElements ?? 0,
+        })),
+      );
   }
 }

@@ -4,15 +4,20 @@ import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.organization.domain.Tenant;
 import com.procureflow.purchaseorder.application.SupplierOrderUsage;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import com.procureflow.supplier.domain.Supplier;
 import com.procureflow.supplier.domain.SupplierCategory;
 import com.procureflow.supplier.infrastructure.SupplierCategoryRepository;
 import com.procureflow.supplier.infrastructure.SupplierRepository;
 import jakarta.persistence.EntityManager;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,12 +51,14 @@ public class SupplierService {
     }
 
     @Transactional(readOnly = true)
-    public List<Supplier> search(String tenantSlug, Supplier.Status status, String query) {
+    public Paged<Supplier> page(
+            String tenantSlug, Supplier.Status status, String query, int page, int size) {
         String terms = query == null || query.isBlank() ? "" : query;
-        if (status == null) {
-            return suppliers.findAllByTenantSlug(tenantSlug, terms);
-        }
-        return suppliers.searchByStatus(tenantSlug, status, terms);
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<Supplier> found = status == null
+                ? suppliers.findPageByTenantSlug(tenantSlug, terms, pageable)
+                : suppliers.findPageByTenantSlugAndStatus(tenantSlug, status, terms, pageable);
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     public Supplier create(
@@ -128,12 +135,20 @@ public class SupplierService {
 
     public List<SupplierCategory> assignCategories(String tenantSlug, UUID supplierId, Set<UUID> categoryIds) {
         Supplier supplier = scoped(tenantSlug, supplierId);
+        // One fetch for the whole set, not one query per id. Missing ids
+        // report deterministically (sorted) instead of HashSet order.
+        Map<UUID, SupplierCategory> found = new HashMap<>();
+        if (!categoryIds.isEmpty()) {
+            for (SupplierCategory category : categories.findAllByIdInAndTenantSlug(categoryIds, tenantSlug)) {
+                found.put(category.getId(), category);
+            }
+        }
         Set<SupplierCategory> assigned = new HashSet<>();
-        for (UUID categoryId : categoryIds) {
-            SupplierCategory category = categories
-                    .findByIdAndTenantSlug(categoryId, tenantSlug)
-                    .orElseThrow(
-                            () -> ApiException.notFound("CATEGORY_NOT_FOUND", "Category not found: " + categoryId));
+        for (UUID categoryId : categoryIds.stream().sorted().toList()) {
+            SupplierCategory category = found.get(categoryId);
+            if (category == null) {
+                throw ApiException.notFound("CATEGORY_NOT_FOUND", "Category not found: " + categoryId);
+            }
             assigned.add(category);
         }
         supplier.getCategories().clear();

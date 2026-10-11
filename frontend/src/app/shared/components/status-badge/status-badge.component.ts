@@ -1,10 +1,11 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { badgeLabelFor, badgeToneFor } from './status-badge';
 
 /** Design-system status pill: tinted per state, uppercase, tracked. */
 @Component({
   selector: 'pf-status-badge',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<span class="pf-badge pf-badge--{{ tone() }}">{{ label() }}</span>`,
 })
 export class StatusBadgeComponent {

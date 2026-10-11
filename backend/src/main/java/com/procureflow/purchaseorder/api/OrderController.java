@@ -5,6 +5,7 @@ import com.procureflow.purchaseorder.application.OrderService;
 import com.procureflow.purchaseorder.domain.PurchaseOrder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -49,15 +50,18 @@ public class OrderController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('order:read')")
-    @Operation(summary = "List orders of the current workspace, newest first")
-    public ResponseEntity<List<OrderResponse>> list(
+    @Operation(summary = "Paged orders of the current workspace, newest first")
+    public ResponseEntity<Paged<OrderResponse>> list(
             @AuthenticationPrincipal AuthenticatedUser principal,
-            @RequestParam(required = false) PurchaseOrder.Status status) {
+            @RequestParam(required = false) PurchaseOrder.Status status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         // Null status lists everything; the repository branches so Hibernate
-        // never sees a null parameter (see gotcha 9).
-        return ResponseEntity.ok(orders.list(principal.tenantId(), status).stream()
-                .map(order -> OrderResponse.from(order, orders.lines(principal.tenantId(), order.getId())))
-                .toList());
+        // never sees a null parameter (see gotcha 9). Line enrichment runs
+        // per page row, bounded by the page size.
+        return ResponseEntity.ok(orders
+                .page(principal.tenantId(), status, Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(order -> OrderResponse.from(order, orders.lines(principal.tenantId(), order.getId()))));
     }
 
     @GetMapping("/{id}")

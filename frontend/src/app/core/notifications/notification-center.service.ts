@@ -6,42 +6,75 @@ import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
 
 type NotificationResponse = components['schemas']['NotificationResponse'];
+type InboxPage = components['schemas']['PagedNotificationResponse'];
 
-/** Header inbox + notifications page: latest rows, unread count, mark-read. */
+export interface PageState {
+  pageIndex: number;
+  pageSize: number;
+  length: number;
+}
+
+/**
+ * Header inbox + notifications page: latest rows, unread count, mark-read.
+ * The inbox endpoint is paged server-side; `items` holds the loaded page
+ * (first page by default) and `page.length` the server total. The unread
+ * badge therefore counts the loaded page — exact at realistic volumes, and
+ * the notifications page always shows the true total beside its paginator.
+ * The read filter travels as `unreadOnly` so the Unread tab counts the
+ * whole inbox, not just the loaded page; shell and workspace always read
+ * the full inbox and pass nothing.
+ */
 @Injectable({ providedIn: 'root' })
 export class NotificationCenterService {
   private readonly http = inject(HttpClient);
   private readonly api = environment.apiUrl;
 
   readonly items = signal<NotificationResponse[]>([]);
+  readonly page = signal<PageState>({ pageIndex: 0, pageSize: 20, length: 0 });
   readonly loading = signal(false);
   readonly failed = signal(false);
   readonly unread = computed(() => this.items().filter((item) => !item.read).length);
 
-  refresh(): void {
+  refresh(unreadOnly = false): void {
+    const current = this.page();
+    this.load(current.pageIndex, current.pageSize, unreadOnly);
+  }
+
+  load(pageIndex: number, pageSize: number, unreadOnly = false): void {
     if (this.loading()) {
       return;
     }
     this.loading.set(true);
     this.failed.set(false);
-    this.http.get<NotificationResponse[]>(`${this.api}/api/v1/notifications`).subscribe({
-      next: (rows) => {
-        this.items.set(rows ?? []);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.failed.set(true);
-        this.loading.set(false);
-      },
-    });
+    this.http
+      .get<InboxPage>(`${this.api}/api/v1/notifications`, {
+        params: { page: pageIndex, size: pageSize, ...(unreadOnly ? { unreadOnly: true } : {}) },
+      })
+      .subscribe({
+        next: (result) => {
+          this.items.set(result?.content ?? []);
+          this.page.set({
+            pageIndex: result?.page ?? pageIndex,
+            pageSize: result?.size ?? pageSize,
+            length: result?.totalElements ?? 0,
+          });
+          this.loading.set(false);
+        },
+        error: () => {
+          this.failed.set(true);
+          this.loading.set(false);
+        },
+      });
   }
 
   markRead(id: string): void {
-    this.http.patch<NotificationResponse>(`${this.api}/api/v1/notifications/${id}/read`, {}).subscribe({
-      next: (updated) => {
-        this.items.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
-      },
-    });
+    this.http
+      .patch<NotificationResponse>(`${this.api}/api/v1/notifications/${id}/read`, {})
+      .subscribe({
+        next: (updated) => {
+          this.items.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+        },
+      });
   }
 
   /**
@@ -74,4 +107,3 @@ export class NotificationCenterService {
       });
   }
 }
-

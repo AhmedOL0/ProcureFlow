@@ -5,19 +5,26 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.procureflow.identity.api.AuthResponse;
+import com.procureflow.identity.application.MailPort;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+
+import static org.mockito.Mockito.verify;
 
 /**
  * Event-driven inbox: submitting and deciding a request notifies the
@@ -29,6 +36,9 @@ class NotificationIT extends AbstractIntegrationTest {
     @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES = postgresContainer();
+
+    @MockitoBean
+    private MailPort mail;
 
     @Test
     void submitNotifiesRequester() {
@@ -61,7 +71,7 @@ class NotificationIT extends AbstractIntegrationTest {
     @Test
     void inboxIsPersonal() {
         Fixture admin = provision(uniqueSlug("acme"));
-        Fixture worker = join(admin.slug());
+        Fixture worker = join(admin);
         submitted(worker.token(), "Mouse");
 
         assertEquals(1, inbox(worker.token()).size());
@@ -77,7 +87,7 @@ class NotificationIT extends AbstractIntegrationTest {
         // Admins may read for support; a stranger member may not touch it.
         assertEquals(HttpStatus.OK, forbidden.getStatusCode());
 
-        Fixture outsider = join(admin.slug());
+        Fixture outsider = join(admin);
         ResponseEntity<String> denied = rest.exchange(
                 "/api/v1/notifications/" + foreign + "/read",
                 HttpMethod.PATCH,
@@ -137,10 +147,62 @@ class NotificationIT extends AbstractIntegrationTest {
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> inbox(String token) {
-        ResponseEntity<List> response = get("/api/v1/notifications", token, List.class);
+        ResponseEntity<Map> response = get("/api/v1/notifications", token, Map.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        return (List<Map<String, Object>>) (List<?>) response.getBody();
+        return (List<Map<String, Object>>) response.getBody().get("content");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void inboxPaginatesNewestFirst() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        submitted(admin.token(), "Laptops");
+        submitted(admin.token(), "Monitors");
+        submitted(admin.token(), "Keyboards");
+
+        ResponseEntity<Map> first = get("/api/v1/notifications?page=0&size=2", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, first.getStatusCode());
+        assertNotNull(first.getBody());
+        assertEquals(2, ((List<?>) first.getBody().get("content")).size());
+        assertEquals(3L, ((Number) first.getBody().get("totalElements")).longValue());
+        assertEquals(2L, ((Number) first.getBody().get("totalPages")).longValue());
+
+        ResponseEntity<Map> second = get("/api/v1/notifications?page=1&size=2", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, second.getStatusCode());
+        assertNotNull(second.getBody());
+        assertEquals(1, ((List<?>) second.getBody().get("content")).size());
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                get("/api/v1/notifications?size=101", admin.token(), String.class).getStatusCode());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void unreadOnlyNarrowsServerSide() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        submitted(admin.token(), "Laptops");
+        UUID read = UUID.fromString(inbox(admin.token()).get(0).get("id").toString());
+        rest.exchange(
+                "/api/v1/notifications/" + read + "/read",
+                HttpMethod.PATCH,
+                new HttpEntity<>(bearer(admin.token())),
+                Map.class);
+        submitted(admin.token(), "Monitors");
+
+        ResponseEntity<Map> unread = get("/api/v1/notifications?unreadOnly=true", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, unread.getStatusCode());
+        assertNotNull(unread.getBody());
+        List<Map<String, Object>> rows = (List<Map<String, Object>>) unread.getBody().get("content");
+        assertEquals(1, rows.size());
+        assertEquals(Boolean.FALSE, rows.get(0).get("read"));
+        assertEquals(1L, ((Number) unread.getBody().get("totalElements")).longValue());
+
+        ResponseEntity<Map> all = get("/api/v1/notifications", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, all.getStatusCode());
+        assertNotNull(all.getBody());
+        assertEquals(2L, ((Number) all.getBody().get("totalElements")).longValue());
     }
 
     private Fixture provision(String slug) {
@@ -157,17 +219,40 @@ class NotificationIT extends AbstractIntegrationTest {
         return new Fixture(slug, response.getBody().accessToken());
     }
 
-    private Fixture join(String slug) {
+    private Fixture join(Fixture admin) {
+        String email =
+                "worker-" + UUID.randomUUID().toString().substring(0, 8) + "@" + admin.slug() + ".test";
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",
                 Map.of(
-                        "email", "worker-" + UUID.randomUUID().toString().substring(0, 8) + "@" + slug + ".test",
+                        "email", email,
                         "password", "correct-horse-123",
-                        "tenantSlug", slug),
+                        "tenantSlug", admin.slug(),
+                        "inviteToken", inviteToken(admin.token(), email)),
                 AuthResponse.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        return new Fixture(slug, response.getBody().accessToken());
+        return new Fixture(admin.slug(), response.getBody().accessToken());
+    }
+
+    private String inviteToken(String adminToken, String email) {
+        ResponseEntity<Map> invited = rest.exchange(
+                "/api/v1/invites",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("email", email, "roleNames", List.of("MEMBER")), bearer(adminToken)),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, invited.getStatusCode());
+        ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
+        verify(mail, org.mockito.Mockito.atLeastOnce()).send(sent.capture());
+        return sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email))
+                .reduce((first, second) -> second)
+                .map(message -> {
+                    Matcher matcher = Pattern.compile("invite=([A-Za-z0-9_-]+)").matcher(message.textBody());
+                    assertTrue(matcher.find());
+                    return matcher.group(1);
+                })
+                .orElseThrow();
     }
 
     private UUID submitted(String token, String title) {

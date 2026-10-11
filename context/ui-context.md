@@ -4,15 +4,15 @@
 
 - Angular 21, TypeScript strict, Signals for local state, RxJS for streams,
   Reactive Forms for all input. No `any` in shipped code.
-- Feature modules behind lazy routes (`app.routes.ts` holds the commented
-  pattern); `core/` (auth, http, guards, interceptors, config),
+- Feature modules behind lazy routes (`app.routes.ts` + per-feature
+  `*.routes.ts`); `core/` (auth, http, guards, interceptors, config),
   `shared/` (components, directives, pipes, utils), `features/*`, `layout/`.
 - API base from `src/environments/*` only; auth token attached by an
   interceptor (Phase: `feature/frontend-auth`); generated API types from
   OpenAPI once Phase 3 codegen lands — no hand-duplicated DTOs after that.
-- Component library choice (Angular Material vs bespoke) is an open
-  question in `progress-tracker.md`; do NOT install a library until it is
-  decided and recorded. No UI dependency for decoration alone.
+- Component library: Angular Material 21 (decided 2026-10-09, recorded in
+  `progress-tracker.md`), bridged onto the Obsidian Emerald token system
+  in `styles.scss`. No UI dependency for decoration alone.
 
 ## Anti-slop design rules (mandatory)
 

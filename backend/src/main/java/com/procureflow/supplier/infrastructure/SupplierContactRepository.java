@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,4 +20,14 @@ public interface SupplierContactRepository extends JpaRepository<SupplierContact
     Optional<SupplierContact> findByIdAndTenantSlug(@Param("id") UUID id, @Param("slug") String slug);
 
     List<SupplierContact> findAllBySupplier_Id(UUID supplierId);
+
+    /**
+     * Clears the primary flag on every other contact in one statement
+     * instead of loading all contacts to flip one flag.
+     */
+    @Modifying
+    @Query("update SupplierContact c set c.primary = false"
+            + " where c.supplier.id = :supplierId and c.primary = true"
+            + " and (:exceptId is null or c.id <> :exceptId)")
+    int unsetPrimaries(@Param("supplierId") UUID supplierId, @Param("exceptId") UUID exceptId);
 }

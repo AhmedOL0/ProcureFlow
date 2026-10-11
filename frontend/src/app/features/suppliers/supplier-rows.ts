@@ -1,6 +1,8 @@
-import { forkJoin, map, Observable, of } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 
 import { Supplier, SupplierCategory, SupplierContact, SupplierPerformance, SuppliersService } from './suppliers.service';
+
+export { initialsFor } from '../../shared/utils/names';
 
 /** One directory row with everything the table renders, resolved up front. */
 export interface SupplierRow {
@@ -10,15 +12,6 @@ export interface SupplierRow {
   /** Most recent scorecard by period, if any. */
   latestScore: SupplierPerformance | null;
   averageOnTime: number | null;
-}
-
-/** Initials avatar text, e.g. "Acme Parts" -> "AP". */
-export function initialsFor(name: string | null | undefined): string {
-  const words = (name ?? '').trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) {
-    return '?';
-  }
-  return ((words[0]?.charAt(0) ?? '') + (words.length > 1 ? (words[words.length - 1]?.charAt(0) ?? '') : '')).toUpperCase();
 }
 
 /** Mean of present on-time rates, rounded to one decimal, else null. */
@@ -48,17 +41,22 @@ export function enrichSuppliers(service: SuppliersService, suppliers: Supplier[]
     suppliers.map((supplier) => {
       const id = supplier.id ?? '';
       return forkJoin({
-        contacts: service.contacts(id),
-        categories: service.categoriesOf(id),
-        performances: service.performances(id),
+        contacts: service.contacts(id).pipe(catchError(() => of([]))),
+        categories: service.categoriesOf(id).pipe(catchError(() => of([]))),
+        performances: service.performances(id).pipe(catchError(() => of([]))),
       }).pipe(
-        map(({ contacts, categories, performances }) => ({
-          supplier,
-          primaryContact: (contacts ?? []).find((c) => c.primary) ?? null,
-          categories: categories ?? [],
-          latestScore: latestScoreOf(performances ?? []),
-          averageOnTime: averageOnTime(performances ?? []),
-        })),
+        map(({ contacts, categories, performances }) => {
+          const contactList = Array.isArray(contacts) ? contacts : [];
+          const categoryList = Array.isArray(categories) ? categories : [];
+          const scoreList = Array.isArray(performances) ? performances : [];
+          return {
+            supplier,
+            primaryContact: contactList.find((c) => c.primary) ?? null,
+            categories: categoryList,
+            latestScore: latestScoreOf(scoreList),
+            averageOnTime: averageOnTime(scoreList),
+          };
+        }),
       );
     }),
   );

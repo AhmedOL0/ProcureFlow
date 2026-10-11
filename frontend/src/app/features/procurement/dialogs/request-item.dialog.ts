@@ -21,7 +21,6 @@ export interface RequestItemDialogData {
   selector: 'app-request-item-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './request-item.dialog.html',
-  styleUrl: './procurement-dialogs.scss',
 })
 export class RequestItemDialogComponent {
   private readonly requests = inject(ProcurementService);
@@ -50,8 +49,9 @@ export class RequestItemDialogComponent {
   readonly failure = signal<string | null>(null);
 
   constructor() {
-    this.suppliers.search(null, null).subscribe({
-      next: (rows) => this.options.set(rows ?? []),
+    // Dropdown scope: first supplier page (bounded read, not the directory).
+    this.suppliers.search(null, '', 0, 100).subscribe({
+      next: (result) => this.options.set(result.rows),
       error: () => undefined,
     });
   }

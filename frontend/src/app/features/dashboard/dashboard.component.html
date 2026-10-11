@@ -14,7 +14,7 @@
   </pf-page-header>
 
   @if (loading()) {
-    <div class="dashboard-loading" role="status" aria-label="Loading overview">
+    <div class="pf-loading" role="status" aria-label="Loading overview">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -28,19 +28,73 @@
     <div class="pf-kpis" role="region" aria-label="Workspace summary">
       @for (kpi of kpis(); track kpi.label) {
         <div class="pf-kpi">
-          <div class="pf-kpi__top">
-            <span class="pf-kpi__label">{{ kpi.label }}</span>
-            <lucide-angular [img]="kpi.icon" [size]="18" class="pf-kpi__icon" />
-          </div>
+          <span class="pf-kpi__label">{{ kpi.label }}</span>
           <div class="pf-kpi__value">{{ kpi.value }}</div>
           <div class="pf-kpi__sub">{{ kpi.sub }}</div>
         </div>
       }
     </div>
 
-    <div class="dashboard-columns">
+    @if (showFinance()) {
+      <div class="pf-kpis" role="region" aria-label="Financial pulse">
+        @for (kpi of financeKpis(); track kpi.label) {
+          <div class="pf-kpi">
+            <span class="pf-kpi__label">{{ kpi.label }}</span>
+            <div class="pf-kpi__value">{{ kpi.value }}</div>
+            <div class="pf-kpi__sub">{{ kpi.sub }}</div>
+          </div>
+        }
+      </div>
+    }
+    @if (financeFailed()) {
+      <p class="dashboard-note" role="status">
+        Financial figures did not load — operational data above is unaffected.
+      </p>
+    }
+
+    @if (approvalKpis(); as flow) {
+      <div class="dashboard-flow" role="region" aria-label="Approval flow">
+        <div class="dashboard-flow__stat">
+          <span class="dashboard-flow__value pf-data-mono">{{ flow.pending }}</span>
+          <span class="dashboard-flow__label">pending</span>
+        </div>
+        <div class="dashboard-flow__stat">
+          <span class="dashboard-flow__value pf-data-mono">{{ flow.decided }}</span>
+          <span class="dashboard-flow__label">decided</span>
+        </div>
+        <div class="dashboard-flow__stat">
+          <span class="dashboard-flow__value">{{ leadHours(flow.avgLeadHours) }}</span>
+          <span class="dashboard-flow__label">avg lead</span>
+        </div>
+        <div class="dashboard-flow__stat">
+          <span class="dashboard-flow__value">{{ leadHours(flow.maxLeadHours) }}</span>
+          <span class="dashboard-flow__label">max lead</span>
+        </div>
+        @if (decisionRate(); as rate) {
+          <div class="dashboard-flow__stat">
+            <span class="dashboard-flow__value">{{ rate }}</span>
+            <span class="dashboard-flow__label">decision rate</span>
+          </div>
+        }
+        <a routerLink="/analytics">Analytics</a>
+      </div>
+    }
+
+    @if (trend().length > 0) {
+      <section class="pf-table-card" aria-label="Spend per month">
+        <div class="pf-card-head">
+          <div class="pf-section-head">
+            <h2>Spend per month</h2>
+            <a routerLink="/analytics">Full trajectory</a>
+          </div>
+        </div>
+        <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics()" />
+      </section>
+    }
+
+    <div class="pf-columns">
       <section class="pf-table-card" aria-label="Awaiting approval">
-        <div class="dashboard-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head">
             <h2>Awaiting approval</h2>
             <a routerLink="/approvals">Open inbox</a>
@@ -53,14 +107,14 @@
             message="Submitted requests land here for review."
           />
         } @else {
-          <ul class="dashboard-rows">
+          <ul class="pf-rows">
             @for (row of awaiting(); track row.id) {
-              <li class="dashboard-row">
-                <div class="dashboard-row__main">
-                  <a class="dashboard-row__title" [routerLink]="['/requests', row.id]">
+              <li class="pf-row">
+                <div class="pf-row__main">
+                  <a class="pf-row__title" [routerLink]="['/requests', row.id]">
                     {{ row.title || 'Untitled request' }}
                   </a>
-                  <span class="dashboard-row__meta">
+                  <span class="pf-row__meta">
                     {{ row.priority ?? 'No priority' }} ·
                     <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
                   </span>
@@ -73,7 +127,7 @@
       </section>
 
       <section class="pf-table-card" aria-label="Recent requests">
-        <div class="dashboard-card-head">
+        <div class="pf-card-head">
           <div class="pf-section-head">
             <h2>Recent requests</h2>
             <a routerLink="/requests">View all</a>
@@ -86,14 +140,14 @@
             message="Raise the first request to start the procure-to-pay flow."
           />
         } @else {
-          <ul class="dashboard-rows">
+          <ul class="pf-rows">
             @for (row of recent(); track row.id) {
-              <li class="dashboard-row">
-                <div class="dashboard-row__main">
-                  <a class="dashboard-row__title" [routerLink]="['/requests', row.id]">
+              <li class="pf-row">
+                <div class="pf-row__main">
+                  <a class="pf-row__title" [routerLink]="['/requests', row.id]">
                     {{ row.title || 'Untitled request' }}
                   </a>
-                  <span class="dashboard-row__meta">
+                  <span class="pf-row__meta">
                     <pf-status-badge [status]="row.status ?? ''" /> ·
                     <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
                   </span>
@@ -104,5 +158,16 @@
         }
       </section>
     </div>
+
+    @if (canSeeAudit) {
+      <div class="dashboard-audit" role="note" aria-label="Audit trail">
+        <lucide-angular [img]="icons.shield" [size]="18" aria-hidden="true" />
+        <p>
+          <strong>Audit trail active.</strong>
+          Every decision, transition and payment in this workspace is recorded —
+          <a routerLink="/admin/audit">review the trail</a>.
+        </p>
+      </div>
+    }
   }
 </div>

@@ -4,8 +4,10 @@ import com.procureflow.notification.domain.AppNotification;
 import com.procureflow.notification.infrastructure.NotificationRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
-import java.util.List;
+import com.procureflow.shared.web.Paged;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +26,24 @@ public class NotificationService {
         this.tenants = tenants;
     }
 
+    /**
+     * Paged inbox read, newest first. The inbox grows with every submission
+     * and decision, so reads stay bounded; callers show {@code totalElements}
+     * on their paginator controls. {@code unreadOnly} narrows server-side so
+     * the Unread tab counts the whole inbox, not just the loaded page.
+     */
     @Transactional(readOnly = true)
-    public List<AppNotification> inbox(String tenantSlug, UUID userId) {
-        return notifications.findAllByTenantIdAndUserIdOrderByCreatedAtDesc(
-                tenants.requireTenantId(tenantSlug), userId);
+    public Paged<AppNotification> inbox(
+            String tenantSlug, UUID userId, boolean unreadOnly, int page, int size) {
+        Page<AppNotification> found;
+        if (unreadOnly) {
+            found = notifications.findAllByTenantIdAndUserIdAndReadFalseOrderByCreatedAtDesc(
+                    tenants.requireTenantId(tenantSlug), userId, PageRequest.of(page, size));
+        } else {
+            found = notifications.findAllByTenantIdAndUserIdOrderByCreatedAtDesc(
+                    tenants.requireTenantId(tenantSlug), userId, PageRequest.of(page, size));
+        }
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     @Transactional

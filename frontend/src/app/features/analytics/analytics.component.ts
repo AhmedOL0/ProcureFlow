@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,12 +8,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { forkJoin, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { DonutChartComponent } from '../../shared/components/donut-chart/donut-chart.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { SpendChartComponent, SpendPoint } from '../../shared/components/spend-chart/spend-chart.component';
 import { Inbox, Truck, Wallet } from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
 import { formatMinor } from '../../shared/utils/money';
@@ -36,9 +39,19 @@ import {
 @Component({
   selector: 'app-analytics',
   imports: [
-    RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatTableModule, MatProgressSpinnerModule, LucideAngularModule,
-    PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
+    RouterLink,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    ErrorStateComponent,
+    SpendChartComponent,
+    DonutChartComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.scss',
@@ -52,6 +65,8 @@ export class AnalyticsComponent {
   protected readonly canSeeAiUsage = this.auth.hasAuthority('ai:use');
 
   readonly periodBox = new FormControl('', { nonNullable: true });
+  readonly categoryBox = new FormControl('', { nonNullable: true });
+  readonly supplierBox = new FormControl('', { nonNullable: true });
 
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
@@ -59,24 +74,51 @@ export class AnalyticsComponent {
   protected readonly supplierKpis = signal<SupplierKpi[]>([]);
   protected readonly approvalKpis = signal<ApprovalKpi | null>(null);
   protected readonly aiUsage = signal<AiUsage | null>(null);
+  private readonly categoryQuery = signal('');
+  private readonly supplierQuery = signal('');
 
-  protected readonly categories = computed(() => toSpendCategories(this.spend()?.byCategory));
+  /**
+   * Server-side filtering stops at the period: the contracts expose no
+   * department/supplier/status/category parameters, so the two searches
+   * below filter the returned aggregates client-side and say so.
+   */
+  protected readonly categories = computed(() => {
+    const query = this.categoryQuery().trim().toLowerCase();
+    return toSpendCategories(this.spend()?.byCategory).filter(
+      (row) => !query || row.category.toLowerCase().includes(query),
+    );
+  });
+  protected readonly suppliers = computed(() => {
+    const query = this.supplierQuery().trim().toLowerCase();
+    return this.supplierKpis().filter(
+      (row) => !query || (row.supplierName ?? '').toLowerCase().includes(query),
+    );
+  });
   protected readonly months = computed<SpendMonth[]>(() => this.spend()?.byPeriod ?? []);
 
-  protected readonly categoryMax = computed(() =>
-    this.categories().reduce((max, row) => Math.max(max, row.amountMinor), 0),
+  protected readonly spendPoints = computed<SpendPoint[]>(() =>
+    this.months().map((month) => ({
+      period: month.period ?? '',
+      ordered: month.orderedMinor ?? 0,
+      invoiced: month.invoicedMinor ?? 0,
+      paid: month.paidMinor ?? 0,
+    })),
   );
-  protected readonly monthMax = computed(() =>
-    this.months().reduce(
-      (max, row) => Math.max(max, row.orderedMinor ?? 0, row.invoicedMinor ?? 0, row.paidMinor ?? 0),
-      0,
-    ),
+
+  protected readonly donutSlices = computed(() =>
+    this.categories().map((row) => ({ label: row.category, value: row.amountMinor })),
   );
 
   protected readonly supplierColumns = ['supplier', 'periods', 'onTime', 'quality'];
 
   constructor() {
     this.periodBox.setValue(this.analytics.currentPeriodUtc());
+    this.categoryBox.valueChanges
+      .pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((value) => this.categoryQuery.set(value));
+    this.supplierBox.valueChanges
+      .pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((value) => this.supplierQuery.set(value));
     this.reload();
   }
 
@@ -109,6 +151,23 @@ export class AnalyticsComponent {
   clearPeriod(): void {
     this.periodBox.setValue('');
     this.reload();
+  }
+
+  /** Chart drill: a month bar narrows the whole page to that period. */
+  drillToMonth(period: string): void {
+    if (!period || this.periodBox.value === period) {
+      return;
+    }
+    this.periodBox.setValue(period);
+    this.reload();
+  }
+
+  /** Chart drill: a donut segment fills the category search. */
+  drillToCategory(category: string): void {
+    if (!category) {
+      return;
+    }
+    this.categoryBox.setValue(category);
   }
 
   barWidth(value: number, max: number): number {

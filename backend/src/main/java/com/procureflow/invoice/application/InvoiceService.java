@@ -9,9 +9,11 @@ import com.procureflow.invoice.infrastructure.InvoiceRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.purchaseorder.application.InvoiceOrderPort;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import com.procureflow.audit.application.AuditTrailLogged;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +21,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +80,13 @@ public class InvoiceService {
         }
         Map<UUID, InvoiceOrderPort.Line> orderLines = order.lines().stream()
                 .collect(Collectors.toMap(InvoiceOrderPort.Line::id, Function.identity()));
+        // One grouped sum for all input lines, not one query per line: same
+        // snapshot (same locked transaction), identical over-invoice math.
+        Map<UUID, Long> invoiced = new HashMap<>();
+        for (Object[] row : lines.sumQuantityByTenantAndOrderItems(
+                tenantId, inputs.stream().map(LineInput::orderItemId).toList())) {
+            invoiced.put((UUID) row[0], (Long) row[1]);
+        }
         long total = 0;
         for (LineInput input : inputs) {
             InvoiceOrderPort.Line orderLine = orderLines.get(input.orderItemId());
@@ -85,7 +96,7 @@ public class InvoiceService {
             if (input.quantity() < 1) {
                 throw ApiException.badRequest("INVALID_QTY", "Invoiced quantity must be positive");
             }
-            long already = lines.sumQuantityByTenantAndOrderItem(tenantId, input.orderItemId());
+            long already = invoiced.getOrDefault(input.orderItemId(), 0L);
             if (already + input.quantity() > orderLine.quantity()) {
                 throw ApiException.conflict("OVER_INVOICED", "Cannot invoice more than ordered");
             }
@@ -112,12 +123,16 @@ public class InvoiceService {
     }
 
     @Transactional(readOnly = true)
-    public List<Invoice> list(String tenantSlug, Invoice.Status status) {
+    public Paged<Invoice> page(String tenantSlug, Invoice.Status status, String query, int page, int size) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
-        if (status == null) {
-            return invoices.findAllByTenantIdOrderByCreatedAtDesc(tenantId);
-        }
-        return invoices.findAllByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, status);
+        String terms = query == null || query.isBlank() ? "" : query;
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<Invoice> found = status == null
+                ? invoices.findAllByTenantIdAndNumberContainingIgnoreCaseOrderByCreatedAtDesc(
+                        tenantId, terms, pageable)
+                : invoices.findAllByTenantIdAndStatusAndNumberContainingIgnoreCaseOrderByCreatedAtDesc(
+                        tenantId, status, terms, pageable);
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     @Transactional(readOnly = true)

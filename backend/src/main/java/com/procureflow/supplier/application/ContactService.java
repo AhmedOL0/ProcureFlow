@@ -87,12 +87,14 @@ public class ContactService {
         contacts.delete(scoped(tenantSlug, contactId));
     }
 
+    /**
+     * Clears the primary flag on every other contact in one statement. Safe
+     * for both callers: neither holds other contacts in the session (add
+     * works on a new instance, update on the excluded one), so no managed
+     * copy can go stale behind the bulk update.
+     */
     private void unsetPrimaries(UUID supplierId, UUID exceptId) {
-        for (SupplierContact existing : contacts.findAllBySupplier_Id(supplierId)) {
-            if (!existing.getId().equals(exceptId) && existing.isPrimary()) {
-                existing.setPrimary(false);
-            }
-        }
+        contacts.unsetPrimaries(supplierId, exceptId);
     }
 
     private Supplier scopedSupplier(String tenantSlug, UUID supplierId) {

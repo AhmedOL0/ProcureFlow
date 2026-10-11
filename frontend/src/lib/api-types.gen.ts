@@ -11,11 +11,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List users of the current workspace */
+        /** Paged users of the current workspace */
         get: operations["list"];
         put?: never;
         /** Create a user in the current workspace */
         post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Helpdesk reset: set a workspace password, revoking all its sessions */
+        post: operations["resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -29,7 +46,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search suppliers of the current workspace */
+        /** Search suppliers of the current workspace (paged) */
         get: operations["search"];
         put?: never;
         /** Create a supplier */
@@ -119,7 +136,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List requests of the current workspace, newest first */
+        /** Paged requests of the current workspace, newest first */
         get: operations["list_2"];
         put?: never;
         /** Create a draft (idempotent per Idempotency-Key) */
@@ -188,7 +205,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List orders of the current workspace, newest first */
+        /** Paged orders of the current workspace, newest first */
         get: operations["list_3"];
         put?: never;
         /** Start a draft order from one approved request */
@@ -292,7 +309,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List invoices of the current workspace, newest first */
+        /** Paged invoices of the current workspace, newest first */
         get: operations["list_5"];
         put?: never;
         /** Book an invoice against a sent order (over-invoicing rejected) */
@@ -320,6 +337,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the workspace's invites, newest first */
+        get: operations["list_6"];
+        put?: never;
+        /** Invite an address with a fixed role set (link mailed, token never returned) */
+        post: operations["invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/departments": {
         parameters: {
             query?: never;
@@ -328,7 +363,7 @@ export interface paths {
             cookie?: never;
         };
         /** List departments of the current workspace */
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         /** Create a department */
         post: operations["create_6"];
@@ -345,11 +380,62 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List pots of the current workspace, newest period first */
-        get: operations["list_7"];
+        /** Paged pots of the current workspace, newest period first */
+        get: operations["list_8"];
         put?: never;
         /** Open a named pot for one month (YYYY-MM) */
         post: operations["create_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Redeem a mailbox-verification link */
+        post: operations["verifyEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Redeem a reset token for a new password */
+        post: operations["resetPassword_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/resend-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-send the mailbox-verification link (always the same generic answer) */
+        post: operations["resendVerification"];
         delete?: never;
         options?: never;
         head?: never;
@@ -365,7 +451,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register (creates or joins a workspace) */
+        /** Register (creates a workspace, or joins one with a live invite) */
         post: operations["register"];
         delete?: never;
         options?: never;
@@ -424,6 +510,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start an email-link password reset (always the same generic answer) */
+        post: operations["forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change the caller's own password, revoking all its sessions */
+        post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/approvals/workflows": {
         parameters: {
             query?: never;
@@ -468,7 +588,7 @@ export interface paths {
             cookie?: never;
         };
         /** List delegations of the current workspace */
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         /** Delegate decide power to a workspace member until endsAt */
         post: operations["delegate"];
@@ -581,6 +701,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one user of the current workspace */
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a workspace profile (names only, null stays unchanged) */
+        patch: operations["updateProfile"];
+        trace?: never;
+    };
+    "/api/v1/users/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Suspend (DISABLED) or reactivate (ACTIVE) a workspace user; self-change refused */
+        patch: operations["setStatus"];
+        trace?: never;
+    };
+    "/api/v1/users/{id}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Replace a workspace user's roles; self-change refused */
+        patch: operations["setRoles"];
+        trace?: never;
+    };
+    "/api/v1/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current workspace profile (self, no admin rights needed) */
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the caller's own profile (names only, null stays unchanged) */
+        patch: operations["updateOwnProfile"];
+        trace?: never;
+    };
     "/api/v1/tenants/current": {
         parameters: {
             query?: never;
@@ -607,7 +797,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get one supplier of the current workspace */
-        get: operations["get"];
+        get: operations["get_1"];
         put?: never;
         post?: never;
         /** Delete a supplier and its contacts/scorecards */
@@ -662,7 +852,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get one request with its items and total */
-        get: operations["get_1"];
+        get: operations["get_2"];
         put?: never;
         post?: never;
         /** Delete a draft request with its items */
@@ -716,7 +906,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get one department of the current workspace */
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
         /** Delete an empty department */
@@ -744,15 +934,15 @@ export interface paths {
         patch: operations["updateWorkflow"];
         trace?: never;
     };
-    "/api/v1/users/{id}": {
+    "/api/v1/purchase-requests/mine": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get one user of the current workspace */
-        get: operations["get_3"];
+        /** Paged requests raised by the caller, newest first */
+        get: operations["mine"];
         put?: never;
         post?: never;
         delete?: never;
@@ -785,7 +975,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** My inbox, newest first */
+        /** My inbox, newest first (paged, optionally unread only) */
         get: operations["inbox"];
         put?: never;
         post?: never;
@@ -855,7 +1045,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current authenticated user */
-        get: operations["me"];
+        get: operations["me_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -871,8 +1061,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List trail rows, newest first, optionally filtered */
-        get: operations["list_9"];
+        /** Paged trail rows, newest first, optionally filtered and searched */
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -983,6 +1173,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invites/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke an invite */
+        delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/approvals/workflows/{id}/steps/{stepId}": {
         parameters: {
             query?: never;
@@ -1011,7 +1218,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Revoke a delegation (delegator or workspace admin) */
-        delete: operations["revoke"];
+        delete: operations["revoke_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1036,8 +1243,12 @@ export interface components {
             firstName?: string;
             lastName?: string;
             status?: string;
+            verified?: boolean;
             tenantSlug?: string;
             roles?: string[];
+        };
+        SetPasswordRequest: {
+            password: string;
         };
         CreateSupplierRequest: {
             name: string;
@@ -1258,6 +1469,21 @@ export interface components {
             /** Format: int64 */
             amountMinor?: number;
         };
+        CreateInviteRequest: {
+            /** Format: email */
+            email: string;
+            roleNames: string[];
+        };
+        InviteResponse: {
+            /** Format: uuid */
+            id?: string;
+            email?: string;
+            roles?: string[];
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         CreateDepartmentRequest: {
             name: string;
             /** Format: uuid */
@@ -1290,6 +1516,20 @@ export interface components {
             /** Format: int64 */
             remainingMinor?: number;
         };
+        VerifyEmailRequest: {
+            token: string;
+        };
+        ResetPasswordRequest: {
+            token: string;
+            newPassword: string;
+        };
+        ResendVerificationRequest: {
+            /** Format: email */
+            email: string;
+        };
+        MessageResponse: {
+            message?: string;
+        };
         RegisterRequest: {
             /** Format: email */
             email: string;
@@ -1298,6 +1538,7 @@ export interface components {
             lastName?: string;
             tenantSlug: string;
             tenantName?: string;
+            inviteToken?: string;
         };
         AuthResponse: {
             tokenType?: string;
@@ -1315,6 +1556,15 @@ export interface components {
             email: string;
             password: string;
             tenantSlug?: string;
+        };
+        ForgotPasswordRequest: {
+            /** Format: email */
+            email: string;
+            tenantSlug?: string;
+        };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
         };
         CreateWorkflowRequest: {
             name: string;
@@ -1425,6 +1675,17 @@ export interface components {
             /** Format: int64 */
             amountMinor?: number;
         };
+        UpdateProfileRequest: {
+            firstName?: string;
+            lastName?: string;
+        };
+        UpdateStatusRequest: {
+            /** @enum {string} */
+            status: "ACTIVE" | "INVITED" | "DISABLED";
+        };
+        UpdateRolesRequest: {
+            roleNames: string[];
+        };
         UpdateTenantRequest: {
             name: string;
         };
@@ -1493,6 +1754,105 @@ export interface components {
             escalateAfterDays?: number;
             active?: boolean;
         };
+        PagedUserResponse: {
+            content?: components["schemas"]["UserResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedSupplierResponse: {
+            content?: components["schemas"]["SupplierResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedPurchaseRequestResponse: {
+            content?: components["schemas"]["PurchaseRequestResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedOrderResponse: {
+            content?: components["schemas"]["OrderResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedNotificationResponse: {
+            content?: components["schemas"]["NotificationResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedMembershipResponse: {
+            content?: components["schemas"]["MembershipResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedInvoiceResponse: {
+            content?: components["schemas"]["InvoiceResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedDepartmentResponse: {
+            content?: components["schemas"]["DepartmentResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PagedBudgetResponse: {
+            content?: components["schemas"]["BudgetResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
         ReservationResponse: {
             /** Format: uuid */
             id?: string;
@@ -1516,6 +1876,17 @@ export interface components {
             afterJson?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        PagedAuditEventResponse: {
+            content?: components["schemas"]["AuditEventResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         AssignmentResponse: {
             /** Format: uuid */
@@ -1597,7 +1968,11 @@ export type $defs = Record<string, never>;
 export interface operations {
     list: {
         parameters: {
-            query?: never;
+            query?: {
+                q?: string;
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1610,7 +1985,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["UserResponse"][];
+                    "*/*": components["schemas"]["PagedUserResponse"];
                 };
             };
         };
@@ -1639,11 +2014,37 @@ export interface operations {
             };
         };
     };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     search: {
         parameters: {
             query?: {
                 status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
                 q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -1657,7 +2058,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SupplierResponse"][];
+                    "*/*": components["schemas"]["PagedSupplierResponse"];
                 };
             };
         };
@@ -1878,6 +2279,9 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "ORDERED" | "CANCELLED";
+                q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -1891,7 +2295,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PurchaseRequestResponse"][];
+                    "*/*": components["schemas"]["PagedPurchaseRequestResponse"];
                 };
             };
         };
@@ -1996,6 +2400,8 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "DRAFT" | "SENT" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CLOSED" | "CANCELLED";
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2009,7 +2415,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["OrderResponse"][];
+                    "*/*": components["schemas"]["PagedOrderResponse"];
                 };
             };
         };
@@ -2132,7 +2538,10 @@ export interface operations {
     };
     list_4: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2145,7 +2554,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["MembershipResponse"][];
+                    "*/*": components["schemas"]["PagedMembershipResponse"];
                 };
             };
         };
@@ -2178,6 +2587,9 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "UNPAID" | "PARTIAL" | "PAID";
+                q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2191,7 +2603,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["InvoiceResponse"][];
+                    "*/*": components["schemas"]["PagedInvoiceResponse"];
                 };
             };
         };
@@ -2261,7 +2673,55 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["DepartmentResponse"][];
+                    "*/*": components["schemas"]["InviteResponse"][];
+                };
+            };
+        };
+    };
+    invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInviteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InviteResponse"];
+                };
+            };
+        };
+    };
+    list_7: {
+        parameters: {
+            query?: {
+                q?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedDepartmentResponse"];
                 };
             };
         };
@@ -2290,10 +2750,13 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 period?: string;
+                q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -2307,7 +2770,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["BudgetResponse"][];
+                    "*/*": components["schemas"]["PagedBudgetResponse"];
                 };
             };
         };
@@ -2332,6 +2795,74 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["BudgetResponse"];
+                };
+            };
+        };
+    };
+    verifyEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resetPassword_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resendVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MessageResponse"];
                 };
             };
         };
@@ -2430,6 +2961,52 @@ export interface operations {
             };
         };
     };
+    forgotPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MessageResponse"];
+                };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     listWorkflows: {
         parameters: {
             query?: never;
@@ -2522,7 +3099,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -2734,6 +3311,150 @@ export interface operations {
             };
         };
     };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    updateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    setStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    setRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRolesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    updateOwnProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
     current: {
         parameters: {
             query?: never;
@@ -2778,7 +3499,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -2938,7 +3659,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3074,7 +3795,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3168,13 +3889,16 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    mine: {
         parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
+            query?: {
+                status?: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "ORDERED" | "CANCELLED";
+                q?: string;
+                page?: number;
+                size?: number;
             };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -3185,7 +3909,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["UserResponse"];
+                    "*/*": components["schemas"]["PagedPurchaseRequestResponse"];
                 };
             };
         };
@@ -3214,7 +3938,11 @@ export interface operations {
     };
     inbox: {
         parameters: {
-            query?: never;
+            query?: {
+                unreadOnly?: boolean;
+                page?: number;
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3227,7 +3955,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["NotificationResponse"][];
+                    "*/*": components["schemas"]["PagedNotificationResponse"];
                 };
             };
         };
@@ -3318,7 +4046,7 @@ export interface operations {
             };
         };
     };
-    me: {
+    me_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3338,11 +4066,14 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: {
                 entityType?: string;
                 entityId?: string;
+                q?: string;
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -3356,7 +4087,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["AuditEventResponse"][];
+                    "*/*": components["schemas"]["PagedAuditEventResponse"];
                 };
             };
         };
@@ -3487,6 +4218,26 @@ export interface operations {
             };
         };
     };
+    revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     removeStep: {
         parameters: {
             query?: never;
@@ -3508,7 +4259,7 @@ export interface operations {
             };
         };
     };
-    revoke: {
+    revoke_1: {
         parameters: {
             query?: never;
             header?: never;

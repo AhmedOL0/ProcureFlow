@@ -53,6 +53,9 @@ public class User {
     @Column(nullable = false, length = 20)
     private Status status = Status.ACTIVE;
 
+    @Column(nullable = false)
+    private boolean verified = false;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_roles",
@@ -128,6 +131,18 @@ public class User {
 
     public Status getStatus() {
         return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 
     public Set<Role> getRoles() {

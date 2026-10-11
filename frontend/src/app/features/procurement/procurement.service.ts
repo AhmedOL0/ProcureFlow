@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
@@ -9,6 +9,11 @@ export type PurchaseRequest = components['schemas']['PurchaseRequestResponse'];
 export type RequestItem = components['schemas']['ItemResponse'];
 export type Decision = components['schemas']['DecisionResponse'];
 export type ApprovalState = components['schemas']['AssignmentResponse'];
+
+export interface RequestPage {
+  rows: PurchaseRequest[];
+  total: number;
+}
 
 /**
  * Thin typed client over procurement + approval-decision contracts.
@@ -20,12 +25,48 @@ export class ProcurementService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/api/v1`;
 
-  list(status: string | null): Observable<PurchaseRequest[]> {
-    let params = new HttpParams();
+  list(
+    status: string | null,
+    query: string | null,
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<RequestPage> {
+    let params = new HttpParams().set('page', pageIndex).set('size', pageSize);
     if (status) {
       params = params.set('status', status);
     }
-    return this.http.get<PurchaseRequest[]>(`${this.base}/purchase-requests`, { params });
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get<components['schemas']['PagedPurchaseRequestResponse']>(`${this.base}/purchase-requests`, {
+        params,
+      })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
+  }
+
+  /**
+   * The caller's own slice: the backend forces the requester from the
+   * session, so no caller id ever crosses the wire.
+   */
+  mine(
+    status: string | null,
+    query: string | null,
+    pageIndex: number,
+    pageSize: number,
+  ): Observable<RequestPage> {
+    let params = new HttpParams().set('page', pageIndex).set('size', pageSize);
+    if (status) {
+      params = params.set('status', status);
+    }
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get<components['schemas']['PagedPurchaseRequestResponse']>(`${this.base}/purchase-requests/mine`, {
+        params,
+      })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
   }
 
   get(id: string): Observable<PurchaseRequest> {

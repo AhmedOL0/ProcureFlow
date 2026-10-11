@@ -39,7 +39,10 @@ export class ApprovalPolicyService {
   }
 
   addStep(id: string, stepOrder: number, approverId: string): Observable<WorkflowStep> {
-    return this.http.post<WorkflowStep>(`${this.base}/workflows/${id}/steps`, { stepOrder, approverId });
+    return this.http.post<WorkflowStep>(`${this.base}/workflows/${id}/steps`, {
+      stepOrder,
+      approverId,
+    });
   }
 
   removeStep(id: string, stepId: string): Observable<void> {

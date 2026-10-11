@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,7 +8,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { computed } from '@angular/core';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
@@ -41,40 +42,36 @@ export class AuditTrailComponent {
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
-  private readonly rows = signal<AuditEvent[]>([]);
+  protected readonly rows = signal<AuditEvent[]>([]);
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
   protected readonly expanded = signal<string | null>(null);
 
-  protected readonly filtered = computed(() => {
-    const query = this.entityFilter.value.trim().toLowerCase();
-    const rows = this.rows();
-    if (!query) {
-      return rows;
-    }
-    return rows.filter(
-      (row) =>
-        (row.action ?? '').toLowerCase().includes(query) ||
-        (row.entityType ?? '').toLowerCase().includes(query) ||
-        (row.entityId ?? '').toLowerCase().includes(query),
-    );
-  });
-
-  protected readonly pageRows = computed(() => {
-    const { pageIndex, pageSize } = this.page();
-    return this.filtered().slice(pageIndex * pageSize, pageIndex * pageSize + pageSize);
-  });
-
+  /**
+   * Free-text search over action and entity type, executed server-side so
+   * matches count every page instead of the loaded one.
+   */
   constructor() {
     this.reload();
+    this.entityFilter.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe(() => {
+        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+        this.reload();
+      });
   }
 
   reload(): void {
+    const current = this.page();
+    this.load(current.pageIndex, current.pageSize);
+  }
+
+  load(pageIndex: number, pageSize: number): void {
     this.loading.set(true);
     this.failure.set(null);
-    this.trail.list(null, null).subscribe({
-      next: (rows) => {
-        this.rows.set(rows ?? []);
-        this.page.update((p) => ({ ...p, pageIndex: 0 }));
+    this.trail.page(null, null, this.entityFilter.value, pageIndex, pageSize).subscribe({
+      next: (result) => {
+        this.rows.set(result.rows);
+        this.page.set({ pageIndex, pageSize, length: result.total });
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -85,7 +82,7 @@ export class AuditTrailComponent {
   }
 
   onPage(page: PageEvent): void {
-    this.page.set(page);
+    this.load(page.pageIndex, page.pageSize);
   }
 
   toggle(row: AuditEvent): void {

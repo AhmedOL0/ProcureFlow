@@ -5,11 +5,13 @@ import com.procureflow.audit.domain.AuditEvent;
 import com.procureflow.audit.infrastructure.AuditEventRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -56,19 +58,43 @@ public class AuditService {
         }
     }
 
+    /**
+     * Paged trail read: same newest-first order and filter branches as the
+     * original list, but bounded — the trail grows forever, so unbounded
+     * reads were the first scalability wall. A non-blank {@code q} narrows
+     * server-side over action and entity type, so the trail search counts
+     * every page instead of the loaded one.
+     */
     @Transactional(readOnly = true)
-    public List<AuditEvent> list(String tenantSlug, String entityType, UUID entityId) {
+    public Paged<AuditEvent> page(
+            String tenantSlug, String entityType, UUID entityId, String q, int page, int size) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
-        if (entityType == null && entityId == null) {
-            return events.findAllByTenantIdOrderByCreatedAtDesc(tenantId);
+        PageRequest pageable = PageRequest.of(page, size);
+        String query = q == null || q.isBlank() ? "" : q;
+        Page<AuditEvent> found;
+        if (query.isEmpty()) {
+            if (entityType == null && entityId == null) {
+                found = events.findAllByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+            } else if (entityType != null && entityId == null) {
+                found = events.findAllByTenantIdAndEntityTypeOrderByCreatedAtDesc(tenantId, entityType, pageable);
+            } else if (entityType == null) {
+                found = events.findAllByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, entityId, pageable);
+            } else {
+                found = events.findAllByTenantIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(
+                        tenantId, entityType, entityId, pageable);
+            }
+        } else if (entityType != null && entityId == null) {
+            found = events.searchByTenantIdAndEntityTypeOrderByCreatedAtDesc(
+                    tenantId, entityType, query, pageable);
+        } else if (entityType == null && entityId != null) {
+            found = events.searchByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, entityId, query, pageable);
+        } else if (entityType != null) {
+            found = events.searchByTenantIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(
+                    tenantId, entityType, entityId, query, pageable);
+        } else {
+            found = events.searchByTenantIdOrderByCreatedAtDesc(tenantId, query, pageable);
         }
-        if (entityType != null && entityId == null) {
-            return events.findAllByTenantIdAndEntityTypeOrderByCreatedAtDesc(tenantId, entityType);
-        }
-        if (entityType == null) {
-            return events.findAllByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, entityId);
-        }
-        return events.findAllByTenantIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(tenantId, entityType, entityId);
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     private String toJson(Map<String, Object> payload) {

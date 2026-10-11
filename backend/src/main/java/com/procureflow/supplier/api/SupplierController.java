@@ -7,6 +7,7 @@ import com.procureflow.supplier.application.SupplierService;
 import com.procureflow.supplier.domain.Supplier;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -46,14 +47,17 @@ public class SupplierController {
     }
 
     @GetMapping
-    @Operation(summary = "Search suppliers of the current workspace")
-    public ResponseEntity<List<SupplierResponse>> search(
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Search suppliers of the current workspace (paged)")
+    public ResponseEntity<Paged<SupplierResponse>> search(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestParam(required = false) Supplier.Status status,
-            @RequestParam(required = false, name = "q") String query) {
-        return ResponseEntity.ok(suppliers.search(principal.tenantId(), status, query).stream()
-                .map(SupplierResponse::from)
-                .toList());
+            @RequestParam(required = false, name = "q") String query,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(suppliers
+                .page(principal.tenantId(), status, query, Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(SupplierResponse::from));
     }
 
     @PostMapping
@@ -73,6 +77,7 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get one supplier of the current workspace")
     public ResponseEntity<SupplierResponse> get(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
@@ -107,6 +112,7 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}/contacts")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List contacts of a supplier")
     public ResponseEntity<List<ContactResponse>> contacts(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
@@ -134,6 +140,7 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}/categories")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List categories assigned to a supplier")
     public ResponseEntity<List<CategoryResponse>> categories(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
@@ -156,6 +163,7 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}/performances")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List scorecards of a supplier, newest first")
     public ResponseEntity<List<PerformanceResponse>> performances(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {

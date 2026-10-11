@@ -9,7 +9,7 @@
 .pf-head__crumbs {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--pf-space-sm);
   font: var(--pf-label-md);
   color: var(--pf-slate);
   margin-bottom: var(--pf-space-xs);
@@ -48,5 +48,17 @@
   display: flex;
   gap: var(--pf-space-sm);
   align-items: center;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+  .pf-head__actions {
+    justify-content: stretch;
+  }
+  .pf-head__actions > a,
+  .pf-head__actions > button {
+    flex: 1 1 auto;
+  }
 }

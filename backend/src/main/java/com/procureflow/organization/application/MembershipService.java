@@ -7,9 +7,12 @@ import com.procureflow.organization.domain.Membership;
 import com.procureflow.organization.infrastructure.DepartmentRepository;
 import com.procureflow.organization.infrastructure.MembershipRepository;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,8 +41,9 @@ public class MembershipService {
     }
 
     @Transactional(readOnly = true)
-    public List<Membership> listByTenant(String tenantSlug) {
-        return memberships.findAllByTenantSlug(tenantSlug);
+    public Paged<Membership> pageByTenant(String tenantSlug, int page, int size) {
+        Page<Membership> found = memberships.findPageByTenantSlug(tenantSlug, PageRequest.of(page, size));
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     public Membership add(String tenantSlug, UUID userId, UUID departmentId) {

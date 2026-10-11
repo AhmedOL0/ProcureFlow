@@ -13,12 +13,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * Single translation point from exceptions to the {@link ApiError} envelope.
@@ -60,6 +57,22 @@ public class RestExceptionHandler {
     public ResponseEntity<ApiError> handleMissingParameter(MissingServletRequestParameterException ex) {
         return ResponseEntity.badRequest()
                 .body(ApiError.of("MISSING_PARAMETER", "Required parameter missing: " + ex.getParameterName()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        // A non-UUID value on a UUID route (e.g. /users/me before a literal
+        // /me mapping exists) is a client fault, never a 500: without this,
+        // every /{id} route answers INTERNAL_ERROR with a stack trace.
+        return ResponseEntity.badRequest()
+                .body(ApiError.of(
+                        "INVALID_PATH_VARIABLE",
+                        "Invalid path variable '" + ex.getName() + "': not a valid "
+                                + simpleNameOf(ex.getRequiredType())));
+    }
+
+    private static String simpleNameOf(Class<?> type) {
+        return type == null ? "value" : type.getSimpleName();
     }
 
     @ExceptionHandler({AuthenticationException.class})

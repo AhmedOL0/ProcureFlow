@@ -4,6 +4,8 @@ import com.procureflow.identity.domain.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,8 +18,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findAllByEmail(String email);
 
     @EntityGraph(attributePaths = {"tenant", "roles", "roles.permissions"})
-    @Query("select u from User u where u.tenant.slug = :slug")
-    List<User> findAllByTenantSlug(@Param("slug") String slug);
+    @Query("select u from User u where u.tenant.slug = :slug"
+            + " and lower(u.email) like lower(concat('%', :query, '%'))")
+    Page<User> findPageByTenantSlug(
+            @Param("slug") String slug, @Param("query") String query, Pageable pageable);
 
     @EntityGraph(attributePaths = {"tenant", "roles", "roles.permissions"})
     @Query("select u from User u where u.tenant.slug = :slug and u.email = :email")

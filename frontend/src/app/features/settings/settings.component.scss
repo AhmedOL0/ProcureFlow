@@ -1,0 +1,8 @@
+// Account settings: notice, loading, card heads, form rows and muted
+// text are global pf-* primitives; the card body keeps its own rhythm.
+.settings-body {
+  padding: var(--pf-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-md);
+}

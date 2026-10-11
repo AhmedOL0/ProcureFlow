@@ -1,0 +1,14 @@
+<div class="donut-chart">
+  <div #canvas class="donut-chart__stage" aria-hidden="true"></div>
+  <ul class="donut-chart__legend">
+    @for (row of legend(); track row.label) {
+      <li>
+        <span class="donut-chart__swatch {{ row.css }}" aria-hidden="true"></span>
+        <span class="donut-chart__label">{{ row.label }}</span>
+        <span class="donut-chart__value pf-data-mono"
+          >{{ formatMinor(row.value, currency()) }} · {{ row.share }}</span
+        >
+      </li>
+    }
+  </ul>
+</div>

@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -69,6 +71,7 @@ class AccountIT extends AbstractIntegrationTest {
     void forgotPasswordIsGenericForUnknownAccounts() {
         String slug = uniqueSlug("acct");
         register(slug, "boss@" + slug + ".test");
+        clearInvocations(mail);
 
         ResponseEntity<String> response = post(
                 "/api/v1/auth/forgot-password",
@@ -86,6 +89,7 @@ class AccountIT extends AbstractIntegrationTest {
         String slug = uniqueSlug("acct");
         String email = "boss@" + slug + ".test";
         register(slug, email);
+        clearInvocations(mail);
 
         ResponseEntity<String> response = post(
                 "/api/v1/auth/forgot-password", null, Map.of("email", email), String.class);
@@ -275,6 +279,22 @@ class AccountIT extends AbstractIntegrationTest {
                 Map.of("firstName", "Mallory"),
                 String.class);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                patch(
+                                "/api/v1/users/" + adminA.user().id() + "/status",
+                                adminB.accessToken(),
+                                Map.of("status", "DISABLED"),
+                                String.class)
+                        .getStatusCode());
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                patch(
+                                "/api/v1/users/" + adminA.user().id() + "/roles",
+                                adminB.accessToken(),
+                                Map.of("roleNames", List.of("MEMBER")),
+                                String.class)
+                        .getStatusCode());
     }
 
     @Test
@@ -293,6 +313,189 @@ class AccountIT extends AbstractIntegrationTest {
         assertEquals(HttpStatus.FORBIDDEN, post(
                 "/api/v1/users/" + member.id() + "/password",
                 token, Map.of("password", "reset-horse-123"), String.class).getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, patch(
+                "/api/v1/users/" + member.id() + "/status", token, Map.of("status", "DISABLED"), String.class)
+                .getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, patch(
+                "/api/v1/users/" + member.id() + "/roles", token, Map.of("roleNames", List.of("MEMBER")), String.class)
+                .getStatusCode());
+    }
+
+    @Test
+    void suspendBlocksLoginAndRefreshUntilReactivated() {
+        String slug = uniqueSlug("acct");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+        UserResponse member = createUser(admin.accessToken(), slug, "min", "MEMBER");
+        ResponseEntity<AuthResponse> memberLogin = login("min@" + slug + ".test", "correct-horse-123", slug);
+        assertEquals(HttpStatus.OK, memberLogin.getStatusCode());
+        String refresh = memberLogin.getBody().refreshToken();
+
+        ResponseEntity<UserResponse> suspended = patch(
+                "/api/v1/users/" + member.id() + "/status",
+                admin.accessToken(),
+                Map.of("status", "DISABLED"),
+                UserResponse.class);
+        assertEquals(HttpStatus.OK, suspended.getStatusCode());
+        assertEquals("DISABLED", suspended.getBody().status());
+
+        assertEquals(
+                HttpStatus.UNAUTHORIZED,
+                login("min@" + slug + ".test", "correct-horse-123", slug).getStatusCode());
+        assertEquals(
+                HttpStatus.UNAUTHORIZED,
+                post("/api/v1/auth/refresh", null, Map.of("refreshToken", refresh), String.class).getStatusCode());
+
+        ResponseEntity<UserResponse> reactivated = patch(
+                "/api/v1/users/" + member.id() + "/status",
+                admin.accessToken(),
+                Map.of("status", "ACTIVE"),
+                UserResponse.class);
+        assertEquals(HttpStatus.OK, reactivated.getStatusCode());
+        assertEquals(
+                HttpStatus.OK, login("min@" + slug + ".test", "correct-horse-123", slug).getStatusCode());
+    }
+
+    @Test
+    void selfSuspendAndSelfRoleChangeRefused() {
+        String slug = uniqueSlug("acct");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+
+        assertEquals(
+                HttpStatus.CONFLICT,
+                patch(
+                                "/api/v1/users/" + admin.user().id() + "/status",
+                                admin.accessToken(),
+                                Map.of("status", "DISABLED"),
+                                String.class)
+                        .getStatusCode());
+        assertEquals(
+                HttpStatus.CONFLICT,
+                patch(
+                                "/api/v1/users/" + admin.user().id() + "/roles",
+                                admin.accessToken(),
+                                Map.of("roleNames", List.of("MEMBER")),
+                                String.class)
+                        .getStatusCode());
+        assertEquals("ACTIVE", me(admin.accessToken()).status());
+        assertTrue(me(admin.accessToken()).roles().contains("TENANT_ADMIN"));
+    }
+
+    @Test
+    void roleChangesTakeEffectUnknownRejectedAndAudited() {
+        String slug = uniqueSlug("acct");
+        AuthResponse admin = register(slug, "boss@" + slug + ".test");
+        UserResponse member = createUser(admin.accessToken(), slug, "min", "MEMBER");
+
+        ResponseEntity<UserResponse> promoted = patch(
+                "/api/v1/users/" + member.id() + "/roles",
+                admin.accessToken(),
+                Map.of("roleNames", List.of("APPROVER")),
+                UserResponse.class);
+        assertEquals(HttpStatus.OK, promoted.getStatusCode());
+        assertTrue(promoted.getBody().roles().contains("APPROVER"));
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                patch(
+                                "/api/v1/users/" + member.id() + "/roles",
+                                admin.accessToken(),
+                                Map.of("roleNames", List.of("NOPE")),
+                                String.class)
+                        .getStatusCode());
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                patch(
+                                "/api/v1/users/" + member.id() + "/roles",
+                                admin.accessToken(),
+                                Map.of("roleNames", List.of()),
+                                String.class)
+                        .getStatusCode());
+
+        ResponseEntity<Map> trail = get(
+                "/api/v1/audit-events?entityType=user&entityId=" + member.id(), admin.accessToken(), Map.class);
+        assertEquals(HttpStatus.OK, trail.getStatusCode());
+        assertNotNull(trail.getBody());
+        assertTrue(trail.getBody().get("content").toString().contains("USER_ROLES_CHANGED"));
+    }
+
+    @Test
+    void emailVerificationMarksAccountVerified() {
+        String slug = uniqueSlug("acct");
+        String email = "nova@" + slug + ".test";
+        ResponseEntity<AuthResponse> response = rest.postForEntity(
+                "/api/v1/auth/register",
+                Map.of(
+                        "email", email,
+                        "password", "correct-horse-123",
+                        "tenantSlug", slug,
+                        "tenantName", "Workspace " + slug),
+                AuthResponse.class);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        String token = response.getBody().accessToken();
+        assertEquals(Boolean.FALSE, me(token).verified());
+
+        String raw = mailedToken(email, "/verify-email?token=");
+        assertEquals(
+                HttpStatus.NO_CONTENT,
+                post("/api/v1/auth/verify-email", null, Map.of("token", raw), Void.class).getStatusCode());
+        assertEquals(Boolean.TRUE, me(token).verified());
+
+        assertEquals(
+                HttpStatus.GONE,
+                post("/api/v1/auth/verify-email", null, Map.of("token", raw), Void.class).getStatusCode());
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                post("/api/v1/auth/verify-email", null, Map.of("token", "bogus"), Void.class).getStatusCode());
+    }
+
+    @Test
+    void unverifiedAccountsGetNoResetToken() {
+        String slug = uniqueSlug("acct");
+        String email = "ghost@" + slug + ".test";
+        rest.postForEntity(
+                "/api/v1/auth/register",
+                Map.of(
+                        "email", email,
+                        "password", "correct-horse-123",
+                        "tenantSlug", slug,
+                        "tenantName", "Workspace " + slug),
+                AuthResponse.class);
+
+        ResponseEntity<Map> forgot =
+                post("/api/v1/auth/forgot-password", null, Map.of("email", email), Map.class);
+        assertEquals(HttpStatus.OK, forgot.getStatusCode());
+
+        ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
+        verify(mail, atLeastOnce()).send(sent.capture());
+        assertTrue(sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email))
+                .noneMatch(message -> message.subject().contains("Reset")));
+    }
+
+    @Test
+    void resendVerificationIsGenericButDelivers() {
+        ResponseEntity<Map> unknown =
+                post("/api/v1/auth/resend-verification", null, Map.of("email", "nobody@nowhere.test"), Map.class);
+        assertEquals(HttpStatus.OK, unknown.getStatusCode());
+
+        String slug = uniqueSlug("acct");
+        String email = "retry@" + slug + ".test";
+        rest.postForEntity(
+                "/api/v1/auth/register",
+                Map.of(
+                        "email", email,
+                        "password", "correct-horse-123",
+                        "tenantSlug", slug,
+                        "tenantName", "Workspace " + slug),
+                AuthResponse.class);
+        ResponseEntity<Map> resend =
+                post("/api/v1/auth/resend-verification", null, Map.of("email", email), Map.class);
+        assertEquals(HttpStatus.OK, resend.getStatusCode());
+        assertEquals(
+                HttpStatus.NO_CONTENT,
+                post("/api/v1/auth/verify-email", null, Map.of("token", mailedToken(email, "/verify-email?token=")),
+                                Void.class)
+                        .getStatusCode());
     }
 
     @Test
@@ -305,8 +508,12 @@ class AccountIT extends AbstractIntegrationTest {
         register(slug, email);
         post("/api/v1/auth/forgot-password", null, Map.of("email", email), String.class);
         ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
-        verify(mail, times(1)).send(sent.capture());
-        return tokenFrom(sent.getValue().textBody());
+        verify(mail, atLeastOnce()).send(sent.capture());
+        return sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email) && message.subject().contains("Reset"))
+                .reduce((first, second) -> second)
+                .map(message -> tokenFrom(message.textBody()))
+                .orElseThrow();
     }
 
     private ResponseEntity<String> reset(String rawToken, String newPassword) {
@@ -325,7 +532,29 @@ class AccountIT extends AbstractIntegrationTest {
                 AuthResponse.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
+        verifyEmail(email);
         return response.getBody();
+    }
+
+    private String mailedToken(String email, String linkMarker) {
+        ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
+        verify(mail, atLeastOnce()).send(sent.capture());
+        return sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email) && message.textBody().contains(linkMarker))
+                .reduce((first, second) -> second)
+                .map(message -> {
+                    Matcher matcher =
+                            Pattern.compile("token=([A-Za-z0-9_-]+)").matcher(message.textBody());
+                    assertTrue(matcher.find());
+                    return matcher.group(1);
+                })
+                .orElseThrow();
+    }
+
+    private void verifyEmail(String email) {
+        ResponseEntity<Void> verified = post(
+                "/api/v1/auth/verify-email", null, Map.of("token", mailedToken(email, "/verify-email?token=")), Void.class);
+        assertEquals(HttpStatus.NO_CONTENT, verified.getStatusCode());
     }
 
     private UserResponse createUser(String adminToken, String slug, String who, String role) {
@@ -336,6 +565,13 @@ class AccountIT extends AbstractIntegrationTest {
                         "roleNames", List.of(role)),
                 UserResponse.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        return response.getBody();
+    }
+
+    private UserResponse me(String token) {
+        ResponseEntity<UserResponse> response = get("/api/v1/auth/me", token, UserResponse.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         return response.getBody();
     }

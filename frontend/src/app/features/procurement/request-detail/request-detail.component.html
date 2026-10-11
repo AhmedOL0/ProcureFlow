@@ -1,6 +1,6 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="request-loading" role="status" aria-label="Loading request file">
+    <div class="pf-loading" role="status" aria-label="Loading request file">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
@@ -43,33 +43,41 @@
           </button>
         }
         @if ((isDraft() || isSubmitted()) && canEdit()) {
-          <button mat-stroked-button (click)="cancel()" [disabled]="acting()">Cancel request</button>
+          <button mat-stroked-button (click)="cancel()" [disabled]="acting()">
+            Cancel request
+          </button>
         }
         @if (isSubmitted() && canDecide()) {
-          <button mat-flat-button color="primary" (click)="decide(true)" [disabled]="acting()">Approve</button>
-          <button mat-stroked-button color="warn" (click)="decide(false)" [disabled]="acting()">Reject</button>
+          <button mat-flat-button color="primary" (click)="decide(true)" [disabled]="acting()">
+            Approve
+          </button>
+          <button mat-stroked-button color="warn" (click)="decide(false)" [disabled]="acting()">
+            Reject
+          </button>
         }
       </div>
     </pf-page-header>
 
-    <div class="request-head-row">
+    <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />
       <span class="request-priority">{{ current.priority ?? 'MEDIUM' }} priority</span>
       <span class="request-total pf-data-mono">{{ formatMinor(current.totalMinor) }}</span>
     </div>
 
     @if (decision(); as verdict) {
-      <section class="request-card" aria-label="Decision">
+      <section class="pf-panel" aria-label="Decision">
         <h2>Decision — {{ verdict.decision }}</h2>
         @if (verdict.comment) {
           <p class="request-note">“{{ verdict.comment }}”</p>
         }
-        <p class="request-muted">Approving reserves the request total against the monthly budget.</p>
+        <p class="request-muted">
+          Approving reserves the request total against the monthly budget.
+        </p>
       </section>
     }
 
     @if (lane(); as assignment) {
-      <section class="request-card" aria-label="Approval lane">
+      <section class="pf-panel" aria-label="Approval lane">
         <h2>Approval lane</h2>
         <p class="request-muted">
           Step {{ assignment.stepOrder }} awaits its approver
@@ -83,33 +91,41 @@
 
     @if (canSeeBudget) {
       @let pot = budget();
-      <section class="request-card" aria-label="Budget context">
+      <section class="pf-panel" aria-label="Budget context">
         <h2>Budget — this month</h2>
         @if (pot === null) {
           <p class="request-muted">Loading budget…</p>
         } @else if (pot === 'missing') {
-          <p class="request-muted">No budget configured for this month — approvals proceed unreserved.</p>
+          <p class="request-muted">
+            No budget configured for this month — approvals proceed unreserved.
+          </p>
         } @else {
           <p class="request-budget">
             <span>{{ pot.name }}</span>
-            <span class="pf-data-mono">{{ formatMinor(pot.remainingMinor) }} left of {{ formatMinor(pot.amountMinor) }}</span>
+            <span class="pf-data-mono"
+              >{{ formatMinor(pot.remainingMinor) }} left of
+              {{ formatMinor(pot.amountMinor) }}</span
+            >
           </p>
           <p class="request-muted">{{ formatMinor(pot.reservedMinor) }} currently reserved.</p>
         }
       </section>
     }
 
-    <section class="request-card" aria-label="History">
+    <section class="pf-panel" aria-label="History">
       <h2>History</h2>
       <ul class="request-history">
         @for (entry of historyEntries(); track entry.label) {
-          <li><span class="request-history__label">{{ entry.label }}</span> {{ readableDate(entry.at) }}</li>
+          <li>
+            <span class="request-history__label">{{ entry.label }}</span>
+            {{ readableDate(entry.at) }}
+          </li>
         }
       </ul>
     </section>
 
-    <section class="request-card" aria-label="Items">
-      <div class="request-card__head">
+    <section class="pf-panel" aria-label="Items">
+      <div class="pf-panel__head">
         <h2>Items ({{ (current.items ?? []).length }})</h2>
         @if (isDraft() && canEdit()) {
           <button mat-button (click)="openItem()">
@@ -124,39 +140,50 @@
           message="A request needs at least one line before it can be submitted. Use Add item above."
         />
       } @else {
-        <table class="pf-table" aria-label="Request items">
-          <thead>
-            <tr>
-              <th scope="col">Description</th>
-              <th scope="col">Category</th>
-              <th scope="col" class="pf-num">Qty</th>
-              <th scope="col" class="pf-num">Unit price</th>
-              <th scope="col" class="pf-num">Line total</th>
-              <th scope="col">Supplier</th>
-              @if (isDraft() && canEdit()) {
-                <th scope="col"><span class="pf-sr-only">Actions</span></th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of current.items ?? []; track item.id) {
+        <div class="pf-table-scroll">
+          <table class="pf-table" aria-label="Request items">
+            <thead>
               <tr>
-                <td>{{ item.description }}</td>
-                <td>{{ item.category || '—' }}</td>
-                <td class="pf-num pf-data-mono">{{ item.quantity }}</td>
-                <td class="pf-num pf-data-mono">{{ formatMinor(item.unitPriceMinor ?? 0, item.currency ?? 'MAD') }}</td>
-                <td class="pf-num pf-data-mono">{{ formatMinor((item.quantity ?? 0) * (item.unitPriceMinor ?? 0), item.currency ?? 'MAD') }}</td>
-                <td>{{ supplierNameFor()(item.supplierId) }}</td>
+                <th scope="col">Description</th>
+                <th scope="col">Category</th>
+                <th scope="col" class="pf-num">Qty</th>
+                <th scope="col" class="pf-num">Unit price</th>
+                <th scope="col" class="pf-num">Line total</th>
+                <th scope="col">Supplier</th>
                 @if (isDraft() && canEdit()) {
-                  <td>
-                    <button mat-button (click)="openItem(item)">Edit</button>
-                    <button mat-button color="warn" (click)="removeItem(item)">Remove</button>
-                  </td>
+                  <th scope="col"><span class="pf-sr-only">Actions</span></th>
                 }
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of current.items ?? []; track item.id) {
+                <tr>
+                  <td>{{ item.description }}</td>
+                  <td>{{ item.category || '—' }}</td>
+                  <td class="pf-num pf-data-mono">{{ item.quantity }}</td>
+                  <td class="pf-num pf-data-mono">
+                    {{ formatMinor(item.unitPriceMinor ?? 0, item.currency ?? 'MAD') }}
+                  </td>
+                  <td class="pf-num pf-data-mono">
+                    {{
+                      formatMinor(
+                        (item.quantity ?? 0) * (item.unitPriceMinor ?? 0),
+                        item.currency ?? 'MAD'
+                      )
+                    }}
+                  </td>
+                  <td>{{ supplierNameFor()(item.supplierId) }}</td>
+                  @if (isDraft() && canEdit()) {
+                    <td>
+                      <button mat-button (click)="openItem(item)">Edit</button>
+                      <button mat-button color="warn" (click)="removeItem(item)">Remove</button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
     </section>
   }

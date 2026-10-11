@@ -1,6 +1,7 @@
 package com.procureflow.supplier.infrastructure;
 
 import com.procureflow.supplier.domain.SupplierCategory;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +17,10 @@ public interface SupplierCategoryRepository extends JpaRepository<SupplierCatego
 
     @Query("select c from SupplierCategory c where c.id = :id and c.tenant.slug = :slug")
     Optional<SupplierCategory> findByIdAndTenantSlug(@Param("id") UUID id, @Param("slug") String slug);
+
+    @Query("select c from SupplierCategory c where c.id in :ids and c.tenant.slug = :slug")
+    List<SupplierCategory> findAllByIdInAndTenantSlug(
+            @Param("ids") Collection<UUID> ids, @Param("slug") String slug);
 
     @Query("select count(c) > 0 from SupplierCategory c where c.tenant.slug = :slug and c.name = :name")
     boolean existsByTenantSlugAndName(@Param("slug") String slug, @Param("name") String name);

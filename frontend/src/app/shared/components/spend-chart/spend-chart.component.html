@@ -1,0 +1,29 @@
+<div class="spend-chart">
+  <div #canvas class="spend-chart__stage" aria-hidden="true"></div>
+  <ul class="spend-chart__legend" aria-label="Series">
+    <li><span class="spend-chart__swatch spend-bar--ordered" aria-hidden="true"></span>Ordered</li>
+    <li><span class="spend-chart__swatch spend-bar--invoiced" aria-hidden="true"></span>Invoiced</li>
+    <li><span class="spend-chart__swatch spend-bar--paid" aria-hidden="true"></span>Paid</li>
+  </ul>
+  <table class="pf-sr-only spend-chart__table">
+    <caption>Monthly spend figures</caption>
+    <thead>
+      <tr>
+        <th scope="col">Month</th>
+        <th scope="col">Ordered</th>
+        <th scope="col">Invoiced</th>
+        <th scope="col">Paid</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of months(); track row.period) {
+        <tr>
+          <th scope="row">{{ row.period }}</th>
+          <td>{{ formatMinor(row.ordered, currency()) }}</td>
+          <td>{{ formatMinor(row.invoiced, currency()) }}</td>
+          <td>{{ formatMinor(row.paid, currency()) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

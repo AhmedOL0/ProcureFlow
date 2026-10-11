@@ -18,7 +18,6 @@ export interface PerformanceDialogData {
   selector: 'app-performance-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
   templateUrl: './performance.dialog.html',
-  styleUrl: './dialogs.scss',
 })
 export class PerformanceDialogComponent {
   private readonly suppliers = inject(SuppliersService);

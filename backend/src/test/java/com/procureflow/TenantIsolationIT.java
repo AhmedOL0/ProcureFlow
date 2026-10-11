@@ -5,16 +5,24 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.procureflow.identity.api.AuthResponse;
+import com.procureflow.identity.application.MailPort;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+
+import static org.mockito.Mockito.verify;
 
 /**
  * Proves tenant isolation at the HTTP layer: reads are scoped, cross-tenant
@@ -26,6 +34,9 @@ class TenantIsolationIT extends AbstractIntegrationTest {
     @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES = postgresContainer();
+
+    @MockitoBean
+    private MailPort mail;
 
     @Test
     void departmentsAreInvisibleAcrossTenants() {
@@ -82,7 +93,7 @@ class TenantIsolationIT extends AbstractIntegrationTest {
     @Test
     void memberWithoutPermissionCannotManageButCanRead() {
         Fixture tenant = provision(uniqueSlug("acme"));
-        AuthResponse member = joinAsMember(tenant.slug(), "min@" + tenant.slug() + ".test");
+        AuthResponse member = joinAsMember(tenant, "min@" + tenant.slug() + ".test");
 
         ResponseEntity<String> denied = rest.exchange(
                 "/api/v1/departments",
@@ -110,14 +121,38 @@ class TenantIsolationIT extends AbstractIntegrationTest {
         return new Fixture(slug, email, response.getBody().user().id(), response.getBody().accessToken());
     }
 
-    private AuthResponse joinAsMember(String slug, String email) {
+    private AuthResponse joinAsMember(Fixture admin, String email) {
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",
-                Map.of("email", email, "password", "correct-horse-123", "tenantSlug", slug),
+                Map.of(
+                        "email", email,
+                        "password", "correct-horse-123",
+                        "tenantSlug", admin.slug(),
+                        "inviteToken", inviteToken(admin.token(), email)),
                 AuthResponse.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         return response.getBody();
+    }
+
+    private String inviteToken(String adminToken, String email) {
+        ResponseEntity<Map> invited = rest.exchange(
+                "/api/v1/invites",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("email", email, "roleNames", List.of("MEMBER")), bearer(adminToken)),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, invited.getStatusCode());
+        ArgumentCaptor<MailPort.OutgoingMail> sent = ArgumentCaptor.forClass(MailPort.OutgoingMail.class);
+        verify(mail, org.mockito.Mockito.atLeastOnce()).send(sent.capture());
+        return sent.getAllValues().stream()
+                .filter(message -> message.to().equals(email))
+                .reduce((first, second) -> second)
+                .map(message -> {
+                    Matcher matcher = Pattern.compile("invite=([A-Za-z0-9_-]+)").matcher(message.textBody());
+                    assertTrue(matcher.find());
+                    return matcher.group(1);
+                })
+                .orElseThrow();
     }
 
     private UUID createDepartment(String token, String name) {

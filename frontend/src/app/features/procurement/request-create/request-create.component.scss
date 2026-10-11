@@ -5,7 +5,7 @@
 .request-create-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--pf-space-xs);
 }
 .request-create-actions {
   display: flex;
@@ -16,5 +16,5 @@
 .request-create-error {
   color: var(--pf-danger-text);
   font: var(--pf-body-md);
-  margin: 4px 0 0;
+  margin: var(--pf-space-xs) 0 0;
 }

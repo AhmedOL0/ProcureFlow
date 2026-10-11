@@ -4,6 +4,7 @@ import com.procureflow.identity.application.AuthenticatedUser;
 import com.procureflow.identity.application.UserAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,10 +38,15 @@ public class UserAdminController {
     }
 
     @GetMapping
-    @Operation(summary = "List users of the current workspace")
-    public ResponseEntity<List<UserResponse>> list(@AuthenticationPrincipal AuthenticatedUser principal) {
-        return ResponseEntity.ok(
-                users.list(principal.tenantId()).stream().map(UserResponse::from).toList());
+    @Operation(summary = "Paged users of the current workspace")
+    public ResponseEntity<Paged<UserResponse>> list(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false, name = "q") String query,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(users
+                .page(principal.tenantId(), query, Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(UserResponse::from));
     }
 
     @GetMapping("/me")
@@ -99,5 +106,25 @@ public class UserAdminController {
             @Valid @RequestBody SetPasswordRequest request) {
         users.resetPassword(principal.tenantId(), id, request.password());
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Suspend (DISABLED) or reactivate (ACTIVE) a workspace user; self-change refused")
+    public ResponseEntity<UserResponse> setStatus(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateStatusRequest request) {
+        return ResponseEntity.ok(UserResponse.from(
+                users.setStatus(principal.tenantId(), principal.userId(), id, request.status())));
+    }
+
+    @PatchMapping("/{id}/roles")
+    @Operation(summary = "Replace a workspace user's roles; self-change refused")
+    public ResponseEntity<UserResponse> setRoles(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateRolesRequest request) {
+        return ResponseEntity.ok(UserResponse.from(
+                users.setRoles(principal.tenantId(), principal.userId(), id, request.roleNames())));
     }
 }

@@ -4,6 +4,8 @@ import com.procureflow.budget.domain.Budget;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -14,9 +16,11 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
 
     Optional<Budget> findByIdAndTenantId(UUID id, UUID tenantId);
 
-    List<Budget> findAllByTenantIdOrderByPeriodDescNameAsc(UUID tenantId);
+    Page<Budget> findAllByTenantIdAndNameContainingIgnoreCaseOrderByPeriodDescNameAsc(
+            UUID tenantId, String name, Pageable pageable);
 
-    List<Budget> findAllByTenantIdAndPeriodOrderByNameAsc(UUID tenantId, String period);
+    Page<Budget> findAllByTenantIdAndPeriodAndNameContainingIgnoreCaseOrderByNameAsc(
+            UUID tenantId, String period, String name, Pageable pageable);
 
     @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("select b from Budget b where b.tenantId = :tenantId and b.period = :period"

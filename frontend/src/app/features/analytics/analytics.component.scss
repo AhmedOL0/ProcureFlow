@@ -1,23 +1,7 @@
+// Analytics: period control, trajectory bars, facts and notes. Loading,
+// columns, card heads and table scroll are global pf-* primitives.
 .analytics-period {
   width: 170px;
-}
-
-.analytics-loading {
-  display: flex;
-  justify-content: center;
-  padding: var(--pf-space-2xl);
-}
-
-.analytics-columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--pf-space-md);
-  align-items: start;
-}
-@media (max-width: 1023px) {
-  .analytics-columns {
-    grid-template-columns: 1fr;
-  }
 }
 
 .analytics-stack {
@@ -27,9 +11,9 @@
   min-width: 0;
 }
 
-.analytics-card-head {
-  padding: var(--pf-space-lg) var(--pf-space-lg) var(--pf-space-md);
-  border-bottom: 1px solid var(--pf-border);
+.analytics-card-filter mat-form-field {
+  width: 100%;
+  max-width: 280px;
 }
 
 .analytics-bars {
@@ -46,7 +30,7 @@
 .analytics-bar-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--pf-space-xs);
   min-width: 0;
 }
 .analytics-bar-meta {
@@ -59,31 +43,6 @@
 .analytics-bar-meta .pf-data-mono {
   font-weight: 600;
 }
-.analytics-track {
-  height: 6px;
-  border-radius: var(--pf-radius-pill);
-  background: var(--pf-neutral-bg);
-  overflow: hidden;
-}
-.analytics-fill {
-  height: 100%;
-  background: var(--pf-blue);
-  border-radius: var(--pf-radius-pill);
-}
-.analytics-bar-sub {
-  display: flex;
-  gap: var(--pf-space-lg);
-  font: var(--pf-body-sm);
-  color: var(--pf-slate);
-}
-
-.analytics-table-scroll {
-  overflow-x: auto;
-}
-.analytics-table-scroll table.pf-table {
-  min-width: 480px;
-}
-
 .analytics-facts {
   margin: 0;
   padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
@@ -94,7 +53,7 @@
 .analytics-facts > div {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--pf-space-xs);
 }
 .analytics-facts dt {
   font: var(--pf-label-md);

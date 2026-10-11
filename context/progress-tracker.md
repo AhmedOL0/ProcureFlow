@@ -4,12 +4,141 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 8 done — procurement workflows end to end** (on
-`feature/frontend-procurement`, awaiting PR). Requests, approval inbox,
-orders, invoices, admin and audit screens are implemented against real
-contracts and verified live. Awaiting the next phase.
+**Phase 13 — enterprise hardening + directory pagination (in progress).**
+C1 invite-gated join + email verification is merged; C2 server pagination
+is implemented backend + frontend with all gates green (backend 140 IT,
+frontend build + 29 Vitest + 48 Playwright). C3 backup sidecar is drilled
+live; C4 audit-search + inbox-unread filters are implemented with all
+gates green (backend 143 IT, frontend build + 29 Vitest + 48 Playwright)
+and live-probed. Remaining: final push + release notes.
+Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
+#12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
+Playwright green, live-verified screens in `docs/screens/`. This pass:
+regression gates, security/a11y/perf review with evidence, infra + CI
+review, README/portfolio overhaul, demo workspace docs.
 
 ## Completed
+
+### Phase 13a — C1 invite-gated join + email verification (merged)
+- V17 invites (single-use atomic redeem) + V18 email verification
+  (24h TTL) + `users.verified` (grandfathered true); known-slug join
+  without a live invite answers 403 `INVITE_REQUIRED`; forgot-password
+  skips unverified addresses with the generic reply.
+- `InviteIT` 6 + AccountIT verification tests; all IT `join()` helpers
+  go through captured-mail invites. Frontend: register `inviteToken`,
+  `/verify-email` route, settings banner + resend, admin invite console.
+- Verified: backend 140 IT green, frontend build + e2e green.
+
+### Phase 13b — C2 directory pagination (this change)
+- Backend: `Paged<T>` envelopes (size 1..100) on requests (+`/mine`
+  with `q`), suppliers, orders, invoices, budgets, departments, users,
+  memberships; unbounded list methods removed; paging/search IT.
+- Frontend: all directories + dialogs + dashboard + workspace on server
+  paging; supplier KPIs via size-1 total reads; `api-types.gen.ts` regen.
+- Hardening found by the migration: `enrichSuppliers` now isolates
+  per-section failures (catchError + array guards, Vitest-locked) instead
+  of failing the whole row.
+- E2E doubles fixed for envelopes: `/suppliers?` disambiguation,
+  `/categories` + `/invites` stubs, Users-region scoping.
+- Verified: tsc 0, build 0, 29 Vitest, 48/48 Playwright (chromium+firefox).
+
+### Phase 13c — C3 backup sidecar + restore drill (this change)
+- Opt-in `db-backup` compose service (profile `backup`,
+  postgres:16-alpine so `pg_dump` matches the server): one compressed
+  custom-format dump per run into the `pgbackups` volume, pruned to
+  `BACKUP_RETENTION` (default 7); one-shot or looping sidecar modes.
+- Live drill 2026-10-11: one-shot dump (175901 bytes), canary row
+  restored into `procureflow_restore` and selected back intact, scratch
+  dropped; runbook in `infrastructure/docker/README.md` with the honest
+  scope (local dev only — production needs managed PITR + tested SLO).
+- Verified: `docker compose config --quiet` exit 0, drill commands run
+  for real against the local stack.
+
+### Phase 13d — C4 audit search + inbox unread filter (this change)
+- Backend: `GET /audit-events?q=` searches action + entity type
+  server-side (4 new branch queries, blanks normalize to unfiltered, no
+  null params); `GET /notifications?unreadOnly=true` narrows server-side
+  (derived `...AndReadFalse...` query, wrapper normalized to false).
+- Frontend: trail free-text box debounces into server `q` (client-only
+  narrowing removed); Unread chip reloads page 0 with `unreadOnly`;
+  shell/workspace/badge reads stay unfiltered; `api-types.gen.ts` regen.
+- Tests: `AuditIT.trailSearchesActionsAndTypesServerSide` (incl. blank-q
+  unfiltered; literal space, not `%20` — RestTemplate double-encodes),
+  `NotificationIT.unreadOnlyNarrowsServerSide`; inbox e2e stub honors
+  the param.
+- Verified: backend 143 IT green; tsc + build clean, 29 Vitest, 48/48
+  Playwright; live probes on the C4 image (submit→unreadOnly 1→read→0,
+  decide→q=REQUEST_DECIDED 1, q=purchase_request 1, miss 0).
+
+### Phase 13g — rail, buttons and charts pass (this change)
+- Workspace overlap fixed at the token level: `p.pf-muted` gains bottom
+  rhythm (the zero margin kissed outline floating labels; same pattern
+  guards settings/departments/users).
+- Rail: curated icon picks (FileClock, Stamp, Network, ListChecks —
+  kills the Suppliers/Departments Building2 duplicate), 40px rows,
+  section rhythm and label-lg entries. Buttons: header actions go
+  full-width on mobile.
+- Charts without a dependency: shared `SpendChartComponent` (grouped
+  ordered/invoiced/paid bars, gridlines, native tooltips, sr-only data
+  table) and `DonutChartComponent` (ring + value legend) on pure-SVG +
+  token fills; math unit-covered in `charts.spec.ts`. Dashboard trend is
+  now spend-per-month + decision-rate stat; analytics pairs trajectory
+  with the donut and on-time meters in the supplier table.
+- Verified: tsc + build clean, 34 Vitest, 50/50 Playwright
+  (chromium+firefox); evidence `docs/screens/` (01/06/10 refreshed +
+  11-dashboard-mobile). Pre-existing shell-scss 4kB budget warning
+  confirmed on the clean tree (5.58kB, not from this pass).
+
+### Phase 13e — Brevo live wiring + demo seed (this change)
+- Brevo: root cause of the 535 was the SMTP *username* (account email),
+  not the key — login is `…@smtp-brevo.com` (SMTP & API → Connexion).
+  `.env` now carries the smtp-brevo login, a fresh `xsmtpsib-…ztV382`
+  key and the validated `ahmedouarrali12@gmail.com` sender
+  (`docs/security/secrets.md` corrected). New error is `525 Unauthorized
+  IP`: credentials accepted, source IP blocked — needs `160.179.6.115`
+  allowlisted under SMTP & API → authorized IPs, then re-probe.
+- `DemoSeeder` (dev profile only, ArchUnit-clean): 6 users, 3
+  departments, 5 suppliers + scorecards, 7 pots, 12 requests (all
+  states), 4 orders, 2 invoices, lane, backdated 2026-05..09. Seed via
+  `MAIL_PROVIDER=log docker compose run --rm -e
+  SPRING_PROFILES_ACTIVE=dev backend`; reset procedure in `docs/demo.md`
+  (ordered deletes — plain tenant delete violates NO ACTION FKs).
+- Verified: backend 143 IT green; live spend trajectory 4 periods, 5
+  categories, 8.02M/2.66M/1.71M/1.30M req/ord/inv/paid.
+
+### Phase 13f — auth UX pass (this change)
+- Login overlap fixed: multi-line explanations moved out of `mat-hint`
+  (fixed subscript overlay) into flow `.auth-note` captions; the alert
+  region reserves two lines (no button jump); footer links wrap as units.
+- Password visibility toggles on login + register (settings pattern);
+  login guards the empty-slug resubmit loop with a field error.
+- Register split into Create/Join chips (mat-chip-listbox, the
+  notifications-filter pattern — mat-button-toggle-group rendered its
+  checkmark and highlight on different segments, so it was replaced):
+  per-mode titles, subtitles, fields, validators and submit labels;
+  INVITE_REQUIRED/TENANT_NAME_REQUIRED auto-flip to the fixing mode.
+- Shared `.auth-note/.auth-alert/.auth-actions` tokens in styles.scss;
+  per-component duplications removed; forgot-password takes the same
+  overlap fix. E2E uses exact password-label matching (toggle buttons
+  carry "Show password") and option roles for the chips.
+- Verified: tsc + build clean, 29 Vitest, 50/50 Playwright
+  (chromium+firefox, incl. new register-mode axe scans); evidence in
+  `docs/screens/auth-{login-error,register-create,register-join,login-mobile}.png`.
+
+### Phase 13h — live ECharts with drills (this change)
+- Static SVG charts replaced by ECharts 6.1 (tree-shaken core: bar+pie,
+  grid/tooltip/title, canvas renderer; lazy chunks only, no new initial
+  weight): entrance + update animations (off under reduced-motion),
+  axis/item tooltips with exact money, series focus on hover.
+- Click-to-drill: month bars narrow the analytics period, donut segments
+  fill the category search, dashboard months open the trajectory.
+  Drills resolve hits at the zrender level (pixel→index/angle math in
+  tested utils) because ECharts-level 'click' forwarding proved
+  unreliable in diagnosis — documented on both components.
+- A11y preserved: aria-hidden canvases, live sr-only data table + value
+  legend; no raw hex (palette resolved from CSS tokens at runtime).
+- Verified: tsc + build clean, 35 Vitest, 52/52 Playwright
+  (chromium+firefox, incl. a canvas drill journey); evidence refreshed.
 
 ### Phase 1 — Foundation (commit 2e2a26c)
 - Repo skeleton, 12 module boundaries + layer contracts, ArchUnit gates.
@@ -53,7 +182,7 @@ contracts and verified live. Awaiting the next phase.
 - Remote: `feature/supplier-management` + `feature/procurement` pushed and
   merged with `--no-ff`; `main` green.
 
-### Phase 4 — Money governance (on `feature/approval-workflow`, awaiting PR)
+### Phase 4 - Money governance (merged)
 - Approval slice 1: V5 (`approval_decisions` immutable + `approval_delegations`
   bounded/revocable); `RequestDecisionPort` locks the request `FOR UPDATE` and
   flips status in the same transaction — concurrent deciders serialize, one wins.
@@ -72,7 +201,7 @@ contracts and verified live. Awaiting the next phase.
   expiry, cross-tenant throughout). Full gate 70/70 green (60 IT + 10 unit/arch).
 - Typegen regenerated; frontend build + Vitest + Playwright green.
 
-### Phase 5 — Payables (on `feature/purchase-orders`, awaiting PR)
+### Phase 5 - Payables (merged)
 - Orders: V9 (`purchase_orders` with unique request link + mandatory
   supplier, `purchase_order_items` snapshotted with received tracking).
   Creation from APPROVED only; send flips the request ORDERED in the same
@@ -106,7 +235,7 @@ contracts and verified live. Awaiting the next phase.
 - Tests: 4× Vitest (token helpers) + 4× Playwright (guard redirect,
   validation, backend-down error, register navigation). Build green.
 
-### Phase 7 — Frontend foundation + suppliers slice (on `feature/frontend-suppliers`, awaiting PR)
+### Phase 7 - Frontend foundation + suppliers slice (merged via #8)
 - Design system from the stitch reference: navy/blue/teal/canvas tokens,
   Inter (self-hosted), status pills, dense tables, shared header/empty/
   error/confirm components, central Lucide catalog.
@@ -126,7 +255,7 @@ contracts and verified live. Awaiting the next phase.
   backend (login → list → dossier, mobile 360px, Stitch directory) with
   screenshots. Backend `verify` still 107/107 green after the CORS change.
 
-### Phase 8 — Procurement workflows end to end (on `feature/frontend-procurement`, awaiting PR)
+### Phase 8 - Procurement workflows end to end (merged via #10)
 - Requests: directory (server status filter + chips, client search/sort/page),
   dossier with items, lifecycle actions, approve/reject with comments,
   decision + lane + budget-context + history cards.
@@ -145,28 +274,103 @@ contracts and verified live. Awaiting the next phase.
 
 ## In progress
 
-- Phase 8 PR (`feature/frontend-operations` → `main`, PR #10): assembled,
-  gates green. A design-system pass on the same branch follows the stitch
-  reference: hardened tokens, grouped navy rail, real-data overview
-  dashboard, auth mastheads, zero raw hex/undefined tokens.
-- RBAC persona roles (`feature/rbac-persona-roles` → `main`, PR #11):
-  APPROVER/FINANCE/AUDITOR defaults, additive provisioning, 4× new IT,
-  full backend verify green.
-- Governance pages (same frontend branch): Budgets & Spend, Analytics &
-  Reports (+AI usage metering), Notifications page, admin split into
-  Workspace/Users/Departments/Policies, My Requests, page-map rail with
-  permission-aware entries. All live-verified with screenshots.
+- Phase 12 review (this pass) on `feature/frontend-operations`.
+- Phase 1 hardening attack (2026-10-11, commits 65cb7ff..798e434, all
+  pushed): auth throttling (per-account 10/min + per-IP budgets, 429s,
+  live-probed), scheduler tenant scoping (+ regression test, proven red),
+  V14 auth_throttle ledger, V15 hot-path indexes + invoice-line FK,
+  invoice/order race tests, suspend/reactivate + role-update endpoints
+  (audited, self-change refused, refresh locked out) with AccountIT
+  16→19, AI monthly token cap + provider retry/429 mapping (+7 tests).
+  Full `./mvnw -B verify` green (123 IT + unit/arch, floors met);
+  frontend build + 28 Vitest + 19 e2e green;   container rebuilt, throttle
+  and profile live-probed. Two lessons: throttle records need
+  REQUIRES_NEW (rollback erases them), and conditional beans escape the
+  suite (Groq two-constructor crash caught only by container boot —
+  fixed with @Autowired).
+- Architecture stages B–G (2026-10-11, Stage A assessment committed
+  first): throttle ledgers unified (V16 drops the reset table),
+  `ArchitectureGatesTest` (foreign-infra ban + per-handler auth),
+  `AuthorizationMatrixIT` (10 routes × member/admin/anonymous),
+  budget GROUP BY rewrite (BudgetIT + ApprovalIT race green), axe gate
+  on 5 pages (fixed a real critical chip-role violation), Firefox
+  matrix, ADR-010 (outbox deferred with triggers). Full `verify` green
+  (126 IT + unit/arch, floors met); frontend 48 e2e across both
+  browsers. Commits 9069db8, 146b98f, d4bdb3d, fbe2483, all pushed.
+- Deferred-item attack (2026-10-11): N+1 bulk-fetch rewrites (invoice
+  booking/stats, order receive/stats, lane matching, categories,
+  primary clearing — suites incl. races green), paged audit + inbox
+  slice (shared Paged envelope, server MatPaginators, api-types
+  regenerated, e2e doubles updated), takeUntilDestroyed on all 14
+  form subscriptions, conditional-bean structural gate + AI-enabled
+  boot slice (caught FakeAiProvider breaking AI-on wiring),
+  backend-ci api-contract diff job. Full `verify` 129 IT green;
+  frontend build + 28 Vitest + 48 e2e green; containers rebuilt,
+  envelopes + throttle live-probed, notifications paginator
+  screenshotted. One parallel-load login flake seen twice in
+  full-matrix runs (never in isolation or CI-with-retries); a11y
+  helper timeout widened to 15s.
+- Enterprise readiness audit (read-only, 2026-10-10): 9-file package in
+  `docs/enterprise-readiness/` (executive summary, feature matrix,
+  security, architecture/data, UX, testing, DevOps, roadmap, release
+  checklist). Verdict: strong honest MVP, not yet enterprise-complete;
+  top gaps are login throttling, open slug join, no pagination, unwired
+  ops/backup. Gates re-run green for the audit (115 IT + 16 unit/arch,
+  28 Vitest, 19 e2e).
+- Main has merged PR #12 (account) and PR #13 (hardening) on GitHub;
+  this branch just integrated origin/main, so the account endpoints
+  (GET/PATCH /users/me, change-password, forgot/reset) and the hardening
+  pass are now in this line. Local `feature/account-management` and
+  `feature/hardening-pass` branches are stale.
+- Account management backend (merged to main as #12): profile edits,
+  password changes, email-link reset via Brevo (16× AccountIT).
+- Security hardening (merged to main as #13): HSTS + frame-deny,
+  explicit inbox auth, audit redaction + unit test.
+- Frontend line (`feature/frontend-operations`): design system, emerald
+  re-theme, governance pages, workspace, copilot, account settings UI,
+  Phase 10–11 work, plus the #12/#13 integration above.
+- Design-system consolidation (committed 2ad157b on `feature/frontend-operations`,
+  2026-10-10): every page migrated onto shared `pf-*` primitives in
+  `styles.scss` (sr-only, loading, columns, card-head, panel, list, rows,
+  row-link, muted, meter, head-row, stat-pill, form-row, notice, chips,
+  count, table-scroll, dialog rhythm); 10 dead stylesheets deleted
+  (admin-cards, workspace, order/invoice lists, budget detail, 5 dialog
+  sheets); raw px/gap values mapped to tokens; approval inbox rebuilt on
+  `pf-table-card`. Verified: `npm run build` + 28 Vitest + 19 Playwright
+  green, screenshots dashboard/suppliers/users/390px in Temp.
+- Path-var 400 fix (on `feature/frontend-operations`, 2026-10-10): visiting
+  Account Settings fired `GET /api/v1/users/me` (PR #12 endpoint, not yet
+  in this line) → matched `/users/{id}` → UUID conversion of `"me"` threw
+  `MethodArgumentTypeMismatchException` → no handler → 500 + stack trace.
+  Fixed with an explicit 400 (`INVALID_PATH_VARIABLE`) in
+  `RestExceptionHandler` + `InvalidPathVariableIT` (red before: 500 on
+  /users/me and /suppliers/not-a-uuid; green after). Obsolete as a
+  Settings symptom now that #12 is integrated — kept as contract armor
+  for every UUID route. Full `./mvnw -B verify` green (99 IT + 14
+  unit/arch, coverage floors met); container rebuilt, live re-probe
+  answered 400 with no stack in logs.
 
-- Account management backend (`feature/account-management` → `main`):
-  profile edits (self + admin, names only), self change-password, helpdesk
-  reset, email-link reset via Brevo SMTP behind a MailPort (log-mode
-  default), DB-backed throttling, atomic single-use tokens. 16× AccountIT,
-  full backend verify green (113 IT).
+## Next up
 
-## Next up (Phase 9+)
+1. Account Settings end to end: DONE 2026-10-10 — backend rebuilt from
+   this branch, `GET /users/me` answers 200, Settings page loads with
+   profile + password sections (screenshot in Temp); save/change flows
+   covered by AccountIT 16/16 on the merged tree. Label nit fixed
+   ("New password" overlapped the visibility toggle).
+2. Brevo live proof needs confirmed login email + SMTP-key provenance +
+   a validated sender (currently 535 on auth).
+3. Beyond release: pagination envelopes, login/AI rate limits, inbox
+   bulk decisions endpoint, SMTP for real delivery.
 
-1. Merge the Phase 8 PR with CI green.
-2. Whatever epic you name next.
+## Known limitations (carried, not hidden)
+
+- Email delivery unverified live; reset flow proven via mocks + log-mode.
+- No login/AI rate limiting (BCrypt-12 + no enumeration today).
+- Approval inbox does per-row decision reads (N+1, fine at current scale).
+- Frontend ~1.3MB total JS / 6KB main across lazy chunks (measured, no
+  perf work taken).
+- Dev-server discipline: kill by PORT (netstat→PID), never by cmdline
+  substring; check `NG_EXIT`/`$LASTEXITCODE` immediately, never via a pipe.
 
 ## Architecture decisions (supplementing docs/decisions)
 
@@ -202,4 +406,4 @@ contracts and verified live. Awaiting the next phase.
   first client; mobile needs the body variant).
 - OAuth2/social login: out of scope until a customer asks.
 - Cloud provider + state backend for Terraform (DevOps epic).
-- Coverage floors: enforce from Phase 3 (currently report-only).
+- Coverage floors: enforced (`pom.xml`: line 0.70 / branch 0.40 fail the build).

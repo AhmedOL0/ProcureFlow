@@ -45,6 +45,9 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final EntityManager entities;
+    private final AuthAttemptThrottle attempts;
+    private final EmailVerificationService verification;
+    private final InviteService invites;
 
     @Value("${app.jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
@@ -56,7 +59,10 @@ public class AuthService {
             RoleProvisioningService roleProvisioning,
             PasswordEncoder encoder,
             JwtService jwt,
-            EntityManager entities) {
+            EntityManager entities,
+            AuthAttemptThrottle attempts,
+            EmailVerificationService verification,
+            InviteService invites) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.tenants = tenants;
@@ -64,20 +70,28 @@ public class AuthService {
         this.encoder = encoder;
         this.jwt = jwt;
         this.entities = entities;
+        this.attempts = attempts;
+        this.verification = verification;
+        this.invites = invites;
     }
 
-    public AuthResult register(Registration cmd) {
+    public AuthResult register(Registration cmd, String clientIp) {
+        attempts.checkRegister(clientIp);
         PasswordPolicy.requireValid(cmd.password());
         String email = normalize(cmd.email());
         String slug = normalize(cmd.tenantSlug());
         UUID tenantId;
         Set<String> roleNames;
+        boolean verified;
         if (tenants.exists(slug)) {
             if (users.findByTenantSlugAndEmail(slug, email).isPresent()) {
                 throw ApiException.conflict("EMAIL_IN_USE", "This email is already registered in this workspace");
             }
+            // Joining is invite-only: the token binds address, workspace and
+            // role set, and redemption itself proves the mailbox.
             tenantId = tenants.requireTenantId(slug);
-            roleNames = Set.of(RoleProvisioningService.MEMBER);
+            roleNames = invites.redeem(slug, email, cmd.inviteToken());
+            verified = true;
         } else {
             if (cmd.tenantName() == null || cmd.tenantName().isBlank()) {
                 throw ApiException.badRequest(
@@ -85,16 +99,24 @@ public class AuthService {
             }
             tenantId = tenants.ensureTenant(slug, cmd.tenantName().trim());
             roleNames = Set.of(RoleProvisioningService.TENANT_ADMIN);
+            verified = false;
         }
         User user = new User(entities.getReference(Tenant.class, tenantId), email, encoder.encode(cmd.password()));
         user.setFirstName(cmd.firstName());
         user.setLastName(cmd.lastName());
+        user.setVerified(verified);
         user.getRoles().addAll(roleProvisioning.resolveRoles(slug, roleNames));
         users.save(user);
+        if (!verified) {
+            verification.sendFor(user);
+        }
         return new AuthResult(user, issueTokens(user));
     }
 
-    public AuthResult login(Credentials cmd) {
+    public AuthResult login(Credentials cmd, String clientIp) {
+        // Throttle before the lookup so timing and counting reveal nothing
+        // about which accounts exist; failures stay generic below.
+        attempts.checkLogin(cmd.email(), clientIp);
         String email = normalize(cmd.email());
         List<User> candidates = users.findAllByEmail(email);
         User user;
@@ -118,7 +140,8 @@ public class AuthService {
         return new AuthResult(user, issueTokens(user));
     }
 
-    public AuthResult refresh(String presentedToken) {
+    public AuthResult refresh(String presentedToken, String clientIp) {
+        attempts.checkRefresh(clientIp);
         RefreshToken presented = refreshTokens
                 .findByTokenHash(hash(presentedToken))
                 .orElseThrow(() -> ApiException.unauthorized("INVALID_REFRESH_TOKEN", "Refresh token is invalid"));
@@ -131,6 +154,12 @@ public class AuthService {
             throw ApiException.unauthorized("REFRESH_EXPIRED", "Refresh token has expired; please log in again");
         }
         User user = presented.getUser();
+        if (user.getStatus() != User.Status.ACTIVE) {
+            // Suspended accounts cannot rotate: kill the chain and answer
+            // generically, mirroring the login path.
+            revokeAllActive(user.getId());
+            throw ApiException.unauthorized("INVALID_CREDENTIALS", "Invalid email or password");
+        }
         TokenPair pair = issueTokens(user);
         RefreshToken replacement = refreshTokens.findByTokenHash(hash(pair.refreshToken())).orElseThrow();
         presented.revoke(replacement);
