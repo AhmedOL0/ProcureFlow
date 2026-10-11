@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -48,7 +49,7 @@ export class CreateInvoiceDialogComponent {
       },
       error: (error: unknown) => this.failure.set(userMessageFor(parseApiFailure(error))),
     });
-    this.orderControl.valueChanges.subscribe((id) => this.loadLines(id));
+    this.orderControl.valueChanges.pipe(takeUntilDestroyed()).subscribe((id) => this.loadLines(id));
   }
 
   private loadLines(orderId: string): void {

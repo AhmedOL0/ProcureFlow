@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -71,7 +72,7 @@ export class InvoiceListComponent {
 
   constructor() {
     this.reload();
-    this.statusFilter.valueChanges.subscribe(() => {
+    this.statusFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.page.update((p) => ({ ...p, pageIndex: 0 }));
       this.reload();
     });

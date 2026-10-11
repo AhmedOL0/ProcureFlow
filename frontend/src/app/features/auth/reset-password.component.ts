@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -56,7 +57,7 @@ export class ResetPasswordComponent {
   });
 
   constructor() {
-    this.form.valueChanges.subscribe(() => {
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       const confirm = this.form.controls.confirmPassword;
       if (confirm.hasError('mismatch') && this.form.controls.newPassword.value === confirm.value) {
         confirm.setErrors(null);

@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -102,12 +103,12 @@ export class BudgetListComponent {
     // FormControls are not signals: mirror the query into one so the
     // client-side filter re-runs on every keystroke.
     this.searchBox.valueChanges
-      .pipe(debounceTime(200), distinctUntilChanged())
+      .pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((value) => {
         this.query.set(value);
         this.page.update((p) => ({ ...p, length: this.filtered().length, pageIndex: 0 }));
       });
-    this.periodFilter.valueChanges.subscribe(() => this.reload());
+    this.periodFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
   }
 
   reload(): void {

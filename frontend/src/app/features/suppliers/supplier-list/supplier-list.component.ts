@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -144,11 +145,11 @@ export class SupplierListComponent {
   constructor() {
     this.reload();
     this.searchBox.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.reload());
-    this.statusFilter.valueChanges.subscribe(() => this.reload());
+    this.statusFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
     // Category filters client-side: nudge paging so the computed rows re-run.
-    this.categoryFilter.valueChanges.subscribe(() => {
+    this.categoryFilter.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.page.update((p) => ({ ...p, length: this.filtered().length, pageIndex: 0 }));
     });
     this.suppliers.catalog().subscribe({ next: (rows) => this.catalog.set(rows ?? []) });

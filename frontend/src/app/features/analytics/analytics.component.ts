@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -107,10 +108,10 @@ export class AnalyticsComponent {
   constructor() {
     this.periodBox.setValue(this.analytics.currentPeriodUtc());
     this.categoryBox.valueChanges
-      .pipe(debounceTime(200), distinctUntilChanged())
+      .pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((value) => this.categoryQuery.set(value));
     this.supplierBox.valueChanges
-      .pipe(debounceTime(200), distinctUntilChanged())
+      .pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((value) => this.supplierQuery.set(value));
     this.reload();
   }
