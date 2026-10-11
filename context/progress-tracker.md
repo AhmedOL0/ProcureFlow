@@ -4,10 +4,10 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 14 — audit remediation, one phase at a time (this change: B auth
-prefix).** PRs #14 (main work) and #15 (docs) merged. The external audit
-(68/100, Functional Application, 0 critical / 4 high) is remediated in
-small phased PRs with green gates.
+**Phase 14 — audit remediation, one phase at a time (this change: C mixed
+currency).** PRs #14 (main work), #15 (docs) and #16 (auth prefix) merged.
+The external audit (68/100, Functional Application, 0 critical / 4 high)
+is remediated in small phased PRs with green gates.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:
