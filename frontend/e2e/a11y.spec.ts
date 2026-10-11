@@ -84,7 +84,7 @@ test.describe('accessibility', () => {
     await page.goto('/register');
     await expect(page.getByText('Create your workspace')).toBeVisible();
     await expectAxeClean(page);
-    await page.getByRole('radio', { name: 'Join with invite' }).click();
+    await page.getByRole('option', { name: 'Join with invite' }).click();
     await expect(page.getByText('Join your workspace')).toBeVisible();
     await expectAxeClean(page);
   });

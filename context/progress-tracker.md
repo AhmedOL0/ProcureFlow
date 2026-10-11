@@ -93,13 +93,15 @@ review, README/portfolio overhaul, demo workspace docs.
   region reserves two lines (no button jump); footer links wrap as units.
 - Password visibility toggles on login + register (settings pattern);
   login guards the empty-slug resubmit loop with a field error.
-- Register split into Create/Join toggle (mat-button-toggle-group):
+- Register split into Create/Join chips (mat-chip-listbox, the
+  notifications-filter pattern — mat-button-toggle-group rendered its
+  checkmark and highlight on different segments, so it was replaced):
   per-mode titles, subtitles, fields, validators and submit labels;
   INVITE_REQUIRED/TENANT_NAME_REQUIRED auto-flip to the fixing mode.
 - Shared `.auth-note/.auth-alert/.auth-actions` tokens in styles.scss;
   per-component duplications removed; forgot-password takes the same
   overlap fix. E2E uses exact password-label matching (toggle buttons
-  carry "Show password") and radio roles for the toggle.
+  carry "Show password") and option roles for the chips.
 - Verified: tsc + build clean, 29 Vitest, 50/50 Playwright
   (chromium+firefox, incl. new register-mode axe scans); evidence in
   `docs/screens/auth-{login-error,register-create,register-join,login-mobile}.png`.

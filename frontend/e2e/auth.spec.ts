@@ -63,7 +63,7 @@ test('register screen explains the workspace model', async ({ page }) => {
   await expect(page).toHaveURL(/\/register/);
   await expect(page.getByText('Create your workspace')).toBeVisible();
   await expect(page.getByLabel('Workspace name')).toBeVisible();
-  await page.getByRole('radio', { name: 'Join with invite' }).click();
+  await page.getByRole('option', { name: 'Join with invite' }).click();
   await expect(page.getByText('Join your workspace')).toBeVisible();
   await expect(page.getByLabel('Invite code')).toBeVisible();
 });

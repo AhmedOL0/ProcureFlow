@@ -16,16 +16,16 @@
 
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
-        <mat-button-toggle-group
-          class="auth-mode"
-          name="registerMode"
-          aria-label="Create a workspace or join one"
-          [value]="mode()"
-          (change)="setMode($event.value)"
-        >
-          <mat-button-toggle value="create">Create new</mat-button-toggle>
-          <mat-button-toggle value="join">Join with invite</mat-button-toggle>
-        </mat-button-toggle-group>
+        <div class="auth-mode">
+          <mat-chip-listbox aria-label="Create a workspace or join one">
+            <mat-chip-option [selected]="mode() === 'create'" (click)="setMode('create')">
+              Create new
+            </mat-chip-option>
+            <mat-chip-option [selected]="mode() === 'join'" (click)="setMode('join')">
+              Join with invite
+            </mat-chip-option>
+          </mat-chip-listbox>
+        </div>
 
         <mat-form-field appearance="outline">
           <mat-label>Work email</mat-label>
