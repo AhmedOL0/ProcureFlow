@@ -23,10 +23,19 @@
           <mat-label>Password</mat-label>
           <input
             matInput
-            type="password"
             formControlName="password"
             autocomplete="current-password"
+            [type]="showPassword() ? 'text' : 'password'"
           />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="showPassword.set(!showPassword())"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+          >
+            <lucide-angular [img]="showPassword() ? icons.hide : icons.show" [size]="18" />
+          </button>
           @if (form.controls.password.hasError('required') && form.controls.password.touched) {
             <mat-error>Password is required.</mat-error>
           }
@@ -36,13 +45,18 @@
           <mat-form-field appearance="outline">
             <mat-label>Workspace slug</mat-label>
             <input matInput formControlName="tenantSlug" autocomplete="off" placeholder="acme" />
-            <mat-hint>Shown because this email exists in several workspaces.</mat-hint>
+            @if (form.controls.tenantSlug.hasError('required') && form.controls.tenantSlug.touched) {
+              <mat-error>Enter your workspace slug.</mat-error>
+            }
           </mat-form-field>
+          <p class="auth-note">Shown because this email exists in several workspaces.</p>
         }
 
-        @if (failure()) {
-          <p class="auth-error" role="alert">{{ failure() }}</p>
-        }
+        <div class="auth-alert" role="alert">
+          @if (failure()) {
+            <p class="auth-error">{{ failure() }}</p>
+          }
+        </div>
 
         <button mat-flat-button color="primary" type="submit" [disabled]="busy()">
           @if (busy()) {
@@ -54,7 +68,7 @@
       </form>
     </mat-card-content>
 
-    <mat-card-actions>
+    <mat-card-actions class="auth-actions">
       <span class="auth-switch">New here? <a routerLink="/register">Create a workspace</a></span>
       <span class="auth-switch"><a routerLink="/forgot-password">Forgot password?</a></span>
     </mat-card-actions>

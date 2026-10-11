@@ -52,7 +52,7 @@ test('empty login shows validation, not a request', async ({ page }) => {
 test('unreachable backend surfaces an error state', async ({ page }) => {
   await page.goto('/login');
   await page.getByLabel('Work email').fill('boss@acme.test');
-  await page.getByLabel('Password').fill('correct-horse-123');
+  await page.getByLabel('Password', { exact: true }).fill('correct-horse-123');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('alert')).toContainText('Invalid email or password.');
 });
@@ -62,5 +62,8 @@ test('register screen explains the workspace model', async ({ page }) => {
   await page.getByRole('link', { name: 'Create a workspace' }).click();
   await expect(page).toHaveURL(/\/register/);
   await expect(page.getByText('Create your workspace')).toBeVisible();
-  await expect(page.getByLabel('Workspace name (for new workspaces)')).toBeVisible();
+  await expect(page.getByLabel('Workspace name')).toBeVisible();
+  await page.getByRole('radio', { name: 'Join with invite' }).click();
+  await expect(page.getByText('Join your workspace')).toBeVisible();
+  await expect(page.getByLabel('Invite code')).toBeVisible();
 });

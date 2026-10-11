@@ -59,7 +59,7 @@ async function signIn(page: Page): Promise<void> {
   await stubApi(page, token);
   await page.goto('/login');
   await page.getByLabel('Work email').fill('boss@acme.test');
-  await page.getByLabel('Password').fill('x');
+  await page.getByLabel('Password', { exact: true }).fill('x');
   await page.getByRole('button', { name: 'Sign in' }).click();
   // Generous timeout: full-matrix runs parallelize two browsers and the
   // dev server occasionally needs more than the 5s default to respond.
@@ -77,6 +77,15 @@ test.describe('accessibility', () => {
   test('login has no axe violations', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expectAxeClean(page);
+  });
+
+  test('register modes have no axe violations', async ({ page }) => {
+    await page.goto('/register');
+    await expect(page.getByText('Create your workspace')).toBeVisible();
+    await expectAxeClean(page);
+    await page.getByRole('radio', { name: 'Join with invite' }).click();
+    await expect(page.getByText('Join your workspace')).toBeVisible();
     await expectAxeClean(page);
   });
 

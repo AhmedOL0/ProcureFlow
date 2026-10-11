@@ -742,6 +742,49 @@ p.pf-muted {
   margin: 10vh auto var(--pf-space-lg);
 }
 
+// Auth form primitives (single definition — feature auth styles must
+// not redeclare them). Field explanations live in normal flow as
+// .auth-note: mat-hint renders in the fixed subscript overlay and
+// collides with the alert below it once the hint wraps. The alert
+// region always reserves two lines so the button never jumps.
+.auth-note {
+  color: var(--pf-muted-text);
+  font: var(--pf-body-sm);
+  margin: calc(-1 * var(--pf-space-xs)) 0 var(--pf-space-xs);
+}
+
+.auth-alert {
+  min-height: 2.9em;
+}
+
+.auth-error {
+  color: var(--pf-danger-text);
+  font: var(--pf-body-md);
+  margin: var(--pf-space-xs) 0 var(--pf-space-sm);
+}
+
+mat-card-actions.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--pf-space-lg);
+  row-gap: var(--pf-space-xs);
+  padding: 0 var(--pf-space-lg) var(--pf-space-md);
+}
+
+.auth-switch {
+  font: var(--pf-body-md);
+  color: var(--pf-muted-text);
+  padding: 0;
+}
+
+.auth-switch a {
+  white-space: nowrap;
+}
+
+.auth-mode {
+  margin-bottom: var(--pf-space-xs);
+}
+
 // Motion is functional only: honor reduced-motion everywhere, including
 // Material's built-in dialog/menu transitions.
 @media (prefers-reduced-motion: reduce) {

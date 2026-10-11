@@ -172,7 +172,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 
@@ -213,7 +213,7 @@ test.describe('critical journeys', () => {
     );
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('correct-horse-123');
+    await page.getByLabel('Password', { exact: true }).fill('correct-horse-123');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByText('Procurement overview')).toBeVisible();
@@ -249,7 +249,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
     await page.goto('/suppliers');
@@ -312,7 +312,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 
@@ -367,7 +367,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
     await page.goto('/budgets');
@@ -446,7 +446,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 
@@ -508,7 +508,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 
@@ -568,7 +568,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
     await page.goto('/analytics');
@@ -613,7 +613,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 
@@ -681,7 +681,7 @@ test.describe('critical journeys', () => {
     ]);
     await page.goto('/login');
     await page.getByLabel('Work email').fill('boss@acme.test');
-    await page.getByLabel('Password').fill('x');
+    await page.getByLabel('Password', { exact: true }).fill('x');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 

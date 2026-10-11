@@ -87,6 +87,23 @@ review, README/portfolio overhaul, demo workspace docs.
 - Verified: backend 143 IT green; live spend trajectory 4 periods, 5
   categories, 8.02M/2.66M/1.71M/1.30M req/ord/inv/paid.
 
+### Phase 13f — auth UX pass (this change)
+- Login overlap fixed: multi-line explanations moved out of `mat-hint`
+  (fixed subscript overlay) into flow `.auth-note` captions; the alert
+  region reserves two lines (no button jump); footer links wrap as units.
+- Password visibility toggles on login + register (settings pattern);
+  login guards the empty-slug resubmit loop with a field error.
+- Register split into Create/Join toggle (mat-button-toggle-group):
+  per-mode titles, subtitles, fields, validators and submit labels;
+  INVITE_REQUIRED/TENANT_NAME_REQUIRED auto-flip to the fixing mode.
+- Shared `.auth-note/.auth-alert/.auth-actions` tokens in styles.scss;
+  per-component duplications removed; forgot-password takes the same
+  overlap fix. E2E uses exact password-label matching (toggle buttons
+  carry "Show password") and radio roles for the toggle.
+- Verified: tsc + build clean, 29 Vitest, 50/50 Playwright
+  (chromium+firefox, incl. new register-mode axe scans); evidence in
+  `docs/screens/auth-{login-error,register-create,register-join,login-mobile}.png`.
+
 ### Phase 1 — Foundation (commit 2e2a26c)
 - Repo skeleton, 12 module boundaries + layer contracts, ArchUnit gates.
 - V1 schema (tenants/users/roles/permissions/departments/memberships).

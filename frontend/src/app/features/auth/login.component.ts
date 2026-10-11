@@ -6,8 +6,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { Eye, EyeOff } from '../../shared/icons';
 
 /**
  * Workspace sign-in. A 409 LOGIN_AMBIGUOUS (same email in several
@@ -15,12 +17,14 @@ import { AuthService } from '../../core/auth/auth.service';
  */
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatProgressSpinnerModule, LucideAngularModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
+
+  protected readonly icons = { show: Eye, hide: EyeOff };
 
   readonly form = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
@@ -29,6 +33,7 @@ export class LoginComponent {
   });
   readonly busy = signal(false);
   readonly needsTenant = signal(false);
+  readonly showPassword = signal(false);
   readonly failure = signal<string | null>(null);
 
   submit(): void {
@@ -36,9 +41,16 @@ export class LoginComponent {
       this.form.markAllAsTouched();
       return;
     }
+    const { email, password, tenantSlug } = this.form.getRawValue();
+    if (this.needsTenant() && !tenantSlug.trim()) {
+      this.form.controls.tenantSlug.setValidators(Validators.required);
+      this.form.controls.tenantSlug.updateValueAndValidity();
+      this.form.controls.tenantSlug.markAsTouched();
+      this.failure.set('Enter your workspace slug to continue.');
+      return;
+    }
     this.busy.set(true);
     this.failure.set(null);
-    const { email, password, tenantSlug } = this.form.getRawValue();
     this.auth.login(email, password, tenantSlug.trim() || undefined).subscribe({
       error: (error: unknown) => {
         this.busy.set(false);
