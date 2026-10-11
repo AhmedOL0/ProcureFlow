@@ -1,7 +1,25 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  effect,
+  ElementRef,
+  inject,
+  input,
+  OnDestroy,
+  output,
+  PLATFORM_ID,
+  viewChild,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { init as initChart, use, type ECharts } from 'echarts/core';
+import { BarChart } from 'echarts/charts';
+import { GridComponent, TooltipComponent } from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
 
 import { formatMinor } from '../../utils/money';
-import { axisTicks, clamp01, formatAxisMinor, niceCeil } from '../../utils/charts';
+import { buildSpendOption, type SpendSeriesPoint } from '../../utils/charts';
+
+use([BarChart, GridComponent, TooltipComponent, CanvasRenderer]);
 
 export interface SpendPoint {
   period: string;
@@ -10,124 +28,129 @@ export interface SpendPoint {
   paid: number;
 }
 
-interface PlacedBar {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  css: string;
-  title: string;
-}
-
-interface GridLine {
-  y: number;
-  label: string;
-}
-
 /**
- * Grouped spend bars (ordered / invoiced / paid per month) as dependency-free
- * SVG: value gridlines, readable month labels, native tooltips, and an
- * sr-only data table so screen readers get the same figures. The graphic
- * itself is aria-hidden — the table and legend carry the meaning.
+ * Grouped spend bars (ordered / invoiced / paid per month) on ECharts:
+ * entrance + update animations, axis tooltips with exact figures, series
+ * focus on hover, and click-to-drill per month. The drill listens at the
+ * zrender level and resolves the hit with convertFromPixel: the
+ * ECharts-level 'click' forwarding proved unreliable in diagnosis (events
+ * observable at zrender never reached chart.on handlers). The canvas is
+ * aria-hidden — the legend names the series and the sr-only table carries
+ * every figure, so assistive tech loses nothing.
  */
 @Component({
   selector: 'app-spend-chart',
   templateUrl: './spend-chart.component.html',
   styleUrl: './spend-chart.component.scss',
 })
-export class SpendChartComponent {
+export class SpendChartComponent implements AfterViewInit, OnDestroy {
   readonly months = input.required<SpendPoint[]>();
   readonly currency = input('MAD');
+  readonly monthSelected = output<string>();
 
   protected readonly formatMinor = formatMinor;
 
-  private static readonly WIDTH = 720;
-  private static readonly HEIGHT = 300;
-  private static readonly PAD_LEFT = 56;
-  private static readonly PAD_TOP = 12;
-  private static readonly PAD_BOTTOM = 30;
+  private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private chart: ECharts | null = null;
+  private observer: ResizeObserver | null = null;
 
-  protected readonly width = SpendChartComponent.WIDTH;
-  protected readonly height = SpendChartComponent.HEIGHT;
-
-  private readonly top = computed(() => {
-    const peak = this.months().reduce(
-      (max, month) => Math.max(max, month.ordered, month.invoiced, month.paid),
-      0,
-    );
-    return niceCeil(peak);
-  });
-
-  private readonly plotWidth = computed(
-    () => SpendChartComponent.WIDTH - SpendChartComponent.PAD_LEFT - 12,
-  );
-  private readonly plotHeight = computed(
-    () => SpendChartComponent.HEIGHT - SpendChartComponent.PAD_TOP - SpendChartComponent.PAD_BOTTOM,
-  );
-
-  protected readonly grid = computed<GridLine[]>(() => {
-    const top = this.top();
-    const base = SpendChartComponent.HEIGHT - SpendChartComponent.PAD_BOTTOM;
-    return axisTicks(top).map((tick) => ({
-      y: base - (tick / top) * this.plotHeight(),
-      label: formatAxisMinor(tick),
-    }));
-  });
-
-  protected readonly bars = computed<PlacedBar[]>(() => {
-    const rows = this.months();
-    const top = this.top();
-    const base = SpendChartComponent.HEIGHT - SpendChartComponent.PAD_BOTTOM;
-    const groupWidth = rows.length > 0 ? this.plotWidth() / rows.length : 0;
-    const barWidth = Math.min(24, groupWidth / 4.2);
-    const gap = 4;
-    const series = [
-      { key: 'ordered', css: 'spend-bar--ordered', label: 'Ordered' },
-      { key: 'invoiced', css: 'spend-bar--invoiced', label: 'Invoiced' },
-      { key: 'paid', css: 'spend-bar--paid', label: 'Paid' },
-    ] as const;
-    const span = barWidth * series.length + gap * (series.length - 1);
-    const currency = this.currency();
-    return rows.flatMap((row, index) => {
-      const groupX = SpendChartComponent.PAD_LEFT + groupWidth * index + (groupWidth - span) / 2;
-      return series.map((column, position) => {
-        const value = row[column.key] as number;
-        const fraction = clamp01(value, top);
-        const height = Math.max(fraction > 0 ? 2 : 0, fraction * this.plotHeight());
-        return {
-          x: groupX + position * (barWidth + gap),
-          y: base - height,
-          width: barWidth,
-          height,
-          css: column.css,
-          title: `${column.label} ${row.period}: ${formatMinor(value, currency)}`,
-        };
-      });
+  constructor() {
+    effect(() => {
+      this.months();
+      this.currency();
+      this.render();
     });
-  });
+  }
 
-  protected readonly monthLabels = computed(() => {
-    const rows = this.months();
-    const step = Math.max(1, Math.ceil(rows.length / 8));
-    const groupWidth = rows.length > 0 ? this.plotWidth() / rows.length : 0;
-    return rows
-      .map((row, index) => ({ row, index }))
-      .filter(({ index }) => index % step === 0)
-      .map(({ row, index }) => ({
-        x: SpendChartComponent.PAD_LEFT + groupWidth * index + groupWidth / 2,
-        y: SpendChartComponent.HEIGHT - SpendChartComponent.PAD_BOTTOM + 20,
-        text: row.period,
-      }));
-  });
+  ngAfterViewInit(): void {
+    if (!this.browser) {
+      return;
+    }
+    this.chart = initChart(this.canvas().nativeElement);
+    // Drill-down listens at the zrender level and resolves the hit with
+    // convertFromPixel: it fires for every canvas gesture, while the
+    // ECharts-level 'click' forwarding proved unreliable in diagnosis.
+    this.chart.getZr().on('click', (event) => {
+      const point = pixelOf(event);
+      if (!point || !this.chart) {
+        return;
+      }
+      const index = monthIndexAt(this.chart, point);
+      const hit = index === null ? undefined : this.months()[index];
+      if (hit) {
+        this.monthSelected.emit(hit.period);
+      }
+    });
+    this.render();
+    this.observer = new ResizeObserver(() => this.chart?.resize());
+    this.observer.observe(this.canvas().nativeElement);
+  }
 
-  protected readonly totals = computed(() => {
-    const rows = this.months();
-    const sum = (pick: (row: SpendPoint) => number): number =>
-      rows.reduce((acc, row) => acc + (pick(row) ?? 0), 0);
-    return {
-      ordered: sum((row) => row.ordered),
-      invoiced: sum((row) => row.invoiced),
-      paid: sum((row) => row.paid),
-    };
-  });
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    this.observer = null;
+    this.chart?.dispose();
+    this.chart = null;
+  }
+
+  private render(): void {
+    if (!this.chart) {
+      return;
+    }
+    const theme = readSpendTheme();
+    this.chart.setOption(
+      buildSpendOption(
+        this.months().map((month) => ({
+          period: month.period,
+          ordered: month.ordered,
+          invoiced: month.invoiced,
+          paid: month.paid,
+        }) satisfies SpendSeriesPoint),
+        theme,
+        this.currency(),
+        !prefersReducedMotion(),
+      ),
+    );
+  }
+}
+
+/** Token palette resolved from CSS so fills track styles.scss, never copies. */
+function readSpendTheme(): { ordered: string; invoiced: string; paid: string; grid: string; text: string } {
+  const css = getComputedStyle(document.documentElement);
+  const pick = (name: string): string => css.getPropertyValue(name).trim();
+  return {
+    ordered: pick('--pf-navy'),
+    invoiced: pick('--pf-blue'),
+    paid: pick('--pf-copper'),
+    grid: pick('--pf-border'),
+    text: pick('--pf-slate'),
+  };
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function pixelOf(event: unknown): [number, number] | null {
+  const point = event as { offsetX?: unknown; offsetY?: unknown };
+  if (typeof point.offsetX !== 'number' || typeof point.offsetY !== 'number') {
+    return null;
+  }
+  return [point.offsetX, point.offsetY];
+}
+
+/** Month-group index under a canvas gesture, or null outside the groups. */
+function monthIndexAt(chart: ECharts, point: [number, number]): number | null {
+  let resolved: unknown;
+  try {
+    resolved = chart.convertFromPixel({ seriesIndex: 0 }, point);
+  } catch {
+    return null;
+  }
+  const index = Array.isArray(resolved) ? resolved[0] : null;
+  if (typeof index !== 'number' || !Number.isFinite(index)) {
+    return null;
+  }
+  return Math.round(index);
 }

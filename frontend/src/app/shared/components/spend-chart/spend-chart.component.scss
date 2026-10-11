@@ -1,41 +1,12 @@
-// Grouped spend bars: value grid, series fills from the token system,
-// legend swatches. Static SVG (no animation) honours reduced-motion by
-// having nothing to reduce.
+// Grouped spend bars on ECharts: the canvas needs an explicit height
+// (it cannot derive one from SVG the way the old static chart did).
+// Legend swatches mirror the series fills from the token system.
 .spend-chart {
   padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
 }
 
-.spend-chart__canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.spend-chart__grid {
-  stroke: var(--pf-border);
-  stroke-width: 1;
-}
-
-.spend-chart__tick {
-  font: var(--pf-body-sm);
-  fill: var(--pf-slate);
-}
-
-.spend-chart__month {
-  font: 400 11px/14px var(--pf-font);
-  fill: var(--pf-slate);
-}
-
-.spend-chart__bar {
-  &.spend-bar--ordered {
-    fill: var(--pf-navy);
-  }
-  &.spend-bar--invoiced {
-    fill: var(--pf-blue);
-  }
-  &.spend-bar--paid {
-    fill: var(--pf-copper);
-  }
+.spend-chart__stage {
+  height: 300px;
 }
 
 .spend-chart__legend {

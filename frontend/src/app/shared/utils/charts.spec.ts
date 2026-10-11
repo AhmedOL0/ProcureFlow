@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
-import { axisTicks, clamp01, donutArcs, formatAxisMinor, niceCeil } from './charts';
+import {
+  buildDonutOption,
+  buildSpendOption,
+  formatAxisMinor,
+  niceCeil,
+  segmentAt,
+} from './charts';
+
+const THEME = {
+  ordered: 'navy',
+  invoiced: 'viridian',
+  paid: 'copper',
+  grid: 'grid',
+  text: 'text',
+};
 
 describe('charts', () => {
   it('rounds axis tops to clean steps', () => {
@@ -9,19 +23,6 @@ describe('charts', () => {
     expect(niceCeil(5_000_000)).toBe(5_000_000);
     expect(niceCeil(690_000)).toBe(1_000_000);
     expect(niceCeil(NaN)).toBe(1);
-  });
-
-  it('builds even ticks from zero to top', () => {
-    expect(axisTicks(1_000_000, 4)).toEqual([0, 250_000, 500_000, 750_000, 1_000_000]);
-    expect(axisTicks(0)).toEqual([0]);
-  });
-
-  it('clamps bar fractions', () => {
-    expect(clamp01(500, 1000)).toBe(0.5);
-    expect(clamp01(2000, 1000)).toBe(1);
-    expect(clamp01(-5, 1000)).toBe(0);
-    expect(clamp01(null, 1000)).toBe(0);
-    expect(clamp01(5, 0)).toBe(0);
   });
 
   it('compacts axis money labels', () => {
@@ -33,15 +34,60 @@ describe('charts', () => {
     expect(formatAxisMinor(2_660_000)).toBe('2.7M');
   });
 
-  it('lays donut arcs end to end', () => {
-    const arcs = donutArcs([50, 30, 20]);
-    expect(arcs[0]).toEqual({ start: 0, length: 0.5 });
-    expect(arcs[1].start).toBeCloseTo(0.5);
-    expect(arcs[2].start + arcs[2].length).toBeCloseTo(1);
-    expect(donutArcs([0, -1, NaN])).toEqual([
-      { start: 0, length: 0 },
-      { start: 0, length: 0 },
-      { start: 0, length: 0 },
-    ]);
+  it('builds grouped spend series with themed colors', () => {
+    const option = buildSpendOption(
+      [{ period: '2026-05', ordered: 1_020_000, invoiced: 1_020_000, paid: 500_000 }],
+      THEME,
+      'MAD',
+      true,
+    );
+    expect(option.animation).toBe(true);
+    const series = option.series as { name: string; data: number[]; itemStyle: { color: string } }[];
+    expect(series.map((row) => row.name)).toEqual(['Ordered', 'Invoiced', 'Paid']);
+    expect(series[0].data).toEqual([1_020_000]);
+    expect(series[0].itemStyle.color).toBe('navy');
+    expect(series[2].itemStyle.color).toBe('copper');
+    const yAxis = option.yAxis as { max: number; interval: number };
+    expect(yAxis.max).toBe(2_000_000);
+    expect(yAxis.interval).toBe(500_000);
+    const xAxis = option.xAxis as { data: string[] };
+    expect(xAxis.data).toEqual(['2026-05']);
+  });
+
+  it('disables animation for reduced motion', () => {
+    const option = buildSpendOption([], THEME, 'MAD', false);
+    expect(option.animation).toBe(false);
+  });
+
+  it('builds donut data with palette cycling and center total', () => {
+    const option = buildDonutOption(
+      [
+        { label: 'Hardware', value: 4_245_000 },
+        { label: 'Office', value: 1_890_000 },
+      ],
+      ['navy', 'viridian'],
+      'card',
+      'MAD',
+      true,
+    );
+    const series = option.series as {
+      data: { name: string; value: number; itemStyle: { color: string; borderColor: string } }[];
+    }[];
+    expect(series).toHaveLength(1);
+    expect(series[0].data.map((row) => row.name)).toEqual(['Hardware', 'Office']);
+    expect(series[0].data[0].itemStyle).toEqual({ color: 'navy', borderColor: 'card', borderWidth: 2 });
+    expect(series[0].data[1].itemStyle.color).toBe('viridian');
+    const title = option.title as { text: string };
+    expect(title.text).toContain('61,350');
+  });
+
+  it('maps ring gestures to segments from the top, clockwise', () => {
+    const values = [50, 30, 20];
+    expect(segmentAt(values, 0, -1)).toBe(0);
+    expect(segmentAt(values, 1, 0)).toBe(0);
+    expect(segmentAt(values, 0, 1)).toBe(1);
+    expect(segmentAt(values, -1, 0)).toBe(1);
+    expect(segmentAt(values, 0, 0)).toBeNull();
+    expect(segmentAt([100], 0.3, 0.9)).toBe(0);
   });
 });

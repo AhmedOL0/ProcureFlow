@@ -88,7 +88,7 @@
             <a routerLink="/analytics">Full trajectory</a>
           </div>
         </div>
-        <app-spend-chart [months]="trendPoints()" />
+        <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics()" />
       </section>
     }
 

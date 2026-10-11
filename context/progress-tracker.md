@@ -125,6 +125,21 @@ review, README/portfolio overhaul, demo workspace docs.
   (chromium+firefox, incl. new register-mode axe scans); evidence in
   `docs/screens/auth-{login-error,register-create,register-join,login-mobile}.png`.
 
+### Phase 13h — live ECharts with drills (this change)
+- Static SVG charts replaced by ECharts 6.1 (tree-shaken core: bar+pie,
+  grid/tooltip/title, canvas renderer; lazy chunks only, no new initial
+  weight): entrance + update animations (off under reduced-motion),
+  axis/item tooltips with exact money, series focus on hover.
+- Click-to-drill: month bars narrow the analytics period, donut segments
+  fill the category search, dashboard months open the trajectory.
+  Drills resolve hits at the zrender level (pixel→index/angle math in
+  tested utils) because ECharts-level 'click' forwarding proved
+  unreliable in diagnosis — documented on both components.
+- A11y preserved: aria-hidden canvases, live sr-only data table + value
+  legend; no raw hex (palette resolved from CSS tokens at runtime).
+- Verified: tsc + build clean, 35 Vitest, 52/52 Playwright
+  (chromium+firefox, incl. a canvas drill journey); evidence refreshed.
+
 ### Phase 1 — Foundation (commit 2e2a26c)
 - Repo skeleton, 12 module boundaries + layer contracts, ArchUnit gates.
 - V1 schema (tenants/users/roles/permissions/departments/memberships).

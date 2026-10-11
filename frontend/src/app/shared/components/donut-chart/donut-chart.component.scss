@@ -1,69 +1,22 @@
-// Category donut: ring on a neutral track, total in the middle, legend
-// with values on the side. Segment fills come from the token system.
+// Category donut on ECharts: fixed-height canvas plus the value legend.
+// Segment fills come from the token system (resolved in the component,
+// not copied here) — the swatches below mirror the same six steps.
 .donut-chart {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--pf-space-lg) var(--pf-space-2xl);
   padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
 }
 
-.donut-chart__canvas {
-  width: 180px;
-  height: 180px;
-  flex-shrink: 0;
-}
-
-.donut-chart__track {
-  fill: none;
-  stroke: var(--pf-neutral-bg);
-  stroke-width: 26;
-}
-
-.donut-chart__arc {
-  fill: none;
-  stroke-width: 26;
-  &.donut-segment--0 {
-    stroke: var(--pf-navy);
-  }
-  &.donut-segment--1 {
-    stroke: var(--pf-blue);
-  }
-  &.donut-segment--2 {
-    stroke: var(--pf-teal);
-  }
-  &.donut-segment--3 {
-    stroke: var(--pf-copper);
-  }
-  &.donut-segment--4 {
-    stroke: var(--pf-slate);
-  }
-  &.donut-segment--5 {
-    stroke: var(--pf-info-text);
-  }
-}
-
-.donut-chart__total {
-  font: 600 15px/20px var(--pf-font);
-  fill: var(--pf-navy);
-}
-
-.donut-chart__caption {
-  font: var(--pf-label-md);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  fill: var(--pf-slate);
+.donut-chart__stage {
+  height: 240px;
 }
 
 .donut-chart__legend {
   list-style: none;
-  margin: 0;
+  margin: var(--pf-space-md) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: var(--pf-space-sm);
   min-width: 0;
-  flex: 1 1 200px;
   font: var(--pf-label-lg);
   color: var(--pf-text);
 }

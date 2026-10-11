@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { catchError, forkJoin, of } from 'rxjs';
 
@@ -58,6 +58,7 @@ interface Kpi {
 })
 export class DashboardComponent {
   private readonly requests = inject(ProcurementService);
+  private readonly router = inject(Router);
   private readonly suppliers = inject(SuppliersService);
   private readonly orders = inject(OrderService);
   private readonly budgets = inject(BudgetsService);
@@ -286,6 +287,11 @@ export class DashboardComponent {
           this.monthPotMissing.set(this.canSeeBudgets && rows.length === 0);
         },
       });
+  }
+
+  /** Chart drill: a trend month opens the full trajectory. */
+  openAnalytics(): void {
+    void this.router.navigate(['/analytics']);
   }
 
   leadHours(value: number | null | undefined): string {

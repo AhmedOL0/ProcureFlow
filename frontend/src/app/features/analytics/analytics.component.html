@@ -69,7 +69,7 @@
             message="Ordered, invoiced and paid totals appear here once purchasing moves."
           />
         } @else {
-          <app-spend-chart [months]="spendPoints()" />
+          <app-spend-chart [months]="spendPoints()" (monthSelected)="drillToMonth($event)" />
         }
       </section>
 
@@ -90,7 +90,7 @@
             message="Category totals appear once ordered lines carry categories."
           />
         } @else {
-          <app-donut-chart [slices]="donutSlices()" />
+          <app-donut-chart [slices]="donutSlices()" (categorySelected)="drillToCategory($event)" />
         }
       </section>
     </div>

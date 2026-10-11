@@ -1,28 +1,5 @@
 <div class="donut-chart">
-  <svg
-    class="donut-chart__canvas"
-    viewBox="0 0 180 180"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <circle class="donut-chart__track" cx="90" cy="90" r="70" />
-    <g transform="rotate(-90 90 90)">
-      @for (arc of arcs(); track $index) {
-        <circle
-          [attr.class]="'donut-chart__arc ' + arc.css"
-          cx="90"
-          cy="90"
-          r="70"
-          [attr.stroke-dasharray]="arc.dash"
-          [attr.stroke-dashoffset]="arc.offset"
-        />
-      }
-    </g>
-    <text class="donut-chart__total" x="90" y="88" text-anchor="middle">
-      {{ formatMinor(total(), currency()) }}
-    </text>
-    <text class="donut-chart__caption" x="90" y="106" text-anchor="middle">total</text>
-  </svg>
+  <div #canvas class="donut-chart__stage" aria-hidden="true"></div>
   <ul class="donut-chart__legend">
     @for (row of legend(); track row.label) {
       <li>

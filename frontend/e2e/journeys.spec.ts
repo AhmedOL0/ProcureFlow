@@ -573,7 +573,112 @@ test.describe('critical journeys', () => {
     await expect(page).toHaveURL(/\/dashboard/);
     await page.goto('/analytics');
     await expect(page.getByText('Cloud', { exact: true })).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('.spend-chart__month', { hasText: '2026-10' })).toBeVisible();
+    await expect(page.locator('.spend-chart__table')).toContainText('2026-10');
+  });
+
+  test('analytics charts drill into filters', async ({ page }) => {
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [],
+        requests: [],
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
+      }),
+      {
+        method: 'GET',
+        match: '/analytics/spend',
+        body: {
+          requestedMinor: 100000,
+          orderedMinor: 80000,
+          invoicedMinor: 50000,
+          paidMinor: 20000,
+          byCategory: [{ category: 'Cloud', amountMinor: 80000 }],
+          byPeriod: [
+            { period: '2026-10', orderedMinor: 80000, invoicedMinor: 50000, paidMinor: 20000 },
+          ],
+        },
+      },
+      { method: 'GET', match: '/analytics/suppliers', body: [] },
+      {
+        method: 'GET',
+        match: '/analytics/approvals',
+        body: { pending: 2, decided: 5, avgLeadHours: 3.5, maxLeadHours: 9 },
+      },
+      {
+        method: 'GET',
+        match: '/ai/usage',
+        body: { calls: 0, promptTokens: 0, completionTokens: 0, byFeature: [] },
+      },
+    ]);
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/analytics');
+    await expect(page.locator('.spend-chart__table')).toContainText('2026-10');
+    // Entrance animations run ~600ms: click once the bars have grown.
+    await page.waitForTimeout(1000);
+    await expect(page.locator('.spend-chart__stage canvas')).toBeVisible();
+
+    const spendBox = await page.locator('.spend-chart__stage canvas').boundingBox();
+    // The single-month group sits near the canvas middle; sweep across it
+    // so the click lands on a bar whichever series it hits (same month).
+    // getByRole textbox: the "Spend by period" section name also matches
+    // getByLabel('Period'), so scope to the month input explicitly.
+    const periodBox = page.getByRole('textbox', { name: 'Period' });
+    if (spendBox) {
+      const spendCanvas = page.locator('.spend-chart__stage canvas');
+      for (const fraction of [0.44, 0.47, 0.5, 0.53, 0.56]) {
+        await spendCanvas.click({
+          position: { x: spendBox.width * fraction, y: spendBox.height * 0.8 },
+          timeout: 10000,
+        });
+        try {
+          await expect(periodBox).toHaveValue('2026-10', { timeout: 1500 });
+          break;
+        } catch {
+          // Missed the bars; try the next offset.
+        }
+      }
+    }
+    await expect(periodBox).toHaveValue('2026-10', { timeout: 10000 });
+
+    // The month drill reloads (and re-animates) the charts; wait again,
+    // then sweep the donut ring for the single Cloud segment.
+    await page.waitForTimeout(1000);
+    const categoryBox = page.getByRole('textbox', { name: 'Filter categories' });
+    const donutCanvas = page.locator('.donut-chart__stage canvas');
+    const donutBox = await donutCanvas.boundingBox();
+    if (donutBox) {
+      const centerX = donutBox.width / 2;
+      const centerY = donutBox.height / 2;
+      const radius = Math.min(donutBox.width, donutBox.height) * 0.34;
+      const ring = [
+        { x: centerX, y: centerY - radius },
+        { x: centerX + radius, y: centerY },
+        { x: centerX, y: centerY + radius },
+        { x: centerX - radius, y: centerY },
+      ];
+      for (const position of ring) {
+        await donutCanvas.click({ position, timeout: 10000 });
+        try {
+          await expect(categoryBox).toHaveValue('Cloud', {
+            timeout: 1500,
+          });
+          break;
+        } catch {
+          // Missed the ring; try the next cardinal point.
+        }
+      }
+    }
+    await expect(categoryBox).toHaveValue('Cloud', {
+      timeout: 10000,
+    });
   });
 
   test('copilot answers with citations and survives provider failure', async ({ page }) => {

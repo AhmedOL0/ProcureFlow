@@ -153,6 +153,23 @@ export class AnalyticsComponent {
     this.reload();
   }
 
+  /** Chart drill: a month bar narrows the whole page to that period. */
+  drillToMonth(period: string): void {
+    if (!period || this.periodBox.value === period) {
+      return;
+    }
+    this.periodBox.setValue(period);
+    this.reload();
+  }
+
+  /** Chart drill: a donut segment fills the category search. */
+  drillToCategory(category: string): void {
+    if (!category) {
+      return;
+    }
+    this.categoryBox.setValue(category);
+  }
+
   barWidth(value: number, max: number): number {
     if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
       return 0;
