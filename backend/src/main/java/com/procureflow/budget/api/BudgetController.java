@@ -55,8 +55,7 @@ public class BudgetController {
     @Operation(summary = "List pots of the current workspace, newest period first")
     public ResponseEntity<List<BudgetResponse>> list(
             @AuthenticationPrincipal AuthenticatedUser principal, @RequestParam(required = false) String period) {
-        return ResponseEntity.ok(budgets.list(principal.tenantId(), period).stream()
-                .map(budgets::view)
+        return ResponseEntity.ok(budgets.views(principal.tenantId(), period).stream()
                 .map(BudgetResponse::from)
                 .toList());
     }

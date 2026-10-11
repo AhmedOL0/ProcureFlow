@@ -11,6 +11,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -62,10 +63,13 @@ public class BudgetService implements BudgetReservationPort {
         if (pots.isEmpty()) {
             return;
         }
+        // One grouped sum, not one query per pot: same snapshot (same
+        // locked transaction), same best-fit walk over the ordered pots.
+        Map<UUID, Long> reserved = reservedByBudget(pots.stream().map(Budget::getId).toList());
         Budget target = null;
         long bestRemaining = -1;
         for (Budget pot : pots) {
-            long remaining = pot.getAmountMinor() - reservations.sumReservedByBudgetId(pot.getId());
+            long remaining = pot.getAmountMinor() - reserved.getOrDefault(pot.getId(), 0L);
             if (remaining >= amountMinor && remaining > bestRemaining) {
                 target = pot;
                 bestRemaining = remaining;
@@ -155,7 +159,27 @@ public class BudgetService implements BudgetReservationPort {
 
     @Transactional(readOnly = true)
     public BudgetView view(Budget budget) {
-        long reserved = reservations.sumReservedByBudgetId(budget.getId());
+        return view(budget, reservations.sumReservedByBudgetId(budget.getId()));
+    }
+
+    /**
+     * Views for a pot listing: one grouped sum for all pots instead of one
+     * query per row. Pots with no reservations are absent from the map and
+     * read as zero, exactly like the single-pot path.
+     */
+    @Transactional(readOnly = true)
+    public List<BudgetView> views(String tenantSlug, String period) {
+        List<Budget> pots = list(tenantSlug, period);
+        if (pots.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, Long> reserved = reservedByBudget(pots.stream().map(Budget::getId).toList());
+        return pots.stream()
+                .map(pot -> view(pot, reserved.getOrDefault(pot.getId(), 0L)))
+                .toList();
+    }
+
+    private BudgetView view(Budget budget, long reserved) {
         return new BudgetView(
                 budget.getId(),
                 budget.getName(),
@@ -164,6 +188,14 @@ public class BudgetService implements BudgetReservationPort {
                 budget.getCurrency(),
                 reserved,
                 budget.getAmountMinor() - reserved);
+    }
+
+    private Map<UUID, Long> reservedByBudget(List<UUID> budgetIds) {
+        Map<UUID, Long> reserved = new HashMap<>();
+        for (Object[] row : reservations.sumReservedByBudgetIds(budgetIds)) {
+            reserved.put((UUID) row[0], (Long) row[1]);
+        }
+        return reserved;
     }
 
     private Budget scoped(String tenantSlug, UUID id) {
