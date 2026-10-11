@@ -4,10 +4,13 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 14 — audit remediation, one phase at a time (this change: H
-non-root).** PRs #14–#21 merged. The external audit (68/100, Functional
-Application, 0 critical / 4 high) is remediated in small phased PRs with
-green gates.
+**Phase 14 — audit remediation, one phase at a time (this change: KPI
+resilience).** PRs #14–#22 merged. KPI numerals had no fallback where
+container-query units are unsupported (pre-2022 engines dropped the whole
+`clamp()` to body size on every KPI row); plain 24px first now. The
+single-column stacking in the report is the correct ≤767px responsive
+layout (zoom or narrow window), not a defect — confirmed breakpoints
+4→2→1 with mobile evidence.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:
