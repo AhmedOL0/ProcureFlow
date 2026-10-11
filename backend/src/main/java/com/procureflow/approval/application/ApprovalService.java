@@ -16,6 +16,7 @@ import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.procurement.application.RequestDecisionPort;
 import com.procureflow.shared.web.ApiException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -179,16 +180,27 @@ public class ApprovalService {
             advanceIfOverdue(existing.get(), Instant.now());
             return existing.get();
         }
-        Optional<ApprovalWorkflow> match = workflows.findAllByTenantIdOrderByMinAmountMinorAsc(tenantId).stream()
+        List<ApprovalWorkflow> lanes = workflows.findAllByTenantIdOrderByMinAmountMinorAsc(tenantId);
+        // One fetch for every lane's steps — previously one query per lane
+        // plus a re-fetch of the winner. Same snapshot, identical
+        // most-specific-lower-bound match over the ordered lanes.
+        Map<UUID, List<ApprovalStep>> stepsByWorkflow = new HashMap<>();
+        if (!lanes.isEmpty()) {
+            for (ApprovalStep step : steps.findAllByWorkflowIdInOrderByWorkflowIdAscStepOrderAsc(
+                    lanes.stream().map(ApprovalWorkflow::getId).toList())) {
+                stepsByWorkflow.computeIfAbsent(step.getWorkflowId(), id -> new ArrayList<>()).add(step);
+            }
+        }
+        Optional<ApprovalWorkflow> match = lanes.stream()
                 .filter(ApprovalWorkflow::isActive)
                 .filter(w -> w.matches(locked.totalMinor()))
-                .filter(w -> !steps.findAllByWorkflowIdOrderByStepOrderAsc(w.getId()).isEmpty())
+                .filter(w -> !stepsByWorkflow.getOrDefault(w.getId(), List.of()).isEmpty())
                 .reduce((first, second) -> second);
         if (match.isEmpty()) {
             return null;
         }
         ApprovalWorkflow workflow = match.get();
-        ApprovalStep first = steps.findAllByWorkflowIdOrderByStepOrderAsc(workflow.getId()).get(0);
+        ApprovalStep first = stepsByWorkflow.get(workflow.getId()).get(0);
         try {
             return assignments.saveAndFlush(new ApprovalAssignment(
                     tenantId,

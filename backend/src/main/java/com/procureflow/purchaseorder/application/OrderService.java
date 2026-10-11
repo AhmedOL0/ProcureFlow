@@ -9,6 +9,7 @@ import com.procureflow.purchaseorder.infrastructure.PurchaseOrderRepository;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.supplier.application.SupplierLookup;
 import com.procureflow.audit.application.AuditTrailLogged;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -134,10 +135,19 @@ public class OrderService {
         if (receipts == null || receipts.isEmpty()) {
             throw ApiException.badRequest("EMPTY_RECEIPT", "At least one received line is required");
         }
+        // One fetch serves both the per-line checks and the fullness
+        // derivation below — previously each receipt re-read its line and
+        // the whole set was fetched a second time. Same locked transaction,
+        // identical math.
+        Map<UUID, OrderItem> byId = new HashMap<>();
+        for (OrderItem line : lines.findAllByOrder_IdOrderByCreatedAt(order.getId())) {
+            byId.put(line.getId(), line);
+        }
         for (Receipt receipt : receipts) {
-            OrderItem line = lines
-                    .findByIdAndOrderId(receipt.itemId(), order.getId())
-                    .orElseThrow(() -> ApiException.notFound("ORDER_ITEM_NOT_FOUND", "Order line not found"));
+            OrderItem line = byId.get(receipt.itemId());
+            if (line == null) {
+                throw ApiException.notFound("ORDER_ITEM_NOT_FOUND", "Order line not found");
+            }
             if (receipt.quantity() < 1) {
                 throw ApiException.badRequest("INVALID_QTY", "Received quantity must be positive");
             }
@@ -147,8 +157,7 @@ public class OrderService {
             line.receive(receipt.quantity());
             lines.save(line);
         }
-        boolean full = lines.findAllByOrder_IdOrderByCreatedAt(order.getId()).stream()
-                .allMatch(OrderItem::isFullyReceived);
+        boolean full = byId.values().stream().allMatch(OrderItem::isFullyReceived);
         order.setStatus(full ? PurchaseOrder.Status.RECEIVED : PurchaseOrder.Status.PARTIALLY_RECEIVED);
         orders.save(order);
         events.publishEvent(AuditTrailLogged.now(

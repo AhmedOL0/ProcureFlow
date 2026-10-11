@@ -1,10 +1,15 @@
 package com.procureflow.purchaseorder.application;
 
 import com.procureflow.organization.application.TenantProvisioning;
+import com.procureflow.purchaseorder.domain.OrderItem;
 import com.procureflow.purchaseorder.domain.PurchaseOrder;
 import com.procureflow.purchaseorder.infrastructure.OrderItemRepository;
 import com.procureflow.purchaseorder.infrastructure.PurchaseOrderRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,16 +31,26 @@ public class OrderStatsAdapter implements OrderStatsPort {
     @Override
     @Transactional(readOnly = true)
     public List<OrderStat> orderStats(String tenantSlug) {
-        return orders.findAllByTenantIdOrderByCreatedAtDesc(tenants.requireTenantId(tenantSlug)).stream()
-                .map(this::stat)
+        List<PurchaseOrder> found = orders.findAllByTenantIdOrderByCreatedAtDesc(tenants.requireTenantId(tenantSlug));
+        if (found.isEmpty()) {
+            return List.of();
+        }
+        // One fetch for every order's lines, not one query per order.
+        Map<UUID, List<LineStat>> linesByOrder = new HashMap<>();
+        for (OrderItem line : lines.findAllByOrder_IdInOrderByOrder_IdAscCreatedAtAsc(
+                found.stream().map(PurchaseOrder::getId).toList())) {
+            linesByOrder
+                    .computeIfAbsent(line.getOrder().getId(), id -> new ArrayList<>())
+                    .add(new LineStat(line.getQuantity(), line.getUnitPriceMinor(), line.getCurrency(),
+                            line.getReceivedQty()));
+        }
+        return found.stream()
+                .map(order -> new OrderStat(
+                        order.getId(),
+                        order.getStatus().name(),
+                        order.getCurrency(),
+                        order.getCreatedAt(),
+                        linesByOrder.getOrDefault(order.getId(), List.of())))
                 .toList();
-    }
-
-    private OrderStat stat(PurchaseOrder order) {
-        List<LineStat> snapshot = lines.findAllByOrder_IdOrderByCreatedAt(order.getId()).stream()
-                .map(i -> new LineStat(i.getQuantity(), i.getUnitPriceMinor(), i.getCurrency(), i.getReceivedQty()))
-                .toList();
-        return new OrderStat(order.getId(), order.getStatus().name(), order.getCurrency(), order.getCreatedAt(),
-                snapshot);
     }
 }
