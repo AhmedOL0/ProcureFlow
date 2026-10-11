@@ -5,11 +5,13 @@ import com.procureflow.audit.domain.AuditEvent;
 import com.procureflow.audit.infrastructure.AuditEventRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -56,19 +58,27 @@ public class AuditService {
         }
     }
 
+    /**
+     * Paged trail read: same newest-first order and filter branches as the
+     * original list, but bounded — the trail grows forever, so unbounded
+     * reads were the first scalability wall.
+     */
     @Transactional(readOnly = true)
-    public List<AuditEvent> list(String tenantSlug, String entityType, UUID entityId) {
+    public Paged<AuditEvent> page(String tenantSlug, String entityType, UUID entityId, int page, int size) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<AuditEvent> found;
         if (entityType == null && entityId == null) {
-            return events.findAllByTenantIdOrderByCreatedAtDesc(tenantId);
+            found = events.findAllByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+        } else if (entityType != null && entityId == null) {
+            found = events.findAllByTenantIdAndEntityTypeOrderByCreatedAtDesc(tenantId, entityType, pageable);
+        } else if (entityType == null) {
+            found = events.findAllByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, entityId, pageable);
+        } else {
+            found = events.findAllByTenantIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(
+                    tenantId, entityType, entityId, pageable);
         }
-        if (entityType != null && entityId == null) {
-            return events.findAllByTenantIdAndEntityTypeOrderByCreatedAtDesc(tenantId, entityType);
-        }
-        if (entityType == null) {
-            return events.findAllByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, entityId);
-        }
-        return events.findAllByTenantIdAndEntityTypeAndEntityIdOrderByCreatedAtDesc(tenantId, entityType, entityId);
+        return Paged.of(found.getContent(), page, size, found.getTotalElements());
     }
 
     private String toJson(Map<String, Object> payload) {

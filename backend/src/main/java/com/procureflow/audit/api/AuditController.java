@@ -2,9 +2,9 @@ package com.procureflow.audit.api;
 
 import com.procureflow.audit.application.AuditService;
 import com.procureflow.identity.application.AuthenticatedUser;
+import com.procureflow.shared.web.Paged;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,13 +31,15 @@ public class AuditController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('audit:read')")
-    @Operation(summary = "List trail rows, newest first, optionally filtered")
-    public ResponseEntity<List<AuditEventResponse>> list(
+    @Operation(summary = "Paged trail rows, newest first, optionally filtered")
+    public ResponseEntity<Paged<AuditEventResponse>> list(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestParam(required = false) String entityType,
-            @RequestParam(required = false) UUID entityId) {
-        return ResponseEntity.ok(trail.list(principal.tenantId(), entityType, entityId).stream()
-                .map(AuditEventResponse::from)
-                .toList());
+            @RequestParam(required = false) UUID entityId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(trail
+                .page(principal.tenantId(), entityType, entityId, Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(AuditEventResponse::from));
     }
 }

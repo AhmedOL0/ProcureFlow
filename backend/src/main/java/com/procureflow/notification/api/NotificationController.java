@@ -3,10 +3,11 @@ package com.procureflow.notification.api;
 import com.procureflow.identity.application.AuthenticatedUser;
 import com.procureflow.identity.application.PermissionCodes;
 import com.procureflow.notification.application.NotificationService;
+import com.procureflow.shared.web.Paged;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,11 +34,14 @@ public class NotificationController {
     }
 
     @GetMapping
-    @Operation(summary = "My inbox, newest first")
-    public ResponseEntity<List<NotificationResponse>> inbox(@AuthenticationPrincipal AuthenticatedUser principal) {
-        return ResponseEntity.ok(inbox.inbox(principal.tenantId(), principal.userId()).stream()
-                .map(NotificationResponse::from)
-                .toList());
+    @Operation(summary = "My inbox, newest first (paged)")
+    public ResponseEntity<Paged<NotificationResponse>> inbox(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(inbox
+                .inbox(principal.tenantId(), principal.userId(), Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(NotificationResponse::from));
     }
 
     @PatchMapping("/{id}/read")

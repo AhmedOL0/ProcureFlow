@@ -137,10 +137,35 @@ class NotificationIT extends AbstractIntegrationTest {
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> inbox(String token) {
-        ResponseEntity<List> response = get("/api/v1/notifications", token, List.class);
+        ResponseEntity<Map> response = get("/api/v1/notifications", token, Map.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        return (List<Map<String, Object>>) (List<?>) response.getBody();
+        return (List<Map<String, Object>>) response.getBody().get("content");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void inboxPaginatesNewestFirst() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        submitted(admin.token(), "Laptops");
+        submitted(admin.token(), "Monitors");
+        submitted(admin.token(), "Keyboards");
+
+        ResponseEntity<Map> first = get("/api/v1/notifications?page=0&size=2", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, first.getStatusCode());
+        assertNotNull(first.getBody());
+        assertEquals(2, ((List<?>) first.getBody().get("content")).size());
+        assertEquals(3L, ((Number) first.getBody().get("totalElements")).longValue());
+        assertEquals(2L, ((Number) first.getBody().get("totalPages")).longValue());
+
+        ResponseEntity<Map> second = get("/api/v1/notifications?page=1&size=2", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, second.getStatusCode());
+        assertNotNull(second.getBody());
+        assertEquals(1, ((List<?>) second.getBody().get("content")).size());
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                get("/api/v1/notifications?size=101", admin.token(), String.class).getStatusCode());
     }
 
     private Fixture provision(String slug) {

@@ -407,11 +407,11 @@ class AccountIT extends AbstractIntegrationTest {
                                 String.class)
                         .getStatusCode());
 
-        ResponseEntity<List> trail = get(
-                "/api/v1/audit-events?entityType=user&entityId=" + member.id(), admin.accessToken(), List.class);
+        ResponseEntity<Map> trail = get(
+                "/api/v1/audit-events?entityType=user&entityId=" + member.id(), admin.accessToken(), Map.class);
         assertEquals(HttpStatus.OK, trail.getStatusCode());
         assertNotNull(trail.getBody());
-        assertTrue(trail.getBody().toString().contains("USER_ROLES_CHANGED"));
+        assertTrue(trail.getBody().get("content").toString().contains("USER_ROLES_CHANGED"));
     }
 
     @Test

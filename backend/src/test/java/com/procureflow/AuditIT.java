@@ -1,6 +1,7 @@
 package com.procureflow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -94,15 +95,50 @@ class AuditIT extends AbstractIntegrationTest {
                 HttpStatus.FORBIDDEN,
                 get("/api/v1/audit-events", worker.token(), String.class).getStatusCode());
 
-        ResponseEntity<List> own = trailRaw(admin.token(), null, null);
+        ResponseEntity<Map> own = trailRaw(admin.token(), null, null);
         assertEquals(HttpStatus.OK, own.getStatusCode());
         assertNotNull(own.getBody());
-        assertTrue(own.getBody().size() >= 1);
+        assertTrue(((List<?>) own.getBody().get("content")).size() >= 1);
+        assertTrue(((Number) own.getBody().get("totalElements")).longValue() >= 1);
 
-        ResponseEntity<List> foreign = trailRaw(tenantB.token(), null, null);
+        ResponseEntity<Map> foreign = trailRaw(tenantB.token(), null, null);
         assertEquals(HttpStatus.OK, foreign.getStatusCode());
         assertNotNull(foreign.getBody());
-        assertTrue(foreign.getBody().isEmpty());
+        assertTrue(((List<?>) foreign.getBody().get("content")).isEmpty());
+        assertEquals(0L, ((Number) foreign.getBody().get("totalElements")).longValue());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void trailPaginatesAndValidatesBounds() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        approved(admin.token());
+        approved(admin.token());
+
+        ResponseEntity<Map> page0 = get("/api/v1/audit-events?size=1", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, page0.getStatusCode());
+        assertNotNull(page0.getBody());
+        assertEquals(1, ((List<?>) page0.getBody().get("content")).size());
+        assertTrue(((Number) page0.getBody().get("totalElements")).longValue() >= 2);
+        assertTrue(((Number) page0.getBody().get("totalPages")).longValue() >= 2);
+        assertEquals(0, ((Number) page0.getBody().get("page")).intValue());
+
+        ResponseEntity<Map> page1 = get("/api/v1/audit-events?size=1&page=1", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, page1.getStatusCode());
+        List<Map<String, Object>> rows0 = (List<Map<String, Object>>) page0.getBody().get("content");
+        List<Map<String, Object>> rows1 = (List<Map<String, Object>>) page1.getBody().get("content");
+        assertEquals(1, rows1.size());
+        assertNotEquals(rows0.get(0).get("id"), rows1.get(0).get("id"));
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                get("/api/v1/audit-events?page=-1", admin.token(), String.class).getStatusCode());
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                get("/api/v1/audit-events?size=0", admin.token(), String.class).getStatusCode());
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                get("/api/v1/audit-events?size=101", admin.token(), String.class).getStatusCode());
     }
 
     private Fixture provision(String slug) {
@@ -135,13 +171,13 @@ class AuditIT extends AbstractIntegrationTest {
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> trail(String token, String entityType, UUID entityId) {
-        ResponseEntity<List> response = trailRaw(token, entityType, entityId);
+        ResponseEntity<Map> response = trailRaw(token, entityType, entityId);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        return (List<Map<String, Object>>) (List<?>) response.getBody();
+        return (List<Map<String, Object>>) response.getBody().get("content");
     }
 
-    private ResponseEntity<List> trailRaw(String token, String entityType, UUID entityId) {
+    private ResponseEntity<Map> trailRaw(String token, String entityType, UUID entityId) {
         String url = "/api/v1/audit-events";
         if (entityType != null) {
             url += "?entityType=" + entityType;
@@ -149,7 +185,7 @@ class AuditIT extends AbstractIntegrationTest {
                 url += "&entityId=" + entityId;
             }
         }
-        return get(url, token, List.class);
+        return get(url, token, Map.class);
     }
 
     private UUID submitted(String token) {
