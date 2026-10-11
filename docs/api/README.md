@@ -11,9 +11,10 @@ the AI layer all consume it. OpenAPI is served live at `/v3/api-docs`
 - Errors: consistent problem envelope `{ code, message, details?,
   traceId, timestamp }`; 4xx for client faults with actionable messages,
   never stack traces.
-- Listing: endpoints return full workspace arrays (no pagination envelope
-  yet — `page/size/sort` with `{ content, page, size, totalElements,
-  totalPages }` is the documented target, not the current behavior).
+- Listing: directory endpoints return `Paged` envelopes
+  (`page/size` with `{ content, page, size, totalElements, totalPages }`,
+  size 1–100, out-of-range answers 400); unbounded full-array reads remain
+  only on small reference/admin paths.
 - Money: integer minor units (`amountMinor`) plus ISO currency code.
 - Time: UTC ISO-8601 (`Instant`) everywhere; no local times cross the wire.
 - Idempotency: creation endpoints require `Idempotency-Key` (replays
