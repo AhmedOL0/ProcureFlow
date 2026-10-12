@@ -212,8 +212,27 @@ class ProcurementIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void mixedCurrencyLinesAreRejected() {
+    void deletingADraftRemovesItsLines() {
         Fixture admin = provision(uniqueSlug("acme"));
+        UUID id = createId(
+                admin.token(),
+                "Laptops",
+                List.of(Map.of("description", "ThinkPad", "quantity", 2, "unitPriceMinor", 89900)));
+
+        ResponseEntity<String> deleted = rest.exchange(
+                "/api/v1/purchase-requests/" + id,
+                HttpMethod.DELETE,
+                new HttpEntity<>(bearer(admin.token())),
+                String.class);
+        assertEquals(HttpStatus.NO_CONTENT, deleted.getStatusCode());
+
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                get("/api/v1/purchase-requests/" + id, admin.token(), String.class).getStatusCode());
+    }
+
+    @Test
+    void mixedCurrencyLinesAreRejected() {        Fixture admin = provision(uniqueSlug("acme"));
         UUID id = createId(
                 admin.token(),
                 "Laptops",
