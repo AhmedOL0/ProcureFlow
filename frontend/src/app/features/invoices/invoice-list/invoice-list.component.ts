@@ -56,7 +56,7 @@ export class InvoiceListComponent {
 
   readonly searchBox = new FormControl('', { nonNullable: true });
   readonly statusFilter = new FormControl<string | null>(null);
-  readonly columns = ['number', 'status', 'total', 'paid', 'actions'];
+  readonly columns = ['number', 'order', 'status', 'total', 'paid', 'balance', 'actions'];
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
@@ -65,6 +65,14 @@ export class InvoiceListComponent {
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
 
   protected readonly statuses = STATUSES;
+
+  protected shortId(id: string | null | undefined): string {
+    return id ? id.slice(0, 8) : '—';
+  }
+
+  protected balanceOf(row: Invoice): number {
+    return Math.max(0, (row.totalMinor ?? 0) - (row.paidMinor ?? 0));
+  }
 
   protected readonly pageRows = computed(() => [...this.rows()].sort(compareInvoices(this.sort())));
 
