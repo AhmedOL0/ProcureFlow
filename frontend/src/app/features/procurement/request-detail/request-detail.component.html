@@ -62,7 +62,17 @@
       <pf-status-badge [status]="current.status" />
       <span class="request-priority">{{ current.priority ?? 'MEDIUM' }} priority</span>
       <span class="request-total pf-data-mono">{{ formatMinor(current.totalMinor) }}</span>
+      @if (sla() !== 'none') {
+        <span class="pf-badge" [class]="slaTone()">Due {{ readableDate(lane()?.dueAt) }}</span>
+      }
     </div>
+
+    @if (hasJustification()) {
+      <section class="pf-panel" aria-label="Business justification">
+        <h2>Business justification</h2>
+        <p class="request-note">{{ current.description }}</p>
+      </section>
+    }
 
     @if (decision(); as verdict) {
       <section class="pf-panel" aria-label="Decision">
@@ -108,6 +118,25 @@
             >
           </p>
           <p class="request-muted">{{ formatMinor(pot.reservedMinor) }} currently reserved.</p>
+          @if (budgetImpact(); as impact) {
+            <div
+              class="request-budget-bar"
+              role="img"
+              [attr.aria-label]="
+                'Approving would hold ' +
+                formatMinor(impact.total) +
+                ' against ' +
+                formatMinor(impact.remaining) +
+                ' remaining'
+              "
+            >
+              <span class="pf-meter__fill" [style.width.%]="impact.used"></span>
+            </div>
+            <p class="request-muted">
+              Approving holds {{ formatMinor(impact.total) }} against
+              {{ formatMinor(impact.remaining) }} remaining.
+            </p>
+          }
         }
       </section>
     }
@@ -172,7 +201,15 @@
                       )
                     }}
                   </td>
-                  <td>{{ supplierNameFor()(item.supplierId) }}</td>
+                  <td>
+                    @if (item.supplierId) {
+                      <a class="pf-row-link" [routerLink]="['/suppliers', item.supplierId]">{{
+                        supplierNameFor()(item.supplierId)
+                      }}</a>
+                    } @else {
+                      {{ supplierNameFor()(item.supplierId) }}
+                    }
+                  </td>
                   @if (isDraft() && canEdit()) {
                     <td>
                       <button mat-button (click)="openItem(item)">Edit</button>

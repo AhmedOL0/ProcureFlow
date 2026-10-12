@@ -51,3 +51,11 @@
   color: var(--pf-slate);
   margin: 0;
 }
+
+.request-budget-bar {
+  height: 8px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-neutral-bg);
+  overflow: hidden;
+  margin: var(--pf-space-sm) 0;
+}

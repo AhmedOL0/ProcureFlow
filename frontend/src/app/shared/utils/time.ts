@@ -17,6 +17,32 @@ export function formatInstant(value: string | null | undefined): string {
 }
 
 /**
+ * SLA bucket for a due timestamp: overdue past the deadline, soon inside
+ * 24 hours, calm beyond that, none when missing or unreadable. Pure —
+ * covered by Vitest.
+ */
+export function slaStatus(
+  dueAt: string | null | undefined,
+  now: number = Date.now(),
+): 'overdue' | 'soon' | 'calm' | 'none' {
+  if (!dueAt) {
+    return 'none';
+  }
+  const due = Date.parse(dueAt);
+  if (Number.isNaN(due)) {
+    return 'none';
+  }
+  const remaining = due - now;
+  if (remaining <= 0) {
+    return 'overdue';
+  }
+  if (remaining <= 24 * 3600_000) {
+    return 'soon';
+  }
+  return 'calm';
+}
+
+/**
  * Relative age ("2 hrs ago") for list metadata. Pure — covered by Vitest.
  * Beyond a week it falls back to the absolute instant: relative labels
  * stop meaning much past that, and the exact date stays one glance away.

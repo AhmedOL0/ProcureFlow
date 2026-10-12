@@ -36,7 +36,26 @@
         />
       } @else {
         <div class="pf-table-scroll">
-          <table mat-table [dataSource]="pending()" class="pf-table" aria-label="Pending approvals">
+          <table
+            mat-table
+            [dataSource]="pending()"
+            multiTemplateDataRows
+            class="pf-table"
+            aria-label="Pending approvals"
+          >
+            <ng-container matColumnDef="expand">
+              <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">Expand</span></th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-button
+                  (click)="toggle(row)"
+                  [attr.aria-expanded]="isExpanded(row)"
+                  [attr.aria-label]="isExpanded(row) ? 'Collapse ' + row.title : 'Expand ' + row.title"
+                >
+                  {{ isExpanded(row) ? 'Less' : 'Lines' }}
+                </button>
+              </td>
+            </ng-container>
             <ng-container matColumnDef="title">
               <th mat-header-cell *matHeaderCellDef>Request</th>
               <td mat-cell *matCellDef="let row">
@@ -55,7 +74,9 @@
             </ng-container>
             <ng-container matColumnDef="submitted">
               <th mat-header-cell *matHeaderCellDef>Submitted</th>
-              <td mat-cell *matCellDef="let row">{{ submittedAt(row) }}</td>
+              <td mat-cell *matCellDef="let row" [title]="submittedAt(row)">
+                {{ timeAgo(row.submittedAt) }}
+              </td>
             </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">Actions</span></th>
@@ -63,8 +84,30 @@
                 <a mat-button [routerLink]="['/requests', row.id]">Review</a>
               </td>
             </ng-container>
+            <ng-container matColumnDef="expandedDetail">
+              <td mat-cell *matCellDef="let row" [attr.colspan]="columns.length">
+                @if (isExpanded(row)) {
+                  <ul class="inbox-lines">
+                    @for (item of expandedItems(row); track item.id) {
+                      <li>
+                        <span>{{ item.description }} × {{ item.quantity }}</span>
+                        <span class="pf-data-mono">{{
+                          formatMinor(
+                            (item.quantity ?? 0) * (item.unitPriceMinor ?? 0),
+                            item.currency ?? 'MAD'
+                          )
+                        }}</span>
+                      </li>
+                    } @empty {
+                      <li class="pf-muted">Loading lines…</li>
+                    }
+                  </ul>
+                }
+              </td>
+            </ng-container>
             <tr mat-header-row *matHeaderRowDef="columns"></tr>
             <tr mat-row *matRowDef="let row; columns: columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; when: whenExpanded"></tr>
           </table>
         </div>
       }
