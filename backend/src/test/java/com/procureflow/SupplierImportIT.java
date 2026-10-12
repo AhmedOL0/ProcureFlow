@@ -7,7 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.procureflow.identity.api.AuthResponse;
 import com.procureflow.identity.application.MailPort;
+import com.procureflow.organization.domain.Tenant;
+import com.procureflow.organization.infrastructure.TenantRepository;
+import com.procureflow.supplier.domain.Supplier;
+import com.procureflow.supplier.infrastructure.SupplierRepository;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,6 +21,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -43,6 +49,12 @@ class SupplierImportIT extends AbstractIntegrationTest {
 
     @MockitoBean
     private MailPort mail;
+
+    @Autowired
+    private TenantRepository tenants;
+
+    @Autowired
+    private SupplierRepository suppliers;
 
     @Test
     void csvImportCreatesSuppliersWithCategories() {
@@ -161,8 +173,35 @@ class SupplierImportIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void memberCannotImportButAdminImportIsAudited() {
+    @SuppressWarnings("unchecked")
+    void oversizedDirectoryExportsRefuseInsteadOfOoming() {
         Fixture admin = provision(uniqueSlug("import"));
+        Tenant tenant = tenants.findBySlug(admin.slug()).orElseThrow();
+        List<Supplier> bulk = new ArrayList<>(5001);
+        for (int i = 0; i < 5001; i++) {
+            bulk.add(new Supplier(tenant, "Bulk Supplier " + i));
+        }
+        suppliers.saveAll(bulk);
+
+        ResponseEntity<Map> refused = get("/api/v1/suppliers/export.xlsx", admin.token(), Map.class);
+        assertEquals(HttpStatus.BAD_REQUEST, refused.getStatusCode());
+        assertNotNull(refused.getBody());
+        assertEquals("EXPORT_TOO_LARGE", refused.getBody().get("code"));
+        Map<String, String> details = (Map<String, String>) refused.getBody().get("details");
+        assertNotNull(details);
+        assertEquals("5001", details.get("matching"));
+
+        // A narrowed filter still exports fine on the same workspace.
+        ResponseEntity<byte[]> empty =
+                rest.exchange("/api/v1/suppliers/export.xlsx?q=no-such-supplier", HttpMethod.GET,
+                        new HttpEntity<>(bearer(admin.token())), byte[].class);
+        assertEquals(HttpStatus.OK, empty.getStatusCode());
+        assertNotNull(empty.getBody());
+        assertTrue(empty.getBody().length > 0);
+    }
+
+    @Test
+    void memberCannotImportButAdminImportIsAudited() {        Fixture admin = provision(uniqueSlug("import"));
         AuthResponse member = joinAsMember(admin, "min@" + admin.slug() + ".test");
         byte[] csv = "name\nAcme\n".getBytes(StandardCharsets.UTF_8);
         assertEquals(
