@@ -143,7 +143,12 @@ body {
 }
 
 // Links are interactive blue everywhere; row titles inherit it.
+// Visited links keep the same color: the browser default purple would
+// otherwise recolor every route the user has already opened.
 a {
+  color: var(--pf-blue);
+}
+a:visited {
   color: var(--pf-blue);
 }
 

@@ -84,7 +84,7 @@
           @if (assignment.escalated) {
             <strong>(escalated)</strong>
           }
-          · due {{ assignment.dueAt }}
+          · due {{ readableDate(assignment.dueAt) }}
         </p>
       </section>
     }
