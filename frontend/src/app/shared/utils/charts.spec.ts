@@ -77,8 +77,16 @@ describe('charts', () => {
     expect(series[0].data.map((row) => row.name)).toEqual(['Hardware', 'Office']);
     expect(series[0].data[0].itemStyle).toEqual({ color: 'navy', borderColor: 'card', borderWidth: 2 });
     expect(series[0].data[1].itemStyle.color).toBe('viridian');
-    const title = option.title as { text: string };
-    expect(title.text).toContain('61,350');
+    // The center total renders as HTML in DonutChartComponent, never as
+    // an ECharts title (the canvas title box drifted over the ring).
+    expect(option.title).toBeUndefined();
+  });
+
+  it('keeps the ring clear for the HTML center total', () => {
+    const option = buildDonutOption([{ label: 'Hardware', value: 4_245_000 }], ['navy'], 'card', 'MAD', true);
+    const series = option.series as { radius: [string, string] }[];
+    // Wide hole so long MAD totals never touch the ring.
+    expect(series[0].radius).toEqual(['64%', '78%']);
   });
 
   it('maps ring gestures to segments from the top, clockwise', () => {

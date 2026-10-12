@@ -5,8 +5,39 @@
   padding: var(--pf-space-md) var(--pf-space-lg) var(--pf-space-lg);
 }
 
+.donut-chart__wrap {
+  position: relative;
+}
+
 .donut-chart__stage {
   height: 240px;
+}
+
+/**
+ * Center total as HTML, not an ECharts title: the canvas title box and
+ * the ring use different centering bases, which pushed long totals over
+ * the left arc. Grid centering on the same box the ring is drawn in
+ * cannot drift. Clicks pass through to the zrender drill below.
+ */
+.donut-chart__total {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.donut-chart__total-value {
+  font: var(--pf-headline-sm);
+  color: var(--pf-text);
+}
+
+.donut-chart__total-label {
+  font: var(--pf-label-md);
+  color: var(--pf-slate);
 }
 
 .donut-chart__legend {
