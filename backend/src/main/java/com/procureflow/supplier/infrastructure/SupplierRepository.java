@@ -3,6 +3,7 @@ package com.procureflow.supplier.infrastructure;
 import com.procureflow.supplier.domain.Supplier;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,9 @@ public interface SupplierRepository extends JpaRepository<Supplier, UUID> {
     @EntityGraph(attributePaths = {"tenant"})
     @Query("select s from Supplier s where s.id = :id and s.tenant.slug = :slug")
     Optional<Supplier> findByIdAndTenantSlug(@Param("id") UUID id, @Param("slug") String slug);
+
+    @Query("select s from Supplier s where s.tenant.slug = :slug and s.id in :ids")
+    List<Supplier> findByIdInAndTenantSlug(@Param("ids") Set<UUID> ids, @Param("slug") String slug);
 
     @Query("select count(s) > 0 from Supplier s where s.tenant.slug = :slug and s.name = :name")
     boolean existsByTenantSlugAndName(@Param("slug") String slug, @Param("name") String name);

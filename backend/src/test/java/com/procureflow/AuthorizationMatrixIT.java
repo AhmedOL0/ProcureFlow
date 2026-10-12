@@ -3,17 +3,21 @@ package com.procureflow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.procureflow.identity.api.AuthResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -82,6 +86,26 @@ class AuthorizationMatrixIT extends AbstractIntegrationTest {
         assertEquals(HttpStatus.OK, get("/api/v1/tenants/current", member, String.class).getStatusCode());
         // MEMBER carries analytics:read by design (dashboard KPIs for everyone).
         assertEquals(HttpStatus.OK, get("/api/v1/analytics/spend", member, String.class).getStatusCode());
+
+        // Bulk import needs supplier:write; every export follows its read gate.
+        assertEquals(HttpStatus.FORBIDDEN, importFile(member, "s.csv", "name\nAcme\n").getStatusCode());
+        assertEquals(HttpStatus.OK, get("/api/v1/suppliers/export.xlsx", member, String.class).getStatusCode());
+        assertEquals(
+                HttpStatus.OK, get("/api/v1/analytics/spend/report.pdf", member, String.class).getStatusCode());
+    }
+
+    private ResponseEntity<String> importFile(String token, String filename, String content) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new ByteArrayResource(content.getBytes(StandardCharsets.UTF_8)) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        });
+        return rest.exchange("/api/v1/suppliers/import", HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
     }
 
     @Test

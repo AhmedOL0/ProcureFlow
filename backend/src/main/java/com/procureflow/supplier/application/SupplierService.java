@@ -1,8 +1,10 @@
 package com.procureflow.supplier.application;
 
+import com.procureflow.audit.application.AuditTrailLogged;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.organization.domain.Tenant;
 import com.procureflow.purchaseorder.application.SupplierOrderUsage;
+import com.procureflow.shared.document.Spreadsheet;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.shared.web.Paged;
 import com.procureflow.supplier.domain.Supplier;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -36,18 +39,21 @@ public class SupplierService {
     private final TenantProvisioning tenants;
     private final SupplierOrderUsage orderUsage;
     private final EntityManager entities;
+    private final ApplicationEventPublisher events;
 
     public SupplierService(
             SupplierRepository suppliers,
             SupplierCategoryRepository categories,
             TenantProvisioning tenants,
             SupplierOrderUsage orderUsage,
-            EntityManager entities) {
+            EntityManager entities,
+            ApplicationEventPublisher events) {
         this.suppliers = suppliers;
         this.categories = categories;
         this.tenants = tenants;
         this.orderUsage = orderUsage;
         this.entities = entities;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -59,6 +65,50 @@ public class SupplierService {
                 ? suppliers.findPageByTenantSlug(tenantSlug, terms, pageable)
                 : suppliers.findPageByTenantSlugAndStatus(tenantSlug, status, terms, pageable);
         return Paged.of(found.getContent(), page, size, found.getTotalElements());
+    }
+
+    /**
+     * Full filtered list for xlsx export. Counts first so oversized
+     * workspaces fail with EXPORT_TOO_LARGE instead of OOMing the
+     * workbook; the same filters as {@link #page} apply.
+     */
+    @Transactional(readOnly = true)
+    public List<Supplier> exportRows(String tenantSlug, Supplier.Status status, String query, UUID actorId) {
+        String terms = query == null || query.isBlank() ? "" : query;
+        long total = status == null
+                ? suppliers.findPageByTenantSlug(tenantSlug, terms, PageRequest.of(0, 1)).getTotalElements()
+                : suppliers.findPageByTenantSlugAndStatus(tenantSlug, status, terms, PageRequest.of(0, 1))
+                        .getTotalElements();
+        if (total > Spreadsheet.MAX_EXPORT_ROWS) {
+            throw ApiException.badRequest(
+                    "EXPORT_TOO_LARGE",
+                    "Export is limited to " + Spreadsheet.MAX_EXPORT_ROWS + " rows; narrow the filters",
+                    Map.of("matching", String.valueOf(total)));
+        }
+        if (total == 0) {
+            return List.of();
+        }
+        PageRequest all = PageRequest.of(0, (int) total);
+        Page<Supplier> found = status == null
+                ? suppliers.findPageByTenantSlug(tenantSlug, terms, all)
+                : suppliers.findPageByTenantSlugAndStatus(tenantSlug, status, terms, all);
+        // Controllers map detached entities (OSIV is off): touch the lazy
+        // category set now, inside the transaction.
+        found.getContent().forEach(supplier -> supplier.getCategories().size());
+        events.publishEvent(AuditTrailLogged.now(
+                tenantSlug,
+                actorId,
+                "DOCUMENT_EXPORTED",
+                "supplier",
+                null,
+                Map.of(),
+                Map.of("format", "xlsx", "rows", found.getContent().size())));
+        return found.getContent();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByName(String tenantSlug, String name) {
+        return suppliers.existsByTenantSlugAndName(tenantSlug, name);
     }
 
     public Supplier create(

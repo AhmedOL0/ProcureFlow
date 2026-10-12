@@ -5,14 +5,21 @@ import com.procureflow.identity.application.PermissionCodes;
 import com.procureflow.procurement.application.PurchaseRequestService;
 import com.procureflow.procurement.application.PurchaseRequestService.Creation;
 import com.procureflow.procurement.application.PurchaseRequestService.ItemInput;
+import com.procureflow.procurement.application.RequestExportService;
 import com.procureflow.procurement.domain.PurchaseRequest;
+import com.procureflow.shared.document.Filenames;
+import com.procureflow.shared.document.Spreadsheet;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,9 +47,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class PurchaseRequestController {
 
     private final PurchaseRequestService requests;
+    private final RequestExportService exports;
 
-    public PurchaseRequestController(PurchaseRequestService requests) {
+    public PurchaseRequestController(PurchaseRequestService requests, RequestExportService exports) {
         this.requests = requests;
+        this.exports = exports;
     }
 
     @PostMapping
@@ -107,6 +116,44 @@ public class PurchaseRequestController {
     public ResponseEntity<PurchaseRequestResponse> get(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
         return ResponseEntity.ok(toResponse(requests.get(principal.tenantId(), id)));
+    }
+
+    @GetMapping("/export.xlsx")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Export filtered requests as xlsx (max 5000 rows)")
+    public ResponseEntity<byte[]> export(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) PurchaseRequest.Status status,
+            @RequestParam(required = false, name = "q") String query) {
+        // Arrays.asList, not List.of: drafts carry a null submittedAt and
+        // List.of throws on null elements.
+        List<List<Object>> body = exports
+                .exportRows(principal.tenantId(), status, query, principal.userId())
+                .stream()
+                .map(row -> Arrays.<Object>asList(
+                        row.title(),
+                        row.requester(),
+                        row.status(),
+                        row.priority(),
+                        row.currency(),
+                        row.totalMinor() / 100.0,
+                        row.submittedAt(),
+                        row.createdAt()))
+                .toList();
+        byte[] content = Spreadsheet.book(
+                "Requests",
+                List.of("title", "requested_by", "status", "priority", "currency", "total", "submitted_at", "created_at"),
+                body);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.xlsx("purchase-requests", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(content);
     }
 
     @PatchMapping("/{id}")

@@ -1,15 +1,21 @@
 package com.procureflow.purchaseorder.api;
 
 import com.procureflow.identity.application.AuthenticatedUser;
+import com.procureflow.purchaseorder.application.OrderDocumentService;
 import com.procureflow.purchaseorder.application.OrderService;
 import com.procureflow.purchaseorder.domain.PurchaseOrder;
+import com.procureflow.shared.document.Filenames;
+import com.procureflow.shared.document.Spreadsheet;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,9 +38,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final OrderService orders;
+    private final OrderDocumentService documents;
 
-    public OrderController(OrderService orders) {
+    public OrderController(OrderService orders, OrderDocumentService documents) {
         this.orders = orders;
+        this.documents = documents;
     }
 
     @PostMapping
@@ -115,5 +123,56 @@ public class OrderController {
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
         PurchaseOrder order = orders.cancel(principal.tenantId(), principal.userId(), id);
         return ResponseEntity.ok(OrderResponse.from(order, orders.lines(principal.tenantId(), id)));
+    }
+
+    @GetMapping("/{id}/document.pdf")
+    @PreAuthorize("hasAuthority('order:read')")
+    @Operation(summary = "Printable purchase order (supplier, lines, total)")
+    public ResponseEntity<byte[]> document(
+            @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
+        byte[] content = documents.document(principal.tenantId(), principal.userId(), id);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.pdf("purchase-order", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(content);
+    }
+
+    @GetMapping("/export.xlsx")
+    @PreAuthorize("hasAuthority('order:read')")
+    @Operation(summary = "Export filtered orders as xlsx (max 5000 rows)")
+    public ResponseEntity<byte[]> export(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) PurchaseOrder.Status status) {
+        List<List<Object>> body = documents
+                .exportRows(principal.tenantId(), status, principal.userId())
+                .stream()
+                .map(row -> List.<Object>of(
+                        row.id().toString(),
+                        row.supplier(),
+                        row.request(),
+                        row.status(),
+                        row.currency(),
+                        row.totalMinor() / 100.0,
+                        row.createdAt()))
+                .toList();
+        byte[] content = Spreadsheet.book(
+                "Orders",
+                List.of("reference", "supplier", "request", "status", "currency", "total", "created_at"),
+                body);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.xlsx("purchase-orders", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(content);
     }
 }

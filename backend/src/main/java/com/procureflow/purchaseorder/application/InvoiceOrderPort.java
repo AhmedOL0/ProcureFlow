@@ -1,6 +1,8 @@
 package com.procureflow.purchaseorder.application;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -16,9 +18,12 @@ public interface InvoiceOrderPort {
     /** Read-only view of the order with its lines; 404 when absent or foreign. */
     LockedOrder orderView(String tenantSlug, UUID orderId);
 
-    record LockedOrder(UUID orderId, String status, String currency, List<Line> lines) {
+    /** Bulk views for exports: foreign ids simply absent. */
+    Map<UUID, LockedOrder> orderViews(String tenantSlug, Set<UUID> orderIds);
+
+    record LockedOrder(UUID orderId, UUID supplierId, String status, String currency, List<Line> lines) {
     }
 
-    record Line(UUID id, int quantity, long unitPriceMinor, String currency, int receivedQty) {
+    record Line(UUID id, String description, int quantity, long unitPriceMinor, String currency, int receivedQty) {
     }
 }

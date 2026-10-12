@@ -1,17 +1,28 @@
 package com.procureflow.supplier.api;
 
 import com.procureflow.identity.application.AuthenticatedUser;
+import com.procureflow.shared.document.Filenames;
+import com.procureflow.shared.document.Spreadsheet;
+import com.procureflow.shared.web.ApiException;
 import com.procureflow.supplier.application.ContactService;
 import com.procureflow.supplier.application.PerformanceService;
+import com.procureflow.supplier.application.SupplierImportService;
 import com.procureflow.supplier.application.SupplierService;
 import com.procureflow.supplier.domain.Supplier;
+import com.procureflow.supplier.domain.SupplierCategory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
+import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Suppliers plus their nested contacts, categories and scorecards.
@@ -36,12 +48,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class SupplierController {
 
     private final SupplierService suppliers;
+    private final SupplierImportService imports;
     private final ContactService contacts;
     private final PerformanceService performances;
 
     public SupplierController(
-            SupplierService suppliers, ContactService contacts, PerformanceService performances) {
+            SupplierService suppliers,
+            SupplierImportService imports,
+            ContactService contacts,
+            PerformanceService performances) {
         this.suppliers = suppliers;
+        this.imports = imports;
         this.contacts = contacts;
         this.performances = performances;
     }
@@ -187,5 +204,63 @@ public class SupplierController {
                         request.onTimeRate(),
                         request.qualityScore(),
                         request.notes())));
+    }
+
+    @GetMapping("/export.xlsx")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Export the filtered supplier directory as xlsx (max 5000 rows)")
+    public ResponseEntity<byte[]> export(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) Supplier.Status status,
+            @RequestParam(required = false, name = "q") String query) {
+        List<Supplier> rows = suppliers.exportRows(
+                principal.tenantId(), status, query, principal.userId());
+        List<List<Object>> body = rows.stream().map(supplier -> List.<Object>of(
+                supplier.getName(),
+                supplier.getStatus().name(),
+                orBlank(supplier.getTaxId()),
+                orBlank(supplier.getEmail()),
+                orBlank(supplier.getPhone()),
+                orBlank(supplier.getAddress()),
+                supplier.getCategories().stream()
+                        .map(SupplierCategory::getName)
+                        .sorted()
+                        .collect(Collectors.joining(";")),
+                supplier.getCreatedAt())).toList();
+        byte[] content = Spreadsheet.book(
+                "Suppliers",
+                List.of("name", "status", "tax_id", "email", "phone", "address", "categories", "created_at"),
+                body);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.xlsx("suppliers", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(content);
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('supplier:write')")
+    @Operation(summary = "Bulk-create suppliers from .xlsx/.csv (all-or-nothing, max 500 rows)")
+    public ResponseEntity<SupplierImportService.ImportResult> importFile(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam("file") MultipartFile file) {
+        byte[] content;
+        try {
+            content = file.getBytes();
+        } catch (IOException e) {
+            throw ApiException.badRequest("MALFORMED_UPLOAD", "Uploaded file could not be read");
+        }
+        SupplierImportService.ImportResult result = imports.importFile(
+                principal.tenantId(), principal.userId(), file.getOriginalFilename(), content);
+        return ResponseEntity.ok(result);
+    }
+
+    private static String orBlank(String value) {
+        return value == null ? "" : value;
     }
 }

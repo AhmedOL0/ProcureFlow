@@ -1,15 +1,21 @@
 package com.procureflow.invoice.api;
 
 import com.procureflow.identity.application.AuthenticatedUser;
+import com.procureflow.invoice.application.InvoiceDocumentService;
 import com.procureflow.invoice.application.InvoiceService;
 import com.procureflow.invoice.domain.Invoice;
+import com.procureflow.shared.document.Filenames;
+import com.procureflow.shared.document.Spreadsheet;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.procureflow.shared.web.Paged;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,9 +37,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class InvoiceController {
 
     private final InvoiceService invoices;
+    private final InvoiceDocumentService documents;
 
-    public InvoiceController(InvoiceService invoices) {
+    public InvoiceController(InvoiceService invoices, InvoiceDocumentService documents) {
         this.invoices = invoices;
+        this.documents = documents;
     }
 
     @PostMapping
@@ -85,5 +93,61 @@ public class InvoiceController {
             @Valid @RequestBody PayInvoiceRequest request) {
         Invoice paid = invoices.pay(principal.tenantId(), principal.userId(), id, request.amountMinor());
         return ResponseEntity.ok(InvoiceResponse.from(invoices.match(principal.tenantId(), paid.getId())));
+    }
+
+    @GetMapping("/{id}/document.pdf")
+    @PreAuthorize("hasAuthority('invoice:read')")
+    @Operation(summary = "Printable invoice (supplier, lines, total, paid, balance)")
+    public ResponseEntity<byte[]> document(
+            @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
+        byte[] content = documents.document(principal.tenantId(), principal.userId(), id);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.pdf("invoice", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(content);
+    }
+
+    @GetMapping("/export.xlsx")
+    @PreAuthorize("hasAuthority('invoice:read')")
+    @Operation(summary = "Export filtered invoices as xlsx (max 5000 rows)")
+    public ResponseEntity<byte[]> export(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) Invoice.Status status,
+            @RequestParam(required = false, name = "q") String query) {
+        List<List<Object>> body = documents
+                .exportRows(principal.tenantId(), status, query, principal.userId())
+                .stream()
+                .map(row -> List.<Object>of(
+                        row.number(),
+                        row.order(),
+                        row.supplier(),
+                        row.status(),
+                        row.currency(),
+                        row.totalMinor() / 100.0,
+                        row.paidMinor() / 100.0,
+                        (row.totalMinor() - row.paidMinor()) / 100.0,
+                        row.createdAt()))
+                .toList();
+        byte[] content = Spreadsheet.book(
+                "Invoices",
+                List.of(
+                        "number", "order", "supplier", "status", "currency", "total", "paid", "balance",
+                        "created_at"),
+                body);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.xlsx("invoices", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(content);
     }
 }

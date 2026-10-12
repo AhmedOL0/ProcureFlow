@@ -4,6 +4,7 @@ import com.procureflow.procurement.domain.PurchaseRequest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -69,6 +70,9 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     @EntityGraph(attributePaths = {"tenant", "items"})
     @Query("select r from PurchaseRequest r where r.id = :id and r.tenant.slug = :slug")
     Optional<PurchaseRequest> findByIdAndTenantSlug(@Param("id") UUID id, @Param("slug") String slug);
+
+    @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.id in :ids")
+    List<PurchaseRequest> findByIdInAndTenantSlug(@Param("ids") Set<UUID> ids, @Param("slug") String slug);
 
     @EntityGraph(attributePaths = {"tenant", "items"})
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.idempotencyKey = :key")
