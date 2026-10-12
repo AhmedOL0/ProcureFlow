@@ -5,11 +5,16 @@ Live state of the project. Update after every meaningful change.
 ## Current phase
 
 **Phase 15 — stitch reference alignment, one slice at a time (this
-change: dashboard).** Full 21-screen audit done (fake-data hazards
-named per screen). Dashboard slice: KPI corner icons, Monthly/Category
-trajectory toggle, awaiting rows with avatar + priority chip + Review,
-relative time-ago. AI anomaly banner and forecasts deliberately skipped
-(no detection/forecast aggregates — would be fake data).
+change: all remaining frontend-only slices).** Full 21-screen audit done
+(fake-data hazards named per screen). Dashboard slice merged via #27.
+This pass: review-flows, orders, fulfillment/invoices, admin, copilot,
+analytics, requests, suppliers, audit chips, notification labels.
+Gates: tsc + ng build + 45 Vitest + 54 e2e green on a --no-cache nginx
+image; live-demo evidence shots 20–27 in `docs/screens/`.
+Deliberately deferred to backend work: request-create department/CC/
+neededBy (no DTO fields), policy step names/counts, notification
+template names. Request→supplier links stay out — a request names no
+supplier until it becomes an order.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:
