@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
@@ -17,8 +18,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
 import { PromptDialogComponent } from '../../shared/components/prompt-dialog/prompt-dialog.component';
 import { Users } from '../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
-import { OrganizationService, WorkspaceInvite, WorkspaceUser } from './organization.service';
-
+import { Department, Membership, OrganizationService, WorkspaceInvite, WorkspaceUser } from './organization.service';
 /**
  * Users, roles and invites: workspace accounts, live role/status editing,
  * and the invite-only joining flow. The catalog mirrors the backend
@@ -30,6 +30,7 @@ import { OrganizationService, WorkspaceInvite, WorkspaceUser } from './organizat
   selector: 'app-users',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
@@ -54,6 +55,8 @@ export class UsersComponent {
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly users = signal<WorkspaceUser[]>([]);
   protected readonly invites = signal<WorkspaceInvite[]>([]);
+  protected readonly memberships = signal<Membership[]>([]);
+  protected readonly departments = signal<Department[]>([]);
   protected readonly notice = signal<string | null>(null);
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
 
@@ -88,6 +91,7 @@ export class UsersComponent {
     this.loading.set(true);
     this.failure.set(null);
     this.notice.set(null);
+    this.loadDepartments();
     const { pageIndex, pageSize } = this.page();
     this.org.users(this.searchBox.value, pageIndex, pageSize).subscribe({
       next: (result) => {
@@ -109,6 +113,32 @@ export class UsersComponent {
   onPage(page: PageEvent): void {
     this.page.set(page);
     this.reload();
+  }
+
+  /**
+   * Department names behind each user. Enrichment only: a failure here
+   * clears the map instead of failing the directory.
+   */
+  private loadDepartments(): void {
+    this.org.departments('', 0, 100).subscribe({
+      next: (result) => this.departments.set(result.rows),
+      error: () => this.departments.set([]),
+    });
+    this.org.memberships(0, 100).subscribe({
+      next: (result) => this.memberships.set(result.rows),
+      error: () => this.memberships.set([]),
+    });
+  }
+
+  protected departmentNames(userId: string | null | undefined): string {
+    if (!userId) {
+      return '';
+    }
+    const names = this.memberships()
+      .filter((m) => m.userId === userId)
+      .map((m) => this.departments().find((d) => d.id === m.departmentId)?.name ?? '')
+      .filter((name) => name !== '');
+    return [...new Set(names)].join(', ');
   }
 
   private loadInvites(): void {

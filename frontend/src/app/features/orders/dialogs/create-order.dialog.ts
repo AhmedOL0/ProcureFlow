@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -13,7 +13,9 @@ import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-error
 
 /**
  * Start an order from an approved request. Only APPROVED requests are
- * offered — approving never creates the order by itself.
+ * offered — approving never creates the order by itself. Callers may pass
+ * `{ supplierId }` (e.g. a supplier row's "Order" action) to pre-select
+ * the vendor; the select stays editable.
  */
 @Component({
   selector: 'app-create-order-dialog',
@@ -25,6 +27,7 @@ export class CreateOrderDialogComponent {
   private readonly requests = inject(ProcurementService);
   private readonly suppliers = inject(SuppliersService);
   private readonly dialog = inject(MatDialogRef<CreateOrderDialogComponent, CreateOrderDialogResult>);
+  private readonly preset = inject<CreateOrderDialogData>(MAT_DIALOG_DATA, { optional: true });
 
   readonly requestControl = new FormControl<string>('', {
     nonNullable: true,
@@ -46,7 +49,23 @@ export class CreateOrderDialogComponent {
       error: (error: unknown) => this.failure.set(userMessageFor(parseApiFailure(error))),
     });
     this.suppliers.search(null, '', 0, 100).subscribe({
-      next: (result) => this.vendors.set(result.rows),
+      next: (result) => {
+        const vendors = result.rows;
+        const presetId = this.preset?.supplierId;
+        if (presetId && !vendors.some((v) => v.id === presetId)) {
+          // Preset vendor outside the first page: fetch it so the select
+          // shows the name instead of a blank value.
+          this.suppliers.get(presetId).subscribe({
+            next: (vendor) => this.vendors.set([vendor, ...vendors]),
+            error: () => this.vendors.set(vendors),
+          });
+        } else {
+          this.vendors.set(vendors);
+        }
+        if (presetId) {
+          this.supplierControl.setValue(presetId);
+        }
+      },
       error: () => undefined,
     });
   }
@@ -69,4 +88,8 @@ export class CreateOrderDialogComponent {
 
 export interface CreateOrderDialogResult {
   id: string | null;
+}
+
+export interface CreateOrderDialogData {
+  supplierId?: string | null;
 }

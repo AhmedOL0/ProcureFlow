@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -19,6 +20,28 @@ import { AuditEvent, AuditService } from '../organization.service';
 import { LucideAngularModule } from 'lucide-angular';
 
 /**
+ * Every action the backend emits (verified at the AuditTrailLogged call
+ * sites) and every entity type under audit. Chips set the same server
+ * search as the text box — nothing here is a guess.
+ */
+const AUDIT_ACTIONS = [
+  'BUDGET_CREATED',
+  'BUDGET_DELETED',
+  'INVOICE_CREATED',
+  'INVOICE_PAID',
+  'ORDER_CREATED',
+  'ORDER_SENT',
+  'ORDER_RECEIVED',
+  'ORDER_CLOSED',
+  'ORDER_CANCELLED',
+  'REQUEST_DECIDED',
+  'USER_STATUS_CHANGED',
+  'USER_ROLES_CHANGED',
+] as const;
+
+const AUDIT_TYPES = ['budget', 'invoice', 'purchase_order', 'purchase_request', 'user'] as const;
+
+/**
  * Read-only audit trail. Rows show actor, action, target and timestamps;
  * before/after payloads expand per row. Payloads carry statuses, ids and
  * comments only — never secrets. No mutation endpoints exist.
@@ -26,7 +49,7 @@ import { LucideAngularModule } from 'lucide-angular';
 @Component({
   selector: 'app-audit-trail',
   imports: [
-    ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatPaginatorModule,
+    ReactiveFormsModule, MatButtonModule, MatChipsModule, MatFormFieldModule, MatInputModule, MatPaginatorModule,
     MatProgressSpinnerModule, MatTableModule, LucideAngularModule, RouterLink,
     PageHeaderComponent, EmptyStateComponent, ErrorStateComponent,
   ],
@@ -39,6 +62,8 @@ export class AuditTrailComponent {
   protected readonly icons = { scroll: ScrollText };
   readonly entityFilter = new FormControl('', { nonNullable: true });
   readonly columns = ['time', 'actor', 'action', 'target'];
+  protected readonly auditActions = AUDIT_ACTIONS;
+  protected readonly auditTypes = AUDIT_TYPES;
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
@@ -83,6 +108,11 @@ export class AuditTrailComponent {
 
   onPage(page: PageEvent): void {
     this.load(page.pageIndex, page.pageSize);
+  }
+
+  /** Chips toggle the server search; clicking the active chip clears it. */
+  pickQuery(term: string): void {
+    this.entityFilter.setValue(this.entityFilter.value === term ? '' : term);
   }
 
   toggle(row: AuditEvent): void {

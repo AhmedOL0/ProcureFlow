@@ -10,8 +10,17 @@
         <input matInput type="month" [formControl]="periodBox" (change)="reload()" />
       </mat-form-field>
       <button mat-button (click)="clearPeriod()">All time</button>
+      <button mat-stroked-button (click)="exportCsv()">Export CSV</button>
     </div>
   </pf-page-header>
+  <div class="analytics-months" role="group" aria-label="Recent months">
+    <span class="pf-muted">Recent:</span>
+    @for (month of recentMonths(); track month) {
+      <button mat-button (click)="pickMonth(month)" [disabled]="periodBox.value === month">
+        {{ month }}
+      </button>
+    }
+  </div>
 
   @if (loading()) {
       <div class="pf-loading" role="status" aria-label="Loading analytics">

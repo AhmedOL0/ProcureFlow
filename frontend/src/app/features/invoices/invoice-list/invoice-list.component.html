@@ -81,6 +81,18 @@
               <a class="pf-row-link" [routerLink]="[row.id]">{{ row.number }}</a>
             </td>
           </ng-container>
+          <ng-container matColumnDef="order">
+            <th mat-header-cell *matHeaderCellDef>Order</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.orderId) {
+                <a class="pf-row-link" [routerLink]="['/orders', row.orderId]">{{
+                  shortId(row.orderId)
+                }}</a>
+              } @else {
+                —
+              }
+            </td>
+          </ng-container>
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
             <td mat-cell *matCellDef="let row"><pf-status-badge [status]="row.status" /></td>
@@ -95,6 +107,12 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="paid" class="pf-num">Paid</th>
             <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
               {{ formatMinor(row.paidMinor, row.currency) }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="balance">
+            <th mat-header-cell *matHeaderCellDef class="pf-num">Balance</th>
+            <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
+              {{ formatMinor(balanceOf(row), row.currency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">

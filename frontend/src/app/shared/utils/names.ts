@@ -18,3 +18,17 @@ export function humanizeRole(role: string | null | undefined): string {
   const [first, ...rest] = words as [string, ...string[]];
   return [first.charAt(0).toUpperCase() + first.slice(1), ...rest].join(' ');
 }
+
+/**
+ * Human label for UPPER_SNAKE machine strings (notification types, audit
+ * actions), e.g. "REQUEST_DECIDED" -> "Request decided". Pure formatting —
+ * the value itself still comes from the server.
+ */
+export function humanizeLabel(value: string | null | undefined): string {
+  const words = (value ?? '').toLowerCase().split('_').filter(Boolean);
+  if (words.length === 0) {
+    return '—';
+  }
+  const [first, ...rest] = words as [string, ...string[]];
+  return [first.charAt(0).toUpperCase() + first.slice(1), ...rest].join(' ');
+}

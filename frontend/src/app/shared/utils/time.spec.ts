@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatInstant, timeAgo } from './time';
+import { formatInstant, slaStatus, timeAgo } from './time';
 
 describe('formatInstant', () => {
   it('returns an em dash for missing or invalid input', () => {
@@ -40,5 +40,19 @@ describe('timeAgo', () => {
 
   it('treats future timestamps as just now', () => {
     expect(timeAgo('2026-10-11T12:05:00.000Z', now)).toBe('just now');
+  });
+});
+
+describe('slaStatus', () => {
+  const now = Date.parse('2026-10-11T12:00:00.000Z');
+
+  it('buckets deadlines around now', () => {
+    expect(slaStatus(null, now)).toBe('none');
+    expect(slaStatus('', now)).toBe('none');
+    expect(slaStatus('not-a-date', now)).toBe('none');
+    expect(slaStatus('2026-10-11T11:00:00.000Z', now)).toBe('overdue');
+    expect(slaStatus('2026-10-11T12:00:00.000Z', now)).toBe('overdue');
+    expect(slaStatus('2026-10-11T18:00:00.000Z', now)).toBe('soon');
+    expect(slaStatus('2026-10-13T12:00:00.000Z', now)).toBe('calm');
   });
 });

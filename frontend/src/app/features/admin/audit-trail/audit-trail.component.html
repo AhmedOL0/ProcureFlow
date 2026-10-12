@@ -12,6 +12,24 @@
         <input matInput [formControl]="entityFilter" placeholder="ORDER_SENT" />
       </mat-form-field>
     </div>
+    <div class="pf-chips">
+      <mat-chip-listbox aria-label="Filter by action">
+        @for (action of auditActions; track action) {
+          <mat-chip-option [selected]="entityFilter.value === action" (click)="pickQuery(action)">
+            {{ action }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
+    <div class="pf-chips">
+      <mat-chip-listbox aria-label="Filter by record type">
+        @for (type of auditTypes; track type) {
+          <mat-chip-option [selected]="entityFilter.value === type" (click)="pickQuery(type)">
+            {{ type }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
 
     @if (loading()) {
       <div class="pf-loading" role="status" aria-label="Loading audit trail">

@@ -5,3 +5,44 @@
   color: var(--pf-navy);
   margin-left: auto;
 }
+
+.order-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--pf-space-sm);
+  flex-wrap: wrap;
+}
+
+.order-steps__step {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-sm);
+  font: var(--pf-label-md);
+  color: var(--pf-slate);
+}
+
+.order-steps__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-neutral-bg);
+  border: 1px solid var(--pf-border-strong);
+  flex-shrink: 0;
+}
+
+.order-steps__step[data-state='done'] .order-steps__dot {
+  background: var(--pf-blue);
+  border-color: var(--pf-blue);
+}
+
+.order-steps__step[data-state='current'] {
+  color: var(--pf-navy);
+  font-weight: 600;
+}
+
+.order-steps__step[data-state='current'] .order-steps__dot {
+  background: var(--pf-copper);
+  border-color: var(--pf-copper);
+}

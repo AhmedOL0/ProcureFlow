@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 
@@ -29,6 +29,11 @@ import {
   SupplierFormData,
   SupplierFormResult,
 } from '../dialogs/supplier-form.dialog';
+import {
+  CreateOrderDialogComponent,
+  CreateOrderDialogData,
+  CreateOrderDialogResult,
+} from '../../orders/dialogs/create-order.dialog';
 
 interface Kpi {
   label: string;
@@ -72,9 +77,11 @@ export class SupplierListComponent {
   private readonly suppliers = inject(SuppliersService);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(MatDialog);
+  private readonly router = inject(Router);
 
   protected readonly icons = { plus: Plus, search: Search, truck: Truck, initials: initialsFor };
   protected readonly canWrite = this.auth.hasAuthority('supplier:write');
+  protected readonly canOrder = this.auth.hasAuthority('order:write');
 
   readonly searchBox = new FormControl('', { nonNullable: true });
   readonly statusFilter = new FormControl<string | null>(null);
@@ -224,6 +231,27 @@ export class SupplierListComponent {
     dialog.afterClosed().subscribe((saved) => {
       if (saved) {
         this.reload();
+      }
+    });
+  }
+
+  /**
+   * Start an order with this supplier pre-selected. The dialog still
+   * requires an approved request — a supplier row alone can never mint
+   * an order. Success lands on the new order dossier.
+   */
+  openOrder(supplierId: string | null | undefined): void {
+    if (!supplierId) {
+      return;
+    }
+    const dialog = this.dialogs.open<
+      CreateOrderDialogComponent,
+      CreateOrderDialogData,
+      CreateOrderDialogResult
+    >(CreateOrderDialogComponent, { width: '520px', data: { supplierId } });
+    dialog.afterClosed().subscribe((created) => {
+      if (created?.id) {
+        this.router.navigate(['/orders', created.id]);
       }
     });
   }

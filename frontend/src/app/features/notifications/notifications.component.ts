@@ -10,7 +10,9 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { Bell } from '../../shared/icons';
-import { formatInstant } from '../../shared/utils/time';
+import { formatInstant } from
+  '../../shared/utils/time';
+import { humanizeLabel } from '../../shared/utils/names';
 
 /**
  * Notification history: every event the workspace raised for the caller,
@@ -38,7 +40,9 @@ import { formatInstant } from '../../shared/utils/time';
 export class NotificationsComponent {
   protected readonly inbox = inject(NotificationCenterService);
   protected readonly icons = { bell: Bell };
-  protected readonly formatInstant = formatInstant;
+  protected readonly formatInstant =
+    formatInstant;
+  protected readonly humanizeLabel = humanizeLabel;
 
   protected readonly unreadOnly = signal(false);
   protected readonly visible = this.inbox.items;

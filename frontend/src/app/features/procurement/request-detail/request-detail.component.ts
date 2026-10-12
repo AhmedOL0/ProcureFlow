@@ -17,6 +17,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { FileText, Pencil, Plus, Trash2 } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
 import { formatMinor } from '../../../shared/utils/money';
+import { slaStatus } from '../../../shared/utils/time';
 import { SuppliersService } from '../../suppliers/suppliers.service';
 import {
   ApprovalState,
@@ -90,6 +91,42 @@ export class RequestDetailComponent {
       }
       return names.get(supplierId) ?? '…';
     };
+  });
+
+  protected readonly sla = computed(() => slaStatus(this.lane()?.dueAt ?? null));
+
+  protected slaTone(): string {
+    switch (this.sla()) {
+      case 'overdue':
+        return 'pf-badge--danger';
+      case 'soon':
+        return 'pf-badge--warning';
+      default:
+        return 'pf-badge--neutral';
+    }
+  }
+
+  protected readonly hasJustification = computed(() => !!this.request()?.description?.trim());
+
+  /**
+   * Budget impact if this request were approved now: reserved plus this
+   * request against the month pot. Pure arithmetic over loaded rows —
+   * the authoritative reservation still happens server-side on approve.
+   */
+  protected readonly budgetImpact = computed(() => {
+    const pot = this.budget();
+    const request = this.request();
+    if (!pot || pot === 'missing' || !request) {
+      return null;
+    }
+    const amount = pot.amountMinor ?? 0;
+    if (amount <= 0) {
+      return null;
+    }
+    const reserved = pot.reservedMinor ?? 0;
+    const total = request.totalMinor ?? 0;
+    const used = Math.min(100, ((reserved + total) / amount) * 100);
+    return { reserved, total, remaining: pot.remainingMinor ?? 0, used };
   });
 
   private requestId(): string {

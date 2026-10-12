@@ -50,7 +50,7 @@
               <span class="pf-row__title">{{ item.title }}</span>
               <span class="notifications-body">{{ item.body }}</span>
               <span class="pf-row__meta"
-                >{{ item.type }} · {{ formatInstant(item.createdAt) }}</span
+                >{{ humanizeLabel(item.type) }} · {{ formatInstant(item.createdAt) }}</span
               >
             </div>
             @if (!item.read && item.id) {

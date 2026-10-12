@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { humanizeRole, initialsFor } from './names';
+import { humanizeLabel, humanizeRole, initialsFor } from './names';
 
 describe('initialsFor', () => {
   it('takes first and last initials', () => {
@@ -25,5 +25,17 @@ describe('humanizeRole', () => {
   it('falls back when empty', () => {
     expect(humanizeRole(null)).toBe('No role');
     expect(humanizeRole('')).toBe('No role');
+  });
+});
+
+describe('humanizeLabel', () => {
+  it('title-cases machine strings', () => {
+    expect(humanizeLabel('REQUEST_DECIDED')).toBe('Request decided');
+    expect(humanizeLabel('purchase_order')).toBe('Purchase order');
+  });
+
+  it('falls back to a dash when empty', () => {
+    expect(humanizeLabel(null)).toBe('—');
+    expect(humanizeLabel('')).toBe('—');
   });
 });

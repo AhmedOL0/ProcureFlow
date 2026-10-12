@@ -14,6 +14,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { Inbox } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
 import { formatMinor } from '../../../shared/utils/money';
+import { timeAgo } from '../../../shared/utils/time';
 import { Decision, ProcurementService, PurchaseRequest } from '../procurement.service';
 
 interface DecidedRow {
@@ -45,6 +46,7 @@ export class ApprovalInboxComponent {
 
   protected readonly icons = { inbox: Inbox };
   protected readonly formatMinor = formatMinor;
+  protected readonly timeAgo = timeAgo;
   protected readonly canSee = this.auth.hasAuthority('procurement:approve')
     || this.auth.hasAuthority('procurement:request');
 
@@ -53,7 +55,9 @@ export class ApprovalInboxComponent {
   protected readonly pending = signal<PurchaseRequest[]>([]);
   protected readonly pendingTotal = signal(0);
   protected readonly decided = signal<DecidedRow[]>([]);
-  protected readonly columns = ['title', 'priority', 'total', 'submitted', 'actions'];
+  protected readonly expanded = signal<string | null>(null);
+  protected readonly details = signal(new Map<string, PurchaseRequest>());
+  protected readonly columns = ['expand', 'title', 'priority', 'total', 'submitted', 'actions'];
   protected readonly decidedColumns = ['title', 'verdict', 'decidedAt', 'actions'];
 
   constructor() {
@@ -113,8 +117,7 @@ export class ApprovalInboxComponent {
     });
   }
 
-  protected decidedAt(row: DecidedRow): string {
-    const at = row.decision?.createdAt;
+  protected decidedAt(row: DecidedRow): string {    const at = row.decision?.createdAt;
     if (!at) {
       return '—';
     }
@@ -128,5 +131,35 @@ export class ApprovalInboxComponent {
     }
     const date = new Date(request.submittedAt);
     return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+  }
+
+  toggle(row: PurchaseRequest): void {
+    const id = row.id ?? null;
+    const next = this.expanded() === id ? null : id;
+    this.expanded.set(next);
+    if (next && !this.details().has(next)) {
+      this.requests.get(next).subscribe({
+        next: (full) =>
+          this.details.update((cache) => {
+            const copy = new Map(cache);
+            copy.set(next, full);
+            return copy;
+          }),
+        error: () => undefined,
+      });
+    }
+  }
+
+  protected readonly whenExpanded = (_index: number, row: PurchaseRequest): boolean => this.isExpanded(row);
+
+  protected isExpanded(row: PurchaseRequest): boolean {
+    return !!row.id && this.expanded() === row.id;
+  }
+
+  protected expandedItems(row: PurchaseRequest): PurchaseRequest['items'] {
+    if (!row.id) {
+      return [];
+    }
+    return this.details().get(row.id)?.items ?? [];
   }
 }
