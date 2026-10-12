@@ -16,6 +16,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 /**
  * Single translation point from exceptions to the {@link ApiError} envelope.
@@ -85,6 +87,18 @@ public class RestExceptionHandler {
     public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiError.of("FORBIDDEN", "Insufficient permissions"));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleTooLargeUpload(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("FILE_TOO_LARGE", "Uploaded file exceeds the 5 MB import limit"));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ApiError> handleBrokenUpload(MultipartException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("MALFORMED_UPLOAD", "Request is not a valid multipart upload"));
     }
 
     @ExceptionHandler(Exception.class)

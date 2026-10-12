@@ -8,6 +8,12 @@ server:
 spring:
   application:
     name: procureflow
+  servlet:
+    multipart:
+      # Supplier import caps (see Upload in shared/document): 5 MB per
+      # file, 500 data rows, content-sniffed, never trusted by extension.
+      max-file-size: 5MB
+      max-request-size: 6MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/procureflow}
     username: ${SPRING_DATASOURCE_USERNAME:procureflow}
