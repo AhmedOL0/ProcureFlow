@@ -123,6 +123,38 @@ class AnalyticsIT extends AbstractIntegrationTest {
         assertEquals(1, ((List<?>) history.getBody().get("byPeriod")).size());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void spendAllTimeIsBounded() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        for (int flow = 1; flow <= 6; flow++) {
+            paidFlow(admin.token(), "-" + flow);
+        }
+        backdateHalf(admin.slug());
+        String month = YearMonth.now(ZoneOffset.UTC).toString();
+
+        sessions.getStatistics().setStatisticsEnabled(true);
+        sessions.getStatistics().clear();
+        ResponseEntity<Map> history = get("/api/v1/analytics/spend", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, history.getStatusCode());
+        assertNotNull(history.getBody());
+        // All six flows aggregate (three current, three backdated).
+        assertEquals(6 * 181300L, number(history.getBody(), "requestedMinor"));
+        assertEquals(6 * 181300L, number(history.getBody(), "orderedMinor"));
+        assertEquals(6 * 181300L, number(history.getBody(), "paidMinor"));
+        assertEquals(2, ((List<?>) history.getBody().get("byPeriod")).size());
+        assertMonth(history.getBody(), month, 3 * 181300L, 3 * 181300L, 3 * 181300L);
+        assertMonth(history.getBody(), "2000-01", 3 * 181300L, 3 * 181300L, 3 * 181300L);
+        assertCategory(history.getBody(), "Hardware", 6 * 179800L);
+        // DB-side sums and stamp projections: no item or line collections
+        // load however large history grows. Measured 13 loads for 6 flows;
+        // the old entity scan loads 60+ here and trips this gate.
+        long loaded = sessions.getStatistics().getEntityLoadCount();
+        assertTrue(loaded <= 20, "spend(all-time) loaded " + loaded + " entities for 6 flows");
+        long queries = sessions.getStatistics().getQueryExecutionCount();
+        assertTrue(queries <= 16, "spend(all-time) issued " + queries + " queries for 6 flows");
+    }
+
     /**
      * Moves an arbitrary half of the tenant's chains into January 2000 so a
      * period filter has something to exclude. Same technique as the dev

@@ -20,4 +20,10 @@ public interface OrderStatsPort {
 
     record LineStat(int quantity, long unitPriceMinor, String currency, int receivedQty) {
     }
+
+    /** DB-side totals for the all-time path: statuses and stamps with summed lines, no line entities. */
+    record OrderTotal(UUID orderId, String status, Instant createdAt, long totalMinor) {
+    }
+
+    List<OrderTotal> orderTotals(String tenantSlug);
 }

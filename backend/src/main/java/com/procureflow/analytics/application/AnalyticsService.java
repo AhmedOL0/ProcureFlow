@@ -23,8 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Read-only KPIs over existing data. This module owns no transactional
- * state: it aggregates the read ports of procurement, orders, invoices and
- * suppliers in memory (precomputed views only if measured slow). Money sums
+ * state. Month-filtered views read only their month; the all-time path uses
+ * DB-side sums and stamp projections so no item or line collections load no
+ * matter how large tenant history grows. Money sums
  * minor units as-is; workspaces are single-currency (MAD default) today.
  */
 @Service
@@ -52,22 +53,51 @@ public class AnalyticsService {
     public SpendView spend(String tenantSlug, String period) {
         if (period != null) {
             requirePeriod(period);
+            return spendForMonth(tenantSlug, period);
         }
+        return spendAllTime(tenantSlug);
+    }
+
+    /**
+     * Bounded all-time path: DB-side sums and stamp projections, no request
+     * items or order lines load no matter how large tenant history grows.
+     * Query-count gated in AnalyticsIT.
+     */
+    private SpendView spendAllTime(String tenantSlug) {
+        RequestStatsPort.RequestTotals totals = requests.requestTotals(tenantSlug);
+        List<CategorySlice> categories = totals.byCategory().stream()
+                .map(c -> new CategorySlice(c.category(), c.amountMinor()))
+                .toList();
+        Map<String, long[]> monthly = new LinkedHashMap<>();
+        for (OrderStatsPort.OrderTotal order : orders.orderTotals(tenantSlug)) {
+            if ("CANCELLED".equals(order.status())) {
+                continue;
+            }
+            monthly.computeIfAbsent(monthOf(order.createdAt()), m -> new long[3])[0] += order.totalMinor();
+        }
+        for (InvoiceStatsPort.InvoiceTotal invoice : invoices.invoiceTotals(tenantSlug)) {
+            monthly.computeIfAbsent(monthOf(invoice.createdAt()), m -> new long[3])[1] += invoice.totalMinor();
+            monthly.computeIfAbsent(monthOf(invoice.createdAt()), m -> new long[3])[2] += invoice.paidMinor();
+        }
+        long ordered = monthly.values().stream().mapToLong(m -> m[0]).sum();
+        long invoiced = monthly.values().stream().mapToLong(m -> m[1]).sum();
+        long paid = monthly.values().stream().mapToLong(m -> m[2]).sum();
+        List<MonthSlice> months = monthly.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> new MonthSlice(e.getKey(), e.getValue()[0], e.getValue()[1], e.getValue()[2]))
+                .toList();
+        return new SpendView(totals.requestedMinor(), ordered, invoiced, paid, categories, months);
+    }
+
+    private SpendView spendForMonth(String tenantSlug, String period) {
         // A filtered view reads only its month: tenant history stays out of
-        // the persistence context no matter how large it grows. The
-        // all-time path still scans (documented; bounded slices preferred).
-        YearMonth month = period == null ? null : YearMonth.parse(period);
-        Instant from = month == null ? null : month.atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-        Instant to = month == null ? null : month.plusMonths(1).atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-        List<RequestStatsPort.RequestStat> requestRows = month == null
-                ? requests.requestStats(tenantSlug)
-                : requests.requestStats(tenantSlug, from, to);
-        List<OrderStatsPort.OrderStat> orderRows = month == null
-                ? orders.orderStats(tenantSlug)
-                : orders.orderStats(tenantSlug, from, to);
-        List<InvoiceStatsPort.InvoiceStat> invoiceRows = month == null
-                ? invoices.invoiceStats(tenantSlug)
-                : invoices.invoiceStats(tenantSlug, from, to);
+        // the persistence context no matter how large it grows.
+        YearMonth month = YearMonth.parse(period);
+        Instant from = month.atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant to = month.plusMonths(1).atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        List<RequestStatsPort.RequestStat> requestRows = requests.requestStats(tenantSlug, from, to);
+        List<OrderStatsPort.OrderStat> orderRows = orders.orderStats(tenantSlug, from, to);
+        List<InvoiceStatsPort.InvoiceStat> invoiceRows = invoices.invoiceStats(tenantSlug, from, to);
         long requested = 0;
         Map<String, Long> byCategory = new LinkedHashMap<>();
         for (RequestStatsPort.RequestStat request : requestRows) {
@@ -140,7 +170,7 @@ public class AnalyticsService {
         long pending = 0;
         long decided = 0;
         List<Double> leadHours = new ArrayList<>();
-        for (RequestStatsPort.RequestStat request : requests.requestStats(tenantSlug)) {
+        for (RequestStatsPort.LeadRow request : requests.requestLeads(tenantSlug)) {
             if ("SUBMITTED".equals(request.status())) {
                 pending++;
             }
