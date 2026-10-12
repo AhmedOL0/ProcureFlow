@@ -41,4 +41,24 @@ describe('auth-tokens', () => {
     expect(isAccessFresh(session('opaque-token', 0))).toBe(true);
     expect(isAccessFresh(session('opaque-token', 880_000))).toBe(false);
   });
+
+  it('decodes unpadded base64url under strict atob engines', () => {
+    // Real JWTs strip `=` padding; Chromium tolerates that, Firefox and
+    // Safari throw. Stub a strict atob to prove the padding restoration.
+    const realAtob = globalThis.atob.bind(globalThis);
+    vi.stubGlobal('atob', (segment: string) => {
+      if (segment.length % 4 !== 0) {
+        throw new Error('strict atob: length is not a multiple of 4');
+      }
+      return realAtob(segment);
+    });
+    try {
+      const exp = Math.floor(Date.now() / 1000) + 600;
+      const token = jwt(exp).replace(/=+$/, '');
+      expect(token).not.toMatch(/=$/);
+      expect(accessExpiresInMs(session(token))).not.toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

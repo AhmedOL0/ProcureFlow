@@ -55,7 +55,10 @@ export function isAccessFresh(
 
 function base64UrlDecode(segment: string): string | null {
   try {
-    const padded = segment.replace(/-/g, '+').replace(/_/g, '/');
+    // Base64url omits padding; Chromium tolerates that, other engines
+    // throw — restore it (same rule as auth.service's authority check).
+    const normalized = segment.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
     return atob(padded);
   } catch {
     return null;
