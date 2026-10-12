@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
@@ -10,16 +11,33 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { SpendChartComponent, SpendPoint } from '../../shared/components/spend-chart/spend-chart.component';
+import { DonutChartComponent, DonutSlice } from '../../shared/components/donut-chart/donut-chart.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
-import { FileText, Inbox, Plus, ShieldCheck } from '../../shared/icons';
+import {
+  Building2,
+  ChartColumn,
+  CircleCheck,
+  FileClock,
+  FileText,
+  Inbox,
+  Plus,
+  Receipt,
+  ShieldCheck,
+  Stamp,
+  Truck,
+  Wallet,
+} from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
 import { formatMinor } from '../../shared/utils/money';
+import { initialsFor } from '../../shared/utils/names';
+import { timeAgo } from '../../shared/utils/time';
 import {
   AnalyticsService,
   ApprovalKpi,
   SpendMonth,
   SpendResponse,
 } from '../analytics/analytics.service';
+import { toSpendCategories } from '../analytics/spend-categories';
 import { Budget, BudgetsService } from '../budgets/budgets.service';
 import { OrderService } from '../orders/orders.service';
 import { ProcurementService, PurchaseRequest } from '../procurement/procurement.service';
@@ -29,7 +47,10 @@ interface Kpi {
   label: string;
   value: string;
   sub: string;
+  icon: typeof Truck;
 }
+
+export type TrendMode = 'monthly' | 'category';
 
 /**
  * Procurement overview in per-authority sections. The operations pulse
@@ -45,6 +66,7 @@ interface Kpi {
   imports: [
     RouterLink,
     MatButtonModule,
+    MatChipsModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
     PageHeaderComponent,
@@ -52,6 +74,7 @@ interface Kpi {
     EmptyStateComponent,
     ErrorStateComponent,
     SpendChartComponent,
+    DonutChartComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -65,8 +88,15 @@ export class DashboardComponent {
   private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
 
-  protected readonly icons = { plus: Plus, open: FileText, approvals: Inbox, shield: ShieldCheck };
+  protected readonly icons = {
+    plus: Plus,
+    open: FileText,
+    approvals: Inbox,
+    shield: ShieldCheck,
+    initials: initialsFor,
+  };
   protected readonly formatMinor = formatMinor;
+  protected readonly timeAgo = timeAgo;
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
   protected readonly canSeeAudit = this.auth.hasAuthority('audit:read');
   private readonly canSeeFinance = this.auth.hasAuthority('analytics:read');
@@ -94,21 +124,25 @@ export class DashboardComponent {
         label: 'Open requests',
         value: `${open}`,
         sub: `${this.submittedTotal()} awaiting approval`,
+        icon: FileClock,
       },
       {
         label: 'Pending approvals',
         value: `${this.submittedTotal()}`,
         sub: open === 0 ? 'queue is clear' : 'in the approval queue',
+        icon: Stamp,
       },
       {
         label: 'Active suppliers',
         value: this.activeSuppliers() === null ? '—' : `${this.activeSuppliers()}`,
         sub: 'vendors you can buy from',
+        icon: Building2,
       },
       {
         label: 'Open orders',
         value: this.openOrders() === null ? '—' : `${this.openOrders()}`,
         sub: 'sent or partially received',
+        icon: Truck,
       },
     ];
   });
@@ -126,21 +160,25 @@ export class DashboardComponent {
         label: 'Ordered spend (all time)',
         value: flow ? formatMinor(flow.orderedMinor) : '—',
         sub: orderedDelta ?? 'committed to suppliers',
+        icon: ChartColumn,
       },
       {
         label: 'Paid out (all time)',
         value: flow ? formatMinor(flow.paidMinor) : '—',
         sub: paidDelta ?? 'settled with suppliers',
+        icon: CircleCheck,
       },
       {
         label: 'Outstanding invoices',
         value: this.outstandingLabel().value,
         sub: this.outstandingLabel().sub,
+        icon: Receipt,
       },
       {
         label: 'Budget left (month)',
         value: this.budgetLabel().value,
         sub: this.budgetLabel().sub,
+        icon: Wallet,
       },
     ];
   });
@@ -209,12 +247,21 @@ export class DashboardComponent {
 
   protected readonly trend = computed<SpendMonth[]>(() => (this.spend()?.byPeriod ?? []).slice(-6));
 
+  protected readonly trendMode = signal<TrendMode>('monthly');
+
   protected readonly trendPoints = computed<SpendPoint[]>(() =>
     this.trend().map((month) => ({
       period: month.period ?? '',
       ordered: month.orderedMinor ?? 0,
       invoiced: month.invoicedMinor ?? 0,
       paid: month.paidMinor ?? 0,
+    })),
+  );
+
+  protected readonly trendSlices = computed<DonutSlice[]>(() =>
+    toSpendCategories(this.spend()?.byCategory).map((row) => ({
+      label: row.category,
+      value: row.amountMinor,
     })),
   );
 
@@ -292,6 +339,19 @@ export class DashboardComponent {
   /** Chart drill: a trend month opens the full trajectory. */
   openAnalytics(): void {
     void this.router.navigate(['/analytics']);
+  }
+
+  /** Priority chip tone: urgency reads danger, routine reads neutral. */
+  priorityTone(priority: string | null | undefined): string {
+    switch (priority) {
+      case 'HIGH':
+      case 'URGENT':
+        return 'pf-badge--danger';
+      case 'MEDIUM':
+        return 'pf-badge--warning';
+      default:
+        return 'pf-badge--neutral';
+    }
   }
 
   leadHours(value: number | null | undefined): string {

@@ -1,6 +1,36 @@
-// Dashboard: finance note, audit banner and the approval-flow strip.
-// Loading, columns, card heads and rows are the global pf-* primitives
-// in styles.scss; charts come from the shared chart components.
+// Dashboard: finance note, audit banner, approval-flow strip, KPI icon
+// heads, trend toggle row and request avatars. Loading, columns, card
+// heads and rows are the global pf-* primitives in styles.scss; charts
+// come from the shared chart components.
+.pf-kpi__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pf-space-sm);
+}
+.pf-kpi__head lucide-angular {
+  color: var(--pf-slate);
+  flex-shrink: 0;
+}
+
+.dashboard-trend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pf-space-md);
+  flex-wrap: wrap;
+}
+
+.dashboard-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-neutral-bg);
+  color: var(--pf-slate);
+  font: 600 12px/32px var(--pf-font);
+  text-align: center;
+  flex-shrink: 0;
+}
 .dashboard-note {
   font: var(--pf-body-sm);
   color: var(--pf-slate);
