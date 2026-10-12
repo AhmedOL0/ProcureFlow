@@ -58,7 +58,7 @@ export class OrderListComponent {
 
   readonly searchBox = new FormControl('', { nonNullable: true });
   readonly statusFilter = new FormControl<string | null>(null);
-  readonly columns = ['supplier', 'status', 'total', 'actions'];
+  readonly columns = ['ref', 'supplier', 'request', 'lines', 'status', 'total', 'actions'];
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
@@ -158,6 +158,10 @@ export class OrderListComponent {
   onPage(page: PageEvent): void {
     this.page.set(page);
     this.reload();
+  }
+
+  protected shortId(id: string | null | undefined): string {
+    return id ? id.slice(0, 8) : '—';
   }
 
   openCreate(): void {

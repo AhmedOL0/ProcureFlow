@@ -64,7 +64,43 @@
           >Originating request</a
         >
       }
+      @if (current.supplierId) {
+        <a class="pf-row-link" [routerLink]="['/suppliers', current.supplierId]">{{
+          supplierName()
+        }}</a>
+      }
     </div>
+
+    <div class="pf-kpis" role="region" aria-label="Fulfillment summary">
+      <div class="pf-kpi">
+        <span class="pf-kpi__label">Committed total</span>
+        <div class="pf-kpi__value">{{ formatMinor(current.totalMinor, current.currency) }}</div>
+        <div class="pf-kpi__sub">{{ (current.lines ?? []).length }} lines</div>
+      </div>
+      <div class="pf-kpi">
+        <span class="pf-kpi__label">Received</span>
+        <div class="pf-kpi__value">{{ receivedTotal() }} of {{ orderedTotal() }}</div>
+        <div class="pf-kpi__sub">units across all lines</div>
+      </div>
+      <div class="pf-kpi">
+        <span class="pf-kpi__label">Receipt progress</span>
+        <div class="pf-kpi__value">{{ receiptPct().toFixed(0) }}%</div>
+        <div class="pf-kpi__sub">of ordered quantity</div>
+      </div>
+    </div>
+
+    @if (!cancelled()) {
+      <ol class="order-steps" aria-label="Fulfillment progress">
+        @for (step of steps; track step) {
+          <li class="order-steps__step" [attr.data-state]="stepState(step)">
+            <span class="order-steps__dot" aria-hidden="true"></span>
+            <span class="order-steps__label">{{ step }}</span>
+          </li>
+        }
+      </ol>
+    } @else {
+      <p class="pf-muted">This order was cancelled — the pipeline ends here.</p>
+    }
 
     <section class="pf-panel" aria-label="Lines">
       <div class="pf-panel__head">

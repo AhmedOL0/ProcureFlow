@@ -67,6 +67,31 @@ export class OrderDetailComponent {
     () => (this.order()?.lines ?? []).reduce((sum, line) => sum + (line.quantity ?? 0), 0),
   );
 
+  protected readonly receiptPct = computed(() => {
+    const ordered = this.orderedTotal();
+    if (ordered <= 0) {
+      return 0;
+    }
+    return Math.min(100, (this.receivedTotal() / ordered) * 100);
+  });
+
+  /** Fulfillment pipeline position; cancelled ends the line early. */
+  protected readonly steps = ['DRAFT', 'SENT', 'RECEIVED', 'CLOSED'];
+  protected readonly cancelled = computed(() => this.status() === 'CANCELLED');
+
+  protected stepState(step: string): 'done' | 'current' | 'todo' {
+    const order = ['DRAFT', 'SENT', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CLOSED'];
+    const at = order.indexOf(this.status() ?? '');
+    const position = order.indexOf(step);
+    if (at < 0 || position < 0 || this.status() === 'CANCELLED') {
+      return 'todo';
+    }
+    if (position < at) {
+      return 'done';
+    }
+    return position === at ? 'current' : 'todo';
+  }
+
   private orderId(): string {
     return this.route.snapshot.paramMap.get('id') ?? '';
   }
