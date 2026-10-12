@@ -11,7 +11,7 @@ boundaries.
 > Status: **working product, pre-release hardening.** The Angular frontend
 > covers the page map end to end (dashboard, workspace, procurement,
 > fulfillment, budgets, analytics, copilot, admin) against the real API;
-> the backend carries 165 integration tests plus unit/ArchUnit gates
+> the backend carries 166 integration tests plus unit/ArchUnit gates
 > (measured 2026-10-12; JaCoCo 84.1% line / 66.8% branch over 70/40 floors).
 > Screenshots below are all live captures. See `docs/demo.md` to click
 > through it yourself, and `docs/project-management/sprint-plan.md` for
@@ -147,7 +147,7 @@ carries `timestamp` alongside the documented fields.
 Full picture in `docs/testing/strategy.md`. Local gates (must pass before
 every push):
 
-- Backend: `cd backend && ./mvnw verify` — 165 integration tests
+- Backend: `cd backend && ./mvnw verify` — 166 integration tests
   (Testcontainers over real PostgreSQL 16) plus unit/ArchUnit: auth,
   tenant isolation, suppliers (incl. xlsx/csv import), procurement, approvals (incl. decision
   races), budgets (incl. reservation race), orders, invoices,

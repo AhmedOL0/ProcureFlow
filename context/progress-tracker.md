@@ -10,7 +10,7 @@ order/invoice PDFs and filtered xlsx exports (orders, invoices, requests,
 suppliers) and spend reports (PDF + 4-sheet xlsx). Formula-injection
 guard on every exported string; `EXPORT_TOO_LARGE` past 5000 rows;
 `SUPPLIER_IMPORTED` / `DOCUMENT_EXPORTED` audit rows; Content-Disposition
-exposed over CORS. Gates: backend 165 IT green (`verify`), frontend
+exposed over CORS. Gates: backend 166 IT green (`verify`), frontend
 tsc + build + 52 Vitest + 58 e2e green. Follow-ups: budget import,
 request PDF dossier, EXPORT_TOO_LARGE IT (needs 5000-row fixture).
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
