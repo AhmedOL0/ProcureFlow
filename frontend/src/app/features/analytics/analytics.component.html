@@ -12,7 +12,7 @@
       <button mat-button (click)="clearPeriod()">All time</button>
       <button mat-stroked-button (click)="exportCsv()">Export CSV</button>
     </div>
-  />
+  </pf-page-header>
   <div class="analytics-months" role="group" aria-label="Recent months">
     <span class="pf-muted">Recent:</span>
     @for (month of recentMonths(); track month) {
