@@ -32,6 +32,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/api/**")
                 .allowedOrigins(allowedOrigins.toArray(new String[0]))
                 .allowedMethods("GET", "POST", "PATCH", "DELETE", "OPTIONS")
+                // Export downloads read the server filename from this
+                // header; without the exposure the browser hides it and
+                // every download falls back to a generic name.
+                .exposedHeaders("Content-Disposition")
                 .maxAge(3600);
     }
 }
