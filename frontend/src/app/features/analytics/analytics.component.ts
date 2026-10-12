@@ -99,6 +99,38 @@ export class AnalyticsComponent {
   });
   protected readonly months = computed<SpendMonth[]>(() => this.spend()?.byPeriod ?? []);
 
+  /** Distinct ISO codes behind the aggregates; more than one means mixed. */
+  protected readonly currencies = computed<string[]>(() => this.spend()?.currencies ?? []);
+  protected readonly mixed = computed(() => this.currencies().length > 1);
+
+  /**
+   * KPI groups: one per currency from the wire (never merged across codes).
+   * Responses predating `byCurrency` (and empty tenants) fall back to the
+   * legacy merged fields in the product-default code.
+   */
+  protected readonly kpiGroups = computed(() => {
+    const groups = (this.spend()?.byCurrency ?? []).map((row) => ({
+      code: row.currency ?? 'MAD',
+      requested: row.requestedMinor ?? 0,
+      ordered: row.orderedMinor ?? 0,
+      invoiced: row.invoicedMinor ?? 0,
+      paid: row.paidMinor ?? 0,
+    }));
+    if (groups.length > 0) {
+      return groups;
+    }
+    const flow = this.spend();
+    return [
+      {
+        code: 'MAD',
+        requested: flow?.requestedMinor ?? 0,
+        ordered: flow?.orderedMinor ?? 0,
+        invoiced: flow?.invoicedMinor ?? 0,
+        paid: flow?.paidMinor ?? 0,
+      },
+    ];
+  });
+
   protected readonly spendPoints = computed<SpendPoint[]>(() =>
     this.months().map((month) => ({
       period: month.period ?? '',
@@ -113,6 +145,8 @@ export class AnalyticsComponent {
   );
 
   protected readonly supplierColumns = ['supplier', 'periods', 'onTime', 'quality'];
+  protected readonly monthColumns = ['period', 'currency', 'ordered', 'invoiced', 'paid'];
+  protected readonly categoryColumns = ['category', 'currency', 'amount'];
 
   /**
    * Recent-month shortcuts over the single-month filter. Quarters would
@@ -183,25 +217,27 @@ export class AnalyticsComponent {
    */
   exportCsv(): void {
     const period = this.periodBox.value.trim() === '' ? 'all-time' : this.periodBox.value.trim();
-    const lines = ['section,period,name,ordered_minor,invoiced_minor,paid_minor'];
+    const lines = ['section,period,name,currency,ordered_minor,invoiced_minor,paid_minor'];
     for (const month of this.months()) {
       lines.push([
         'month',
         month.period ?? '',
         '',
+        month.currency ?? '',
         month.orderedMinor ?? 0,
         month.invoicedMinor ?? 0,
         month.paidMinor ?? 0,
       ].map(csvCell).join(','));
     }
     for (const row of this.categories()) {
-      lines.push(['category', period, row.category, row.amountMinor, '', ''].map(csvCell).join(','));
+      lines.push(['category', period, row.category, row.currency, row.amountMinor, '', ''].map(csvCell).join(','));
     }
     for (const row of this.suppliers()) {
       lines.push([
         'supplier',
         '',
         row.supplierName ?? '',
+        '',
         row.periods ?? 0,
         row.avgOnTime ?? '',
         row.avgQuality ?? '',

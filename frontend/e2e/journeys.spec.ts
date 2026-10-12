@@ -720,6 +720,61 @@ test.describe('critical journeys', () => {
     await expect(page.locator('.spend-chart__table')).toContainText('2026-10');
   });
 
+  test('analytics splits mixed currencies instead of merging', async ({ page }) => {
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
+        departments: [], users: [], notifications: [],
+      }),
+      {
+        method: 'GET',
+        match: '/analytics/spend',
+        body: {
+          requestedMinor: 280000,
+          orderedMinor: 80000,
+          invoicedMinor: 0,
+          paidMinor: 0,
+          currencies: ['EUR', 'MAD'],
+          byCurrency: [
+            { currency: 'EUR', requestedMinor: 200000, orderedMinor: 0, invoicedMinor: 0, paidMinor: 0 },
+            { currency: 'MAD', requestedMinor: 80000, orderedMinor: 80000, invoicedMinor: 0, paidMinor: 0 },
+          ],
+          byCategory: [
+            { category: 'Cloud', currency: 'EUR', amountMinor: 200000 },
+            { category: 'Cloud', currency: 'MAD', amountMinor: 80000 },
+          ],
+          byPeriod: [
+            { period: '2026-10', currency: 'EUR', orderedMinor: 0, invoicedMinor: 0, paidMinor: 0 },
+            { period: '2026-10', currency: 'MAD', orderedMinor: 80000, invoicedMinor: 0, paidMinor: 0 },
+          ],
+        },
+      },
+      { method: 'GET', match: '/analytics/suppliers', body: [] },
+      {
+        method: 'GET',
+        match: '/analytics/approvals',
+        body: { pending: 0, decided: 0, avgLeadHours: null, maxLeadHours: null },
+      },
+      {
+        method: 'GET',
+        match: '/ai/usage',
+        body: { calls: 0, promptTokens: 0, completionTokens: 0, byFeature: [] },
+      },
+    ]);
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/analytics');
+    // Warning plus per-currency KPIs; charts give way to tagged tables.
+    await expect(page.getByRole('alert')).toContainText('EUR, MAD');
+    await expect(page.getByText('Requested · EUR')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Requested · MAD')).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Spend by category and currency' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Spend by period and currency' })).toBeVisible();
+  });
+
   test('analytics charts drill into filters', async ({ page }) => {
     await stubApi(page, [
       ...baseStubs({

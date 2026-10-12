@@ -2072,8 +2072,20 @@ export interface components {
             avgOnTime?: number;
             avgQuality?: number;
         };
+        CurrencyTotalResponse: {
+            currency?: string;
+            /** Format: int64 */
+            requestedMinor?: number;
+            /** Format: int64 */
+            orderedMinor?: number;
+            /** Format: int64 */
+            invoicedMinor?: number;
+            /** Format: int64 */
+            paidMinor?: number;
+        };
         MonthResponse: {
             period?: string;
+            currency?: string;
             /** Format: int64 */
             orderedMinor?: number;
             /** Format: int64 */
@@ -2090,6 +2102,8 @@ export interface components {
             invoicedMinor?: number;
             /** Format: int64 */
             paidMinor?: number;
+            currencies?: string[];
+            byCurrency?: components["schemas"]["CurrencyTotalResponse"][];
             byCategory?: components["schemas"]["CategoryResponse"][];
             byPeriod?: components["schemas"]["MonthResponse"][];
         };
