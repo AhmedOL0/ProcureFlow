@@ -4,13 +4,12 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 14 — audit remediation, one phase at a time (this change: KPI
-resilience).** PRs #14–#22 merged. KPI numerals had no fallback where
-container-query units are unsupported (pre-2022 engines dropped the whole
-`clamp()` to body size on every KPI row); plain 24px first now. The
-single-column stacking in the report is the correct ≤767px responsive
-layout (zoom or narrow window), not a defect — confirmed breakpoints
-4→2→1 with mobile evidence.
+**Phase 14 — audit remediation, hotfix: CSP broke global styles
+(this change).** PRs #14–#24 merged. Angular's critical-CSS print trick
+(`media="print"` + inline onload swapper) silently died under our
+script-src CSP, leaving the whole global stylesheet print-only: grids,
+cards, tables and links unstyled on every page while component styles
+survived. Fix: `inlineCritical: false` (plain stylesheet link).
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:

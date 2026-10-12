@@ -70,6 +70,20 @@
                   "maximumError": "8kB"
                 }
               ],
+              // inlineCritical emits the global stylesheet with
+              // media="print" + an inline onload swapper. Our
+              // Content-Security-Policy has no script-src-attr
+              // unsafe-inline, so the swapper never runs and the whole
+              // global stylesheet stays print-only (unstyled grids, cards,
+              // tables and links). Keep minification, load normally.
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "outputHashing": "all"
             },
           "development": {
