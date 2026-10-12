@@ -51,7 +51,7 @@ export class ResetPasswordComponent {
   readonly form = new FormGroup({
     newPassword: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(12)],
+      validators: [Validators.required, Validators.minLength(12), Validators.maxLength(72)],
     }),
     confirmPassword: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });

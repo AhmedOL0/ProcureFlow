@@ -175,6 +175,19 @@ class AccountIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void resetPasswordRefusesBeyondBcryptTruncation() {
+        String raw = mintToken(uniqueSlug("acct"));
+
+        // Thirty emoji fit any char count but exceed 72 bytes: BCrypt would
+        // silently truncate, so the policy refuses before burning the token.
+        ResponseEntity<String> tooLong = reset(raw, "😀".repeat(30));
+        assertEquals(HttpStatus.BAD_REQUEST, tooLong.getStatusCode());
+        assertTrue(tooLong.getBody().contains("PASSWORD_TOO_LONG"));
+
+        assertEquals(HttpStatus.NO_CONTENT, reset(raw, "correct-horse-123").getStatusCode());
+    }
+
+    @Test
     void concurrentRedemptionAdmitsExactlyOneWinner() throws Exception {
         String raw = mintToken(uniqueSlug("acct"));
         ExecutorService pool = Executors.newFixedThreadPool(2);

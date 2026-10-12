@@ -37,7 +37,7 @@ export class RegisterComponent {
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     password: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(12)],
+      validators: [Validators.required, Validators.minLength(12), Validators.maxLength(72)],
     }),
     tenantSlug: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     tenantName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -95,6 +95,8 @@ export class RegisterComponent {
             this.failure.set('A workspace name is required to create a new workspace.');
           } else if (code === 'WEAK_PASSWORD') {
             this.failure.set('Password must be at least 12 characters.');
+          } else if (code === 'PASSWORD_TOO_LONG') {
+            this.failure.set('That password is too long for secure hashing — use at most 72 characters.');
           } else {
             this.failure.set('Registration failed. Check the workspace slug and try again.');
           }
