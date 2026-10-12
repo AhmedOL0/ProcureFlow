@@ -41,12 +41,16 @@ public class RequestStatsAdapter implements RequestStatsPort {
     @Transactional(readOnly = true)
     public RequestTotals requestTotals(String tenantSlug) {
         List<CategoryTotal> categories = new ArrayList<>();
-        for (Object[] row : items.sumActiveByCategoryAndTenantSlug(tenantSlug)) {
+        long requested = 0;
+        for (Object[] row : items.sumActiveByCategoryAndCurrency(tenantSlug)) {
             String category = row[0] == null || row[0].toString().isBlank() ? "Uncategorized" : row[0].toString();
-            categories.add(new CategoryTotal(category, (Long) row[1]));
+            String currency = row[1] == null ? "" : row[1].toString();
+            long amount = (Long) row[2];
+            categories.add(new CategoryTotal(category, currency, amount));
+            requested += amount;
         }
         categories.sort((a, b) -> Long.compare(b.amountMinor(), a.amountMinor()));
-        return new RequestTotals(items.sumActiveByTenantSlug(tenantSlug), categories);
+        return new RequestTotals(requested, categories);
     }
 
     @Override

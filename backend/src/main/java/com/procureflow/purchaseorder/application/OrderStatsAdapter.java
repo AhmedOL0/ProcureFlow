@@ -57,6 +57,7 @@ public class OrderStatsAdapter implements OrderStatsPort {
             totals.add(new OrderStatsPort.OrderTotal(
                     order.getId(),
                     order.getStatus().name(),
+                    order.getCurrency(),
                     order.getCreatedAt(),
                     sums.getOrDefault(order.getId(), 0L)));
         }

@@ -20,7 +20,7 @@ public interface InvoiceStatsPort {
     }
 
     /** DB-side totals for the all-time path: stamps and sums, no line entities. */
-    record InvoiceTotal(UUID invoiceId, String status, Instant createdAt, long totalMinor, long paidMinor) {
+    record InvoiceTotal(UUID invoiceId, String status, String currency, Instant createdAt, long totalMinor, long paidMinor) {
     }
 
     List<InvoiceTotal> invoiceTotals(String tenantSlug);

@@ -48,26 +48,37 @@ public class SpendReportService {
 
         List<String> meta = new ArrayList<>();
         meta.add("Workspace: " + tenantSlug + "  |  Period: " + scope);
-        meta.add("Amounts as shown on the Analytics page (" + DISPLAY_CURRENCY + ")");
+        meta.add(currenciesNote(spend.currencies()));
 
         List<List<String>> totals = new ArrayList<>();
-        totals.add(List.of("Requested", MoneyText.of(spend.requestedMinor(), DISPLAY_CURRENCY)));
-        totals.add(List.of("Ordered", MoneyText.of(spend.orderedMinor(), DISPLAY_CURRENCY)));
-        totals.add(List.of("Invoiced", MoneyText.of(spend.invoicedMinor(), DISPLAY_CURRENCY)));
-        totals.add(List.of("Paid", MoneyText.of(spend.paidMinor(), DISPLAY_CURRENCY)));
+        for (var currency : spend.byCurrency()) {
+            totals.add(List.of(
+                    "Requested (" + currency.currency() + ")",
+                    MoneyText.of(currency.requestedMinor(), currency.currency())));
+            totals.add(List.of(
+                    "Ordered (" + currency.currency() + ")",
+                    MoneyText.of(currency.orderedMinor(), currency.currency())));
+            totals.add(List.of(
+                    "Invoiced (" + currency.currency() + ")",
+                    MoneyText.of(currency.invoicedMinor(), currency.currency())));
+            totals.add(List.of(
+                    "Paid (" + currency.currency() + ")", MoneyText.of(currency.paidMinor(), currency.currency())));
+        }
 
         List<List<String>> categories = new ArrayList<>();
         for (var slice : spend.byCategory()) {
-            categories.add(List.of(slice.category(), MoneyText.of(slice.amountMinor(), DISPLAY_CURRENCY)));
+            categories.add(List.of(
+                    slice.category() + " (" + slice.currency() + ")",
+                    MoneyText.of(slice.amountMinor(), slice.currency())));
         }
 
         List<List<String>> months = new ArrayList<>();
         for (MonthSlice month : spend.byPeriod()) {
             months.add(List.of(
-                    month.period(),
-                    MoneyText.of(month.orderedMinor(), DISPLAY_CURRENCY),
-                    MoneyText.of(month.invoicedMinor(), DISPLAY_CURRENCY),
-                    MoneyText.of(month.paidMinor(), DISPLAY_CURRENCY)));
+                    month.period() + " (" + month.currency() + ")",
+                    MoneyText.of(month.orderedMinor(), month.currency()),
+                    MoneyText.of(month.invoicedMinor(), month.currency()),
+                    MoneyText.of(month.paidMinor(), month.currency())));
         }
 
         List<List<String>> vendors = new ArrayList<>();
@@ -134,20 +145,23 @@ public class SpendReportService {
         String scope = period == null || period.isBlank() ? "All time" : period;
 
         List<List<Object>> totals = new ArrayList<>();
-        totals.add(List.of("Requested", spend.requestedMinor() / 100.0));
-        totals.add(List.of("Ordered", spend.orderedMinor() / 100.0));
-        totals.add(List.of("Invoiced", spend.invoicedMinor() / 100.0));
-        totals.add(List.of("Paid", spend.paidMinor() / 100.0));
+        for (var currency : spend.byCurrency()) {
+            totals.add(List.of("Requested", currency.currency(), currency.requestedMinor() / 100.0));
+            totals.add(List.of("Ordered", currency.currency(), currency.orderedMinor() / 100.0));
+            totals.add(List.of("Invoiced", currency.currency(), currency.invoicedMinor() / 100.0));
+            totals.add(List.of("Paid", currency.currency(), currency.paidMinor() / 100.0));
+        }
 
         List<List<Object>> categories = new ArrayList<>();
         for (var slice : spend.byCategory()) {
-            categories.add(List.of(slice.category(), slice.amountMinor() / 100.0));
+            categories.add(List.of(slice.category(), slice.currency(), slice.amountMinor() / 100.0));
         }
 
         List<List<Object>> months = new ArrayList<>();
         for (MonthSlice month : spend.byPeriod()) {
             months.add(List.of(
                     month.period(),
+                    month.currency(),
                     month.orderedMinor() / 100.0,
                     month.invoicedMinor() / 100.0,
                     month.paidMinor() / 100.0));
@@ -163,12 +177,12 @@ public class SpendReportService {
         }
 
         byte[] content = Spreadsheet.bookMulti(List.of(
-                new Spreadsheet.SheetData("Totals", List.of("metric", "amount_" + DISPLAY_CURRENCY), totals),
+                new Spreadsheet.SheetData("Totals", List.of("metric", "currency", "amount"), totals),
                 new Spreadsheet.SheetData(
-                        "Categories", List.of("category", "amount_" + DISPLAY_CURRENCY), categories),
+                        "Categories", List.of("category", "currency", "amount"), categories),
                 new Spreadsheet.SheetData(
                         "Periods",
-                        List.of("period", "ordered", "invoiced", "paid"),
+                        List.of("period", "currency", "ordered", "invoiced", "paid"),
                         months),
                 new Spreadsheet.SheetData(
                         "Suppliers", List.of("supplier", "periods", "on_time", "quality"), vendors)));
@@ -185,6 +199,13 @@ public class SpendReportService {
 
     private static String percent(BigDecimal rate) {
         return rate == null ? "-" : rate.toPlainString() + "%";
+    }
+
+    private static String currenciesNote(List<String> currencies) {
+        if (currencies.size() > 1) {
+            return "Currencies: " + String.join(", ", currencies) + " (mixed — figures split per currency)";
+        }
+        return "Currency: " + (currencies.isEmpty() ? DISPLAY_CURRENCY : currencies.get(0));
     }
 
     private static Object rate(BigDecimal value) {

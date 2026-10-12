@@ -52,11 +52,17 @@ public class AnalyticsController {
                 view.orderedMinor(),
                 view.invoicedMinor(),
                 view.paidMinor(),
+                view.currencies(),
+                view.byCurrency().stream()
+                        .map(t -> new CurrencyTotalResponse(
+                                t.currency(), t.requestedMinor(), t.orderedMinor(), t.invoicedMinor(), t.paidMinor()))
+                        .toList(),
                 view.byCategory().stream()
-                        .map(c -> new CategoryResponse(c.category(), c.amountMinor()))
+                        .map(c -> new CategoryResponse(c.category(), c.currency(), c.amountMinor()))
                         .toList(),
                 view.byPeriod().stream()
-                        .map(m -> new MonthResponse(m.period(), m.orderedMinor(), m.invoicedMinor(), m.paidMinor()))
+                        .map(m -> new MonthResponse(
+                                m.period(), m.currency(), m.orderedMinor(), m.invoicedMinor(), m.paidMinor()))
                         .toList()));
     }
 
@@ -127,14 +133,21 @@ public class AnalyticsController {
             long orderedMinor,
             long invoicedMinor,
             long paidMinor,
+            List<String> currencies,
+            List<CurrencyTotalResponse> byCurrency,
             List<CategoryResponse> byCategory,
             List<MonthResponse> byPeriod) {
     }
 
-    public record CategoryResponse(String category, long amountMinor) {
+    public record CurrencyTotalResponse(
+            String currency, long requestedMinor, long orderedMinor, long invoicedMinor, long paidMinor) {
     }
 
-    public record MonthResponse(String period, long orderedMinor, long invoicedMinor, long paidMinor) {
+    public record CategoryResponse(String category, String currency, long amountMinor) {
+    }
+
+    public record MonthResponse(
+            String period, String currency, long orderedMinor, long invoicedMinor, long paidMinor) {
     }
 
     public record SupplierKpiResponse(

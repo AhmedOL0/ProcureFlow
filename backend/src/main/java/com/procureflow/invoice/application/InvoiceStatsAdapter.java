@@ -58,6 +58,7 @@ public class InvoiceStatsAdapter implements InvoiceStatsPort {
                 .map(invoice -> new InvoiceTotal(
                         invoice.getId(),
                         invoice.getStatus().name(),
+                        invoice.getCurrency(),
                         invoice.getCreatedAt(),
                         invoice.getTotalMinor(),
                         paid.getOrDefault(invoice.getId(), 0L)))

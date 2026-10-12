@@ -335,6 +335,58 @@ class AnalyticsIT extends AbstractIntegrationTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void mixedCurrenciesSplitInsteadOfMerging() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        paidFlow(admin.token());
+        // A euro draft needs no budget pot: the requested bucket is where
+        // mixing shows first, and per-currency rows keep it honest.
+        draft(admin.token(), "Serveurs", "Hardware", 1, 100000, "EUR");
+
+        ResponseEntity<Map> spend = get("/api/v1/analytics/spend", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, spend.getStatusCode());
+        assertNotNull(spend.getBody());
+        assertEquals(List.of("EUR", "MAD"), spend.getBody().get("currencies"));
+
+        List<Map<String, Object>> byCurrency = (List<Map<String, Object>>) spend.getBody().get("byCurrency");
+        assertNotNull(byCurrency);
+        assertEquals(2, byCurrency.size());
+        Map<String, Object> eur = byCurrency.stream()
+                .filter(row -> "EUR".equals(row.get("currency")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Missing EUR breakdown"));
+        assertEquals(100000L, ((Number) eur.get("requestedMinor")).longValue());
+        assertEquals(0L, ((Number) eur.get("orderedMinor")).longValue());
+
+        List<Map<String, Object>> categories =
+                (List<Map<String, Object>>) spend.getBody().get("byCategory");
+        assertNotNull(categories);
+        assertTrue(categories.stream().anyMatch(row ->
+                "Hardware".equals(row.get("category")) && "EUR".equals(row.get("currency"))
+                        && ((Number) row.get("amountMinor")).longValue() == 100000L));
+    }
+
+    private UUID draft(String token, String title, String category, int quantity, long unitPrice, String currency) {
+        ResponseEntity<Map> created = rest.exchange(
+                "/api/v1/purchase-requests",
+                HttpMethod.POST,
+                new HttpEntity<>(
+                        Map.of(
+                                "title", title,
+                                "items", List.of(Map.of(
+                                        "description", title + " line",
+                                        "category", category,
+                                        "quantity", quantity,
+                                        "unitPriceMinor", unitPrice,
+                                        "currency", currency))),
+                        withIdempotency(token)),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, created.getStatusCode());
+        assertNotNull(created.getBody());
+        return UUID.fromString(created.getBody().get("id").toString());
+    }
+
     private UUID submitted(String token) {
         ResponseEntity<Map> created = rest.exchange(
                 "/api/v1/purchase-requests",

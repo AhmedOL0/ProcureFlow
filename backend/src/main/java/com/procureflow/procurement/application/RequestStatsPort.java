@@ -34,7 +34,7 @@ public interface RequestStatsPort {
     record ItemStat(String category, int quantity, long unitPriceMinor, String currency) {
     }
 
-    record CategoryTotal(String category, long amountMinor) {
+    record CategoryTotal(String category, String currency, long amountMinor) {
     }
 
     record RequestTotals(long requestedMinor, List<CategoryTotal> byCategory) {

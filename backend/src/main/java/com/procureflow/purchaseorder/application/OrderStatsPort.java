@@ -22,7 +22,7 @@ public interface OrderStatsPort {
     }
 
     /** DB-side totals for the all-time path: statuses and stamps with summed lines, no line entities. */
-    record OrderTotal(UUID orderId, String status, Instant createdAt, long totalMinor) {
+    record OrderTotal(UUID orderId, String status, String currency, Instant createdAt, long totalMinor) {
     }
 
     List<OrderTotal> orderTotals(String tenantSlug);
