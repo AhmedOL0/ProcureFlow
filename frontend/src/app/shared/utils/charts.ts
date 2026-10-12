@@ -127,19 +127,14 @@ export function buildDonutOption(
   currency: string,
   animate: boolean,
 ): EChartsCoreOption {
-  const total = slices.reduce((acc, slice) => acc + (slice.value > 0 ? slice.value : 0), 0);
   return {
     animation: animate,
     animationDuration: 600,
     animationDurationUpdate: 400,
-    title: {
-      text: formatMinor(total, currency),
-      subtext: 'total',
-      left: 'center',
-      top: '42%',
-      textAlign: 'center',
-      itemGap: 2,
-    },
+    // No ECharts title: the center total renders as an HTML overlay in
+    // DonutChartComponent. The canvas title box centers on the container
+    // while the ring centers on the half-min-dimension, so long totals
+    // drifted over the left arc; CSS grid centering cannot drift.
     tooltip: {
       trigger: 'item',
       formatter: (params: unknown) => {
@@ -150,7 +145,7 @@ export function buildDonutOption(
     series: [
       {
         type: 'pie',
-        radius: ['58%', '78%'],
+        radius: ['64%', '78%'],
         label: { show: false },
         emphasis: { scale: true, scaleSize: 4 },
         data: slices.map((slice, index) => ({

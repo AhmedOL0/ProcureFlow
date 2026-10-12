@@ -14,13 +14,13 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { init as initChart, use, type ECharts } from 'echarts/core';
 import { PieChart } from 'echarts/charts';
-import { TitleComponent, TooltipComponent } from 'echarts/components';
+import { TooltipComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 
 import { formatMinor } from '../../utils/money';
 import { buildDonutOption, segmentAt } from '../../utils/charts';
 
-use([PieChart, TitleComponent, TooltipComponent, CanvasRenderer]);
+use([PieChart, TooltipComponent, CanvasRenderer]);
 
 export interface DonutSlice {
   label: string;
@@ -149,7 +149,7 @@ function pixelOf(event: unknown): [number, number] | null {
 
 /**
  * Donut segment under a canvas gesture, or null off the ring. The ring
- * occupies 58–78% of the half-min-dimension around the canvas center
+ * occupies 64–78% of the half-min-dimension around the canvas center
  * (mirroring the option radii, with a small tolerance for fat fingers).
  * ECharts pies do not support convertFromPixel, so the angle maps through
  * the same cumulative fractions the ring is drawn from: data order from
@@ -163,7 +163,7 @@ function sliceIndexAt(chart: ECharts, values: number[], point: [number, number])
   const dx = point[0] - chart.getWidth() / 2;
   const dy = point[1] - chart.getHeight() / 2;
   const distance = Math.hypot(dx, dy);
-  if (distance < halfMin * 0.55 || distance > halfMin * 0.81) {
+  if (distance < halfMin * 0.61 || distance > halfMin * 0.81) {
     return null;
   }
   return segmentAt(values, dx, dy);

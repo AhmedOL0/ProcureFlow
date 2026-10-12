@@ -1,5 +1,13 @@
 <div class="donut-chart">
-  <div #canvas class="donut-chart__stage" aria-hidden="true"></div>
+  <div class="donut-chart__wrap">
+    <div #canvas class="donut-chart__stage" aria-hidden="true"></div>
+    <div class="donut-chart__total">
+      <span class="donut-chart__total-value pf-data-mono">{{
+        formatMinor(total(), currency())
+      }}</span>
+      <span class="donut-chart__total-label">total</span>
+    </div>
+  </div>
   <ul class="donut-chart__legend">
     @for (row of legend(); track row.label) {
       <li>
