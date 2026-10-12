@@ -41,14 +41,23 @@
       <ul class="pf-list">
         @for (user of users(); track user.id) {
           <li class="pf-list__row">
-            <span
-              >{{ user.email }}
-              @if (user.verified === false) {
-                <span class="pf-muted">(unverified)</span>
+            <span class="pf-list__main">
+              <span
+                >{{ user.email }}
+                @if (user.verified === false) {
+                  <span class="pf-muted">(unverified)</span>
+                }
+              </span>
+              @if (departmentNames(user.id); as departments) {
+                <span class="pf-list__sub">{{ departments }}</span>
               }
             </span>
             <span class="pf-list__actions">
-              <span class="pf-muted">{{ (user.roles ?? []).join(', ') || 'no roles' }}</span>
+              @for (role of user.roles ?? []; track role) {
+                <span class="pf-badge pf-badge--neutral">{{ role }}</span>
+              } @empty {
+                <span class="pf-muted">no roles</span>
+              }
               @if (canManageUsers) {
                 <button mat-button (click)="resetPassword(user)">Reset password</button>
               }
@@ -88,6 +97,12 @@
         (page)="onPage($event)"
         aria-label="User pages"
       />
+      <p class="pf-muted">
+        Approval thresholds live under
+        <a class="pf-row-link" routerLink="/admin/workflows">Approval policies</a>
+        and cost centers under
+        <a class="pf-row-link" routerLink="/admin/departments">Departments</a>.
+      </p>
     </section>
 
     @if (canManageUsers) {

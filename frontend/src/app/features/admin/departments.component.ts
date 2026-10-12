@@ -120,8 +120,7 @@ export class DepartmentsComponent {
     this.reload();
   }
 
-  protected userEmail(userId: string | null | undefined): string {
-    if (!userId) {
+  protected userEmail(userId: string | null | undefined): string {    if (!userId) {
       return '?';
     }
     return this.users().find((u) => u.id === userId)?.email ?? userId.slice(0, 8);
@@ -132,6 +131,13 @@ export class DepartmentsComponent {
       return '?';
     }
     return this.departments().find((d) => d.id === departmentId)?.name ?? departmentId.slice(0, 8);
+  }
+
+  protected memberCount(departmentId: string | null | undefined): number {
+    if (!departmentId) {
+      return 0;
+    }
+    return this.memberships().filter((m) => m.departmentId === departmentId).length;
   }
 
   createDepartment(): void {

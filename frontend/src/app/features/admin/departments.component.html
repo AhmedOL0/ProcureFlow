@@ -32,8 +32,12 @@
       } @else {
         <ul class="pf-list">
           @for (department of departments(); track department.id) {
+            @let count = memberCount(department.id);
             <li class="pf-list__row">
-              <span>{{ department.name }}</span>
+              <span class="pf-list__main">
+                <span>{{ department.name }}</span>
+                <span class="pf-list__sub">{{ count }} member{{ count === 1 ? '' : 's' }}</span>
+              </span>
               @if (canManageDepartments) {
                 <span class="pf-list__actions">
                   <button mat-button (click)="renameDepartment(department)">Rename</button>
