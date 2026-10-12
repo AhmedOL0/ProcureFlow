@@ -33,6 +33,14 @@
         </mat-form-field>
         <button mat-flat-button color="primary" (click)="ask()" [disabled]="busy()">Ask</button>
       </div>
+      @if (!answer() && !busy() && !failure()) {
+        <div class="copilot-suggestions">
+          <span class="pf-muted">Try:</span>
+          @for (prompt of suggestions; track prompt) {
+            <button mat-stroked-button (click)="useSuggestion(prompt)">{{ prompt }}</button>
+          }
+        </div>
+      }
       <div class="copilot-result">
         @if (busy()) {
           <div class="copilot-loading" role="status" aria-label="Thinking">
@@ -56,12 +64,22 @@
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">
                 @for (cite of result.citations ?? []; track cite) {
-                  <li>{{ cite }}</li>
+                  <li>
+                    @if (citationRoute(cite); as route) {
+                      <a class="pf-row-link" [routerLink]="route">{{ cite }}</a>
+                    } @else {
+                      {{ cite }}
+                    }
+                  </li>
                 }
               </ul>
             }
             @if (result.model) {
-              <p class="copilot-model pf-data-mono">{{ result.model }}</p>
+              <p class="copilot-model pf-data-mono">
+                {{ result.model }}@if (latencyLabel(); as latency) {
+                  <span> · answered in {{ latency }}</span>
+                }
+              </p>
             }
           </article>
         } @else {
@@ -110,12 +128,22 @@
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">
                 @for (cite of result.citations ?? []; track cite) {
-                  <li>{{ cite }}</li>
+                  <li>
+                    @if (citationRoute(cite); as route) {
+                      <a class="pf-row-link" [routerLink]="route">{{ cite }}</a>
+                    } @else {
+                      {{ cite }}
+                    }
+                  </li>
                 }
               </ul>
             }
             @if (result.model) {
-              <p class="copilot-model pf-data-mono">{{ result.model }}</p>
+              <p class="copilot-model pf-data-mono">
+                {{ result.model }}@if (latencyLabel(); as latency) {
+                  <span> · answered in {{ latency }}</span>
+                }
+              </p>
             }
           </article>
         } @else {
@@ -265,12 +293,22 @@
             @if ((result.citations ?? []).length > 0) {
               <ul class="copilot-cites">
                 @for (cite of result.citations ?? []; track cite) {
-                  <li>{{ cite }}</li>
+                  <li>
+                    @if (citationRoute(cite); as route) {
+                      <a class="pf-row-link" [routerLink]="route">{{ cite }}</a>
+                    } @else {
+                      {{ cite }}
+                    }
+                  </li>
                 }
               </ul>
             }
             @if (result.model) {
-              <p class="copilot-model pf-data-mono">{{ result.model }}</p>
+              <p class="copilot-model pf-data-mono">
+                {{ result.model }}@if (latencyLabel(); as latency) {
+                  <span> · answered in {{ latency }}</span>
+                }
+              </p>
             }
           </article>
         } @else {

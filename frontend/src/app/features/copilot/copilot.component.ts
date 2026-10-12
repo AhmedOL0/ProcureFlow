@@ -12,8 +12,8 @@ import { LucideAngularModule } from 'lucide-angular';
 import { Observable, Subscription } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
-import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
+import { citationRoute } from './citations';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { Plus, Sparkles, Trash2 } from '../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
@@ -66,13 +66,22 @@ export class CopilotComponent {
 
   protected readonly icons = { plus: Plus, trash: Trash2, sparkles: Sparkles };
   protected readonly formatMinor = formatMinor;
+  protected readonly citationRoute = citationRoute;
   protected readonly modes = MODES;
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
+
+  /** Static starter questions: they fill the box, never auto-submit. */
+  protected readonly suggestions = [
+    'Where is spend accelerating this month?',
+    'Which requests are waiting longest for approval?',
+    'Summarize overdue supplier payments.',
+  ];
 
   protected readonly mode = signal<CopilotMode>('chat');
   protected readonly busy = signal(false);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly answer = signal<ChatAnswer | null>(null);
+  protected readonly latencyMs = signal<number | null>(null);
   protected readonly draft = signal<RequestDraft | null>(null);
   protected readonly draftSaved = signal(false);
   private running: Subscription | null = null;
@@ -134,6 +143,14 @@ export class CopilotComponent {
       return;
     }
     this.run(this.copilot.chat(this.questionBox.value.trim()), (answer) => this.answer.set(answer));
+  }
+
+  useSuggestion(text: string): void {
+    if (this.busy()) {
+      return;
+    }
+    this.questionBox.setValue(text);
+    this.questionBox.markAsTouched();
   }
 
   explain(): void {
@@ -209,10 +226,13 @@ export class CopilotComponent {
     this.busy.set(true);
     this.failure.set(null);
     this.answer.set(null);
+    this.latencyMs.set(null);
+    const started = performance.now();
     this.running = call.subscribe({
       next: (result) => {
         this.running = null;
         this.busy.set(false);
+        this.latencyMs.set(Math.round(performance.now() - started));
         apply(result);
       },
       error: (error: unknown) => {
@@ -221,6 +241,14 @@ export class CopilotComponent {
         this.failure.set(parseApiFailure(error));
       },
     });
+  }
+
+  protected latencyLabel(): string | null {
+    const elapsed = this.latencyMs();
+    if (elapsed === null) {
+      return null;
+    }
+    return elapsed < 1000 ? `${elapsed}ms` : `${(elapsed / 1000).toFixed(1)}s`;
   }
 
   protected failureMessage(): string {

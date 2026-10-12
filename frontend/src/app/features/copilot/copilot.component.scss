@@ -25,6 +25,14 @@
   max-width: 220px;
 }
 
+.copilot-suggestions {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-sm);
+  flex-wrap: wrap;
+  padding: 0 var(--pf-space-lg) var(--pf-space-md);
+}
+
 .copilot-result {
   padding: var(--pf-space-lg);
 }
