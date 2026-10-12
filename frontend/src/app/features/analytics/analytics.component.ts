@@ -111,6 +111,19 @@ export class AnalyticsComponent {
 
   protected readonly supplierColumns = ['supplier', 'periods', 'onTime', 'quality'];
 
+  /**
+   * Recent-month shortcuts over the single-month filter. Quarters would
+   * need a backend range aggregate; these set honest single months.
+   */
+  protected readonly recentMonths = computed<string[]>(() => {
+    const cursor = new Date();
+    cursor.setUTCDate(1);
+    return [0, 1, 2].map((back) => {
+      const date = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() - back, 1));
+      return date.toISOString().slice(0, 7);
+    });
+  });
+
   constructor() {
     this.periodBox.setValue(this.analytics.currentPeriodUtc());
     this.categoryBox.valueChanges
@@ -153,6 +166,53 @@ export class AnalyticsComponent {
     this.reload();
   }
 
+  pickMonth(period: string): void {
+    if (this.periodBox.value !== period) {
+      this.periodBox.setValue(period);
+      this.reload();
+    }
+  }
+
+  /**
+   * CSV of exactly what the page shows (loaded aggregates, not a server
+   * export — there is no export endpoint). Built client-side and
+   * downloaded via Blob; fields are quoted so commas in names survive.
+   */
+  exportCsv(): void {
+    const period = this.periodBox.value.trim() === '' ? 'all-time' : this.periodBox.value.trim();
+    const lines = ['section,period,name,ordered_minor,invoiced_minor,paid_minor'];
+    for (const month of this.months()) {
+      lines.push([
+        'month',
+        month.period ?? '',
+        '',
+        month.orderedMinor ?? 0,
+        month.invoicedMinor ?? 0,
+        month.paidMinor ?? 0,
+      ].map(csvCell).join(','));
+    }
+    for (const row of this.categories()) {
+      lines.push(['category', period, row.category, row.amountMinor, '', ''].map(csvCell).join(','));
+    }
+    for (const row of this.suppliers()) {
+      lines.push([
+        'supplier',
+        '',
+        row.supplierName ?? '',
+        row.periods ?? 0,
+        row.avgOnTime ?? '',
+        row.avgQuality ?? '',
+      ].map(csvCell).join(','));
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `procureflow-analytics-${period}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   /** Chart drill: a month bar narrows the whole page to that period. */
   drillToMonth(period: string): void {
     if (!period || this.periodBox.value === period) {
@@ -170,8 +230,7 @@ export class AnalyticsComponent {
     this.categoryBox.setValue(category);
   }
 
-  barWidth(value: number, max: number): number {
-    if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
+  barWidth(value: number, max: number): number {    if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
       return 0;
     }
     return Math.min(100, Math.max(0, (value / max) * 100));
@@ -183,4 +242,9 @@ export class AnalyticsComponent {
     }
     return `${value.toFixed(1)}h`;
   }
+}
+
+function csvCell(value: string | number): string {
+  const text = `${value ?? ''}`;
+  return `"${text.replace(/"/g, '""')}"`;
 }
