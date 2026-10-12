@@ -11,8 +11,8 @@ boundaries.
 > Status: **working product, pre-release hardening.** The Angular frontend
 > covers the page map end to end (dashboard, workspace, procurement,
 > fulfillment, budgets, analytics, copilot, admin) against the real API;
-> the backend carries 143 integration tests plus unit/ArchUnit gates
-> (measured 2026-10-11; JaCoCo 81.3% line / 63.4% branch over 70/40 floors).
+> the backend carries 166 integration tests plus unit/ArchUnit gates
+> (measured 2026-10-12; JaCoCo 84.1% line / 66.8% branch over 70/40 floors).
 > Screenshots below are all live captures. See `docs/demo.md` to click
 > through it yourself, and `docs/project-management/sprint-plan.md` for
 > the delivery record.
@@ -147,17 +147,18 @@ carries `timestamp` alongside the documented fields.
 Full picture in `docs/testing/strategy.md`. Local gates (must pass before
 every push):
 
-- Backend: `cd backend && ./mvnw verify` — 143 integration tests
+- Backend: `cd backend && ./mvnw verify` — 166 integration tests
   (Testcontainers over real PostgreSQL 16) plus unit/ArchUnit: auth,
-  tenant isolation, suppliers, procurement, approvals (incl. decision
+  tenant isolation, suppliers (incl. xlsx/csv import), procurement, approvals (incl. decision
   races), budgets (incl. reservation race), orders, invoices,
-  notifications, audit, analytics, copilot, account (incl. token races),
+  notifications, audit, analytics, copilot, documents (PDF/xlsx export),
+  account (incl. token races),
   roles, metrics. JaCoCo floors (line 0.70 / branch 0.40) fail the build
   on regression.
-- Frontend unit: `cd frontend && npm test` (Vitest, 35 tests)
+- Frontend unit: `cd frontend && npm test` (Vitest, 52 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-  (52 runs: 26 tests × chromium + firefox — 12 stubbed critical journeys
-  incl. chart drills, 7 auth, 6 axe, 1 smoke: request-to-approval,
+  (58 runs: 29 tests × chromium + firefox — 14 stubbed critical journeys
+  incl. chart drills and document download/import, 7 auth, 6 axe, 1 smoke: request-to-approval,
   unsaved-draft guard, budget, order, invoice, admin, analytics,
   copilot success/failure, notifications, settings, session expiry)
 - API types: regenerate after any API change and commit the result.

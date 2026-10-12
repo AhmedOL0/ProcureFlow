@@ -29,6 +29,13 @@
       [breadcrumbs]="[{ label: 'Orders', url: '/orders' }, { label: 'Order file' }]"
     >
       <div slot="actions">
+        <button mat-stroked-button (click)="downloadPdf()" [disabled]="busyExport()">
+          @if (busyExport()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            PDF
+          }
+        </button>
         @if (canWrite) {
           @if (canSend()) {
             <button mat-flat-button color="primary" (click)="send()" [disabled]="acting()">
@@ -53,6 +60,10 @@
         }
       </div>
     </pf-page-header>
+
+    @if (exportError()) {
+      <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
+    }
 
     <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />

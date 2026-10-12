@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
+import { Download, toDownload } from '../../shared/utils/download';
 
 export type PurchaseOrder = components['schemas']['OrderResponse'];
 export type OrderLine = components['schemas']['OrderLineResponse'];
@@ -56,5 +57,30 @@ export class OrderService {
 
   cancel(id: string): Observable<PurchaseOrder> {
     return this.http.post<PurchaseOrder>(`${this.base}/purchase-orders/${id}/cancel`, {});
+  }
+
+  /** Printable order (supplier, lines, total) as PDF. */
+  document(id: string): Observable<Download> {
+    return this.http
+      .get(`${this.base}/purchase-orders/${id}/document.pdf`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'purchase-order.pdf')));
+  }
+
+  /** Filtered orders as xlsx. */
+  exportXlsx(status: string | null): Observable<Download> {
+    let params = new HttpParams();
+    if (status) {
+      params = params.set('status', status);
+    }
+    return this.http
+      .get(`${this.base}/purchase-orders/export.xlsx`, {
+        params,
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'purchase-orders.xlsx')));
   }
 }

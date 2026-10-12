@@ -21,7 +21,8 @@ import { ErrorStateComponent } from '../../../shared/components/error-state/erro
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { Plus, Search, Truck } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
+import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { enrichSuppliers, initialsFor, SupplierRow } from '../supplier-rows';
 import { Supplier, SupplierCategory, SuppliersService } from '../suppliers.service';
 import {
@@ -34,6 +35,7 @@ import {
   CreateOrderDialogData,
   CreateOrderDialogResult,
 } from '../../orders/dialogs/create-order.dialog';
+import { SupplierImportDialogComponent } from '../dialogs/supplier-import.dialog';
 
 interface Kpi {
   label: string;
@@ -90,6 +92,8 @@ export class SupplierListComponent {
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   readonly catalog = signal<SupplierCategory[]>([]);
   private readonly rows = signal<SupplierRow[]>([]);
   private readonly sort = signal<Sort>({ active: '', direction: '' });
@@ -230,6 +234,28 @@ export class SupplierListComponent {
     >(SupplierFormDialogComponent, { width: '480px', data: { mode: 'create' } });
     dialog.afterClosed().subscribe((saved) => {
       if (saved) {
+        this.reload();
+      }
+    });
+  }
+
+  /** Filtered directory as xlsx; failures show inline, never a dialog. */
+  exportXlsx(): void {
+    runDownload(
+      this.suppliers.exportXlsx(this.statusFilter.value, this.searchBox.value),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
+  }
+
+  openImport(): void {
+    const dialog = this.dialogs.open<SupplierImportDialogComponent, undefined, boolean>(
+      SupplierImportDialogComponent,
+      { width: '520px' },
+    );
+    dialog.afterClosed().subscribe((imported) => {
+      if (imported) {
         this.reload();
       }
     });

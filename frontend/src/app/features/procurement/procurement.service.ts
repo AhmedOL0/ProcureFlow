@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
+import { Download, toDownload } from '../../shared/utils/download';
 
 export type PurchaseRequest = components['schemas']['PurchaseRequestResponse'];
 export type RequestItem = components['schemas']['ItemResponse'];
@@ -71,6 +72,24 @@ export class ProcurementService {
 
   get(id: string): Observable<PurchaseRequest> {
     return this.http.get<PurchaseRequest>(`${this.base}/purchase-requests/${id}`);
+  }
+
+  /** Filtered requests as xlsx (workspace scope, not the /mine slice). */
+  exportXlsx(status: string | null, query: string | null): Observable<Download> {
+    let params = new HttpParams();
+    if (status) {
+      params = params.set('status', status);
+    }
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get(`${this.base}/purchase-requests/export.xlsx`, {
+        params,
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'purchase-requests.xlsx')));
   }
 
   create(

@@ -3,6 +3,7 @@ package com.procureflow.identity.infrastructure;
 import com.procureflow.identity.domain.User;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @EntityGraph(attributePaths = {"tenant", "roles"})
     @Query("select u from User u where u.id = :id")
     Optional<User> findDetailedById(@Param("id") UUID id);
+
+    @Query("select u from User u where u.id = :id and u.tenant.slug = :slug")
+    Optional<User> findByIdAndTenantSlug(@Param("id") UUID id, @Param("slug") String slug);
+
+    @Query("select u from User u where u.tenant.slug = :slug and u.id in :ids")
+    List<User> findByIdInAndTenantSlug(@Param("ids") Set<UUID> ids, @Param("slug") String slug);
 
     @Query("select count(u) > 0 from User u where u.id = :id and u.tenant.slug = :slug")
     boolean existsInTenant(@Param("id") UUID id, @Param("slug") String slug);

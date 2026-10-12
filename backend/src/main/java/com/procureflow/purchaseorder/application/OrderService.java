@@ -107,6 +107,22 @@ public class OrderService {
         return lines.findAllByOrder_IdOrderByCreatedAt(id);
     }
 
+    /**
+     * Line totals for a batch of orders in one query — exports sum without
+     * the per-row enrichment the paged list endpoint performs.
+     */
+    @Transactional(readOnly = true)
+    public Map<UUID, Long> totalsFor(List<UUID> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, Long> totals = new HashMap<>();
+        for (OrderItem line : lines.findAllByOrder_IdInOrderByOrder_IdAscCreatedAtAsc(orderIds)) {
+            totals.merge(line.getOrder().getId(), line.lineTotalMinor(), Long::sum);
+        }
+        return totals;
+    }
+
     @Transactional
     public PurchaseOrder send(String tenantSlug, UUID actorId, UUID id) {
         UUID tenantId = tenants.requireTenantId(tenantSlug);

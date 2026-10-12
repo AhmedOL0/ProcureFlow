@@ -11,8 +11,20 @@ function httpFailure(status: number, body: unknown): HttpErrorResponse {
 describe('api-errors', () => {
   it('reads the backend envelope', () => {
     const failure = parseApiFailure(httpFailure(409, { code: 'SUPPLIER_EXISTS', message: 'dup' }));
-    expect(failure).toEqual({ status: 409, code: 'SUPPLIER_EXISTS', message: 'dup' });
+    expect(failure).toEqual({ status: 409, code: 'SUPPLIER_EXISTS', message: 'dup', details: {} });
     expect(userMessageFor(failure)).toBe('A supplier with this name already exists.');
+  });
+
+  it('carries per-row details for import failures', () => {
+    const failure = parseApiFailure(
+      httpFailure(400, {
+        code: 'IMPORT_VALIDATION_FAILED',
+        message: 'fix the rows',
+        details: { 'row.2.email': 'Not a valid email address', errorCount: '1' },
+      }),
+    );
+    expect(failure.details).toEqual({ 'row.2.email': 'Not a valid email address', errorCount: '1' });
+    expect(userMessageFor(failure)).toContain('nothing was imported');
   });
 
   it('falls back per status without an envelope', () => {

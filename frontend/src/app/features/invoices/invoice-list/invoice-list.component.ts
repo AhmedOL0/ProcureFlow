@@ -22,7 +22,8 @@ import { ErrorStateComponent } from '../../../shared/components/error-state/erro
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { FileText, Plus, Search } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
+import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { Invoice, InvoiceService } from '../invoices.service';
 import { CreateInvoiceDialogComponent, CreateInvoiceDialogResult } from '../dialogs/create-invoice.dialog';
@@ -60,6 +61,8 @@ export class InvoiceListComponent {
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   private readonly rows = signal<Invoice[]>([]);
   private readonly sort = signal<Sort>({ active: '', direction: '' });
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
@@ -109,6 +112,16 @@ export class InvoiceListComponent {
 
   setStatusFilter(status: string | null): void {
     this.statusFilter.setValue(status);
+  }
+
+  /** Filtered invoices as xlsx; failures show inline, never a dialog. */
+  exportXlsx(): void {
+    runDownload(
+      this.invoices.exportXlsx(this.statusFilter.value, this.searchBox.value),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
   }
 
   onSort(sort: Sort): void {

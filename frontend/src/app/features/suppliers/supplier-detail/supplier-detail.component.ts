@@ -77,7 +77,7 @@ export class SupplierDetailComponent {
   reload(): void {
     const id = this.supplierId();
     if (!id) {
-      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.' });
+      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.', details: {} });
       this.loading.set(false);
       return;
     }

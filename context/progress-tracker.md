@@ -4,17 +4,15 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 15 — stitch reference alignment, one slice at a time (this
-change: all remaining frontend-only slices).** Full 21-screen audit done
-(fake-data hazards named per screen). Dashboard slice merged via #27.
-This pass: review-flows, orders, fulfillment/invoices, admin, copilot,
-analytics, requests, suppliers, audit chips, notification labels.
-Gates: tsc + ng build + 45 Vitest + 54 e2e green on a --no-cache nginx
-image; live-demo evidence shots 20–27 in `docs/screens/`.
-Deliberately deferred to backend work: request-create department/CC/
-neededBy (no DTO fields), policy step names/counts, notification
-template names. Request→supplier links stay out — a request names no
-supplier until it becomes an order.
+**Phase 16 — document import/export (this change).** Supplier xlsx/csv
+import (all-or-nothing, row errors, 5 MB / 500 rows) plus printable
+order/invoice PDFs and filtered xlsx exports (orders, invoices, requests,
+suppliers) and spend reports (PDF + 4-sheet xlsx). Formula-injection
+guard on every exported string; `EXPORT_TOO_LARGE` past 5000 rows;
+`SUPPLIER_IMPORTED` / `DOCUMENT_EXPORTED` audit rows; Content-Disposition
+exposed over CORS. Gates: backend 166 IT green (`verify`), frontend
+tsc + build + 52 Vitest + 58 e2e green. Follow-ups: budget import,
+request PDF dossier, EXPORT_TOO_LARGE IT (needs 5000-row fixture).
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:

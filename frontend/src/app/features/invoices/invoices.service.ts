@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
+import { Download, toDownload } from '../../shared/utils/download';
 
 export type Invoice = components['schemas']['InvoiceResponse'];
 export type InvoiceMatchLine = components['schemas']['MatchLineResponse'];
@@ -52,5 +53,33 @@ export class InvoiceService {
 
   pay(id: string, amountMinor: number): Observable<Invoice> {
     return this.http.post<Invoice>(`${this.base}/invoices/${id}/payments`, { amountMinor });
+  }
+
+  /** Printable invoice (supplier, lines, paid, balance) as PDF. */
+  document(id: string): Observable<Download> {
+    return this.http
+      .get(`${this.base}/invoices/${id}/document.pdf`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'invoice.pdf')));
+  }
+
+  /** Filtered invoices as xlsx. */
+  exportXlsx(status: string | null, query: string | null): Observable<Download> {
+    let params = new HttpParams();
+    if (status) {
+      params = params.set('status', status);
+    }
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get(`${this.base}/invoices/export.xlsx`, {
+        params,
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'invoices.xlsx')));
   }
 }

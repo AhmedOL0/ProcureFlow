@@ -11,8 +11,14 @@
       </mat-form-field>
       <button mat-button (click)="clearPeriod()">All time</button>
       <button mat-stroked-button (click)="exportCsv()">Export CSV</button>
+      <button mat-stroked-button (click)="reportPdf()" [disabled]="busyExport()">Report PDF</button>
+      <button mat-stroked-button (click)="reportXlsx()" [disabled]="busyExport()">Report Excel</button>
     </div>
   </pf-page-header>
+
+  @if (exportError()) {
+    <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
+  }
   <div class="analytics-months" role="group" aria-label="Recent months">
     <span class="pf-muted">Recent:</span>
     @for (month of recentMonths(); track month) {

@@ -13,6 +13,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { FileText } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { Invoice, InvoiceService } from '../invoices.service';
 import { PayDialogComponent, PayDialogResult } from '../dialogs/pay.dialog';
@@ -44,6 +45,8 @@ export class InvoiceDetailComponent {
 
   protected readonly loading = signal(true);
   protected readonly acting = signal(false);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly invoice = signal<Invoice | null>(null);
 
@@ -58,7 +61,7 @@ export class InvoiceDetailComponent {
   reload(): void {
     const id = this.invoiceId();
     if (!id) {
-      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.' });
+      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.', details: {} });
       this.loading.set(false);
       return;
     }
@@ -86,8 +89,21 @@ export class InvoiceDetailComponent {
     return Math.max((invoice?.totalMinor ?? 0) - (invoice?.paidMinor ?? 0), 0);
   }
 
-  openPay(): void {
+  /** Printable invoice as PDF; failures show inline below the header. */
+  downloadPdf(): void {
     const current = this.invoice();
+    if (!current?.id) {
+      return;
+    }
+    runDownload(
+      this.invoices.document(current.id),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
+  }
+
+  openPay(): void {    const current = this.invoice();
     if (!current?.id || this.acting()) {
       return;
     }

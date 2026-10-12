@@ -690,6 +690,13 @@ p.pf-muted {
   margin: 0;
 }
 
+// Error sibling for transient action failures (export downloads).
+.pf-notice--error {
+  background: var(--pf-danger-bg);
+  border-color: var(--pf-danger-border);
+  color: var(--pf-danger-text);
+}
+
 // Dialog rhythm: stacked fields, inline rows, hints and API errors.
 // One definition — feature dialog stylesheets must not redeclare it.
 .dialog-form {

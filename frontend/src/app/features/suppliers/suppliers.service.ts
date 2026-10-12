@@ -4,11 +4,13 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
+import { Download, toDownload } from '../../shared/utils/download';
 
 export type Supplier = components['schemas']['SupplierResponse'];
 export type SupplierContact = components['schemas']['ContactResponse'];
 export type SupplierCategory = components['schemas']['CategoryResponse'];
 export type SupplierPerformance = components['schemas']['PerformanceResponse'];
+export type SupplierImportResult = components['schemas']['ImportResult'];
 
 export interface SupplierPage {
   rows: Supplier[];
@@ -105,5 +107,30 @@ export class SuppliersService {
     body: components['schemas']['RecordPerformanceRequest'],
   ): Observable<SupplierPerformance> {
     return this.http.post<SupplierPerformance>(`${this.base}/suppliers/${supplierId}/performances`, body);
+  }
+
+  /** Filtered directory as xlsx; the server filename wins. */
+  exportXlsx(status: string | null, query: string | null): Observable<Download> {
+    let params = new HttpParams();
+    if (status) {
+      params = params.set('status', status);
+    }
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get(`${this.base}/suppliers/export.xlsx`, {
+        params,
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'suppliers.xlsx')));
+  }
+
+  /** Bulk-create from .xlsx/.csv; failures arrive as ApiError details. */
+  importFile(file: File): Observable<SupplierImportResult> {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    return this.http.post<SupplierImportResult>(`${this.base}/suppliers/import`, body);
   }
 }

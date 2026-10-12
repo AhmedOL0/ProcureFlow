@@ -20,7 +20,8 @@ import { ErrorStateComponent } from '../../../shared/components/error-state/erro
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { FileText, Plus, Search } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
+import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { formatDate } from '../../../shared/utils/format';
 import { formatMinor } from '../../../shared/utils/money';
 import {
@@ -87,6 +88,8 @@ export class RequestListComponent {
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   private readonly rows = signal<PurchaseRequest[]>([]);
   private readonly users = signal<WorkspaceUser[]>([]);
   private readonly memberships = signal<Membership[]>([]);
@@ -144,6 +147,16 @@ export class RequestListComponent {
   onPage(page: PageEvent): void {
     this.page.set(page);
     this.reload();
+  }
+
+  /** Workspace requests as xlsx; the /mine slice keeps no export. */
+  exportXlsx(): void {
+    runDownload(
+      this.requests.exportXlsx(this.statusFilter.value, this.searchBox.value),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
   }
 
   /**

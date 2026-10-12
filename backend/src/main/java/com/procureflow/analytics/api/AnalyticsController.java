@@ -4,12 +4,17 @@ import com.procureflow.analytics.application.AnalyticsService.ApprovalKpi;
 import com.procureflow.analytics.application.AnalyticsService.SpendView;
 import com.procureflow.analytics.application.AnalyticsService.SupplierKpi;
 import com.procureflow.analytics.application.AnalyticsService;
+import com.procureflow.analytics.application.SpendReportService;
 import com.procureflow.identity.application.AuthenticatedUser;
+import com.procureflow.shared.document.Filenames;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,9 +33,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AnalyticsController {
 
     private final AnalyticsService analytics;
+    private final SpendReportService reports;
 
-    public AnalyticsController(AnalyticsService analytics) {
+    public AnalyticsController(AnalyticsService analytics, SpendReportService reports) {
         this.analytics = analytics;
+        this.reports = reports;
     }
 
     @GetMapping("/spend")
@@ -71,6 +78,43 @@ public class AnalyticsController {
         ApprovalKpi kpi = analytics.approvals(principal.tenantId());
         return ResponseEntity.ok(new ApprovalKpiResponse(
                 kpi.pending(), kpi.decided(), kpi.avgLeadHours(), kpi.maxLeadHours()));
+    }
+
+    @GetMapping("/spend/report.pdf")
+    @PreAuthorize("hasAuthority('analytics:read')")
+    @Operation(summary = "Spend report over the page aggregates (PDF)")
+    public ResponseEntity<byte[]> reportPdf(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) String period) {
+        byte[] content = reports.pdf(principal.tenantId(), principal.userId(), period);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.pdf("spend-report", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(content);
+    }
+
+    @GetMapping("/spend/report.xlsx")
+    @PreAuthorize("hasAuthority('analytics:read')")
+    @Operation(summary = "Spend report over the page aggregates (xlsx, 4 sheets)")
+    public ResponseEntity<byte[]> reportXlsx(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) String period) {
+        byte[] content = reports.xlsx(principal.tenantId(), principal.userId(), period);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.xlsx("spend-report", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(content);
     }
 
     private static SupplierKpiResponse supplier(SupplierKpi kpi) {
