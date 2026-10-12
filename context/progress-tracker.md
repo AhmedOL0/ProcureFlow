@@ -4,12 +4,12 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 14 — audit remediation, hotfix: CSP broke global styles
-(this change).** PRs #14–#24 merged. Angular's critical-CSS print trick
-(`media="print"` + inline onload swapper) silently died under our
-script-src CSP, leaving the whole global stylesheet print-only: grids,
-cards, tables and links unstyled on every page while component styles
-survived. Fix: `inlineCritical: false` (plain stylesheet link).
+**Phase 15 — stitch reference alignment, one slice at a time (this
+change: dashboard).** Full 21-screen audit done (fake-data hazards
+named per screen). Dashboard slice: KPI corner icons, Monthly/Category
+trajectory toggle, awaiting rows with avatar + priority chip + Review,
+relative time-ago. AI anomaly banner and forecasts deliberately skipped
+(no detection/forecast aggregates — would be fake data).
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:

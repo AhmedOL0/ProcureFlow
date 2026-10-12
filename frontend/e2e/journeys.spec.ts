@@ -120,7 +120,7 @@ function baseStubs(state: {
     // (/suppliers/{id}/contacts, .../categories, .../performances) never
     // collides with the directory envelope under substring matching.
     { method: 'GET', match: '/suppliers?', handle: () => ({ status: 200, body: asPage(state.suppliers) }) },
-    { method: 'GET', match: '/orders', handle: () => ({ status: 200, body: asPage(state.orders) }) },
+    { method: 'GET', match: '/purchase-orders', handle: () => ({ status: 200, body: asPage(state.orders) }) },
     { method: 'GET', match: '/invites', body: [] },
     { method: 'GET', match: '/supplier-categories', body: [] },
     {
@@ -217,6 +217,62 @@ test.describe('critical journeys', () => {
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByText('Procurement overview')).toBeVisible();
+  });
+
+  test('dashboard enriches rows, times and trend views', async ({ page }) => {
+    const createdAt = new Date(Date.now() - 2 * 3600_000).toISOString();
+    const requests: Record<string, unknown>[] = [
+      {
+        id: 'r-1',
+        title: 'Journey laptops',
+        status: 'SUBMITTED',
+        priority: 'HIGH',
+        totalMinor: 300000,
+        createdAt,
+        requesterId: 'u-admin',
+      },
+    ];
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [],
+        requests,
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
+      }),
+      { method: 'GET', match: '/budgets', handle: () => ({ status: 200, body: asPage([]) }) },
+      {
+        method: 'GET',
+        match: '/analytics/spend',
+        body: {
+          requestedMinor: 300000,
+          orderedMinor: 0,
+          invoicedMinor: 0,
+          paidMinor: 0,
+          byCategory: [{ category: 'Hardware', amountMinor: 300000 }],
+          byPeriod: [{ period: '2026-10', orderedMinor: 0, invoicedMinor: 0, paidMinor: 0 }],
+        },
+      },
+      {
+        method: 'GET',
+        match: '/analytics/approvals',
+        body: { pending: 1, decided: 0, avgLeadHours: 0, maxLeadHours: 0 },
+      },
+    ]);
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('correct-horse-123');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page.getByText('HIGH', { exact: true })).toBeVisible({ timeout: 10000 });
+    const awaiting = page.getByRole('region', { name: 'Awaiting approval' });
+    await expect(awaiting.getByRole('link', { name: 'Review' })).toBeVisible();
+    await expect(page.getByText('2 hrs ago')).toBeVisible();
+    await page.getByRole('option', { name: 'Category' }).click();
+    await expect(page.getByText('Hardware', { exact: true })).toBeVisible();
   });
 
   test('supplier creation appears in the directory', async ({ page }) => {

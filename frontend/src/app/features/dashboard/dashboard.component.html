@@ -28,7 +28,10 @@
     <div class="pf-kpis" role="region" aria-label="Workspace summary">
       @for (kpi of kpis(); track kpi.label) {
         <div class="pf-kpi">
-          <span class="pf-kpi__label">{{ kpi.label }}</span>
+          <div class="pf-kpi__head">
+            <span class="pf-kpi__label">{{ kpi.label }}</span>
+            <lucide-angular [img]="kpi.icon" [size]="16" aria-hidden="true" />
+          </div>
           <div class="pf-kpi__value">{{ kpi.value }}</div>
           <div class="pf-kpi__sub">{{ kpi.sub }}</div>
         </div>
@@ -39,7 +42,10 @@
       <div class="pf-kpis" role="region" aria-label="Financial pulse">
         @for (kpi of financeKpis(); track kpi.label) {
           <div class="pf-kpi">
-            <span class="pf-kpi__label">{{ kpi.label }}</span>
+            <div class="pf-kpi__head">
+              <span class="pf-kpi__label">{{ kpi.label }}</span>
+              <lucide-angular [img]="kpi.icon" [size]="16" aria-hidden="true" />
+            </div>
             <div class="pf-kpi__value">{{ kpi.value }}</div>
             <div class="pf-kpi__sub">{{ kpi.sub }}</div>
           </div>
@@ -81,14 +87,33 @@
     }
 
     @if (trend().length > 0) {
-      <section class="pf-table-card" aria-label="Spend per month">
-        <div class="pf-card-head">
+      <section class="pf-table-card" aria-label="Spend trend">
+        <div class="pf-card-head dashboard-trend-head">
           <div class="pf-section-head">
-            <h2>Spend per month</h2>
+            <h2>Spend trend</h2>
             <a routerLink="/analytics">Full trajectory</a>
           </div>
+          <mat-chip-listbox aria-label="Trend view">
+            <mat-chip-option [selected]="trendMode() === 'monthly'" (click)="trendMode.set('monthly')">
+              Monthly
+            </mat-chip-option>
+            <mat-chip-option [selected]="trendMode() === 'category'" (click)="trendMode.set('category')">
+              Category
+            </mat-chip-option>
+          </mat-chip-listbox>
         </div>
-        <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics()" />
+        @if (trendMode() === 'monthly') {
+          <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics()" />
+        } @else {
+          @if (trendSlices().length === 0) {
+            <pf-empty-state
+              title="No categorized spend"
+              message="Category totals appear once ordered lines carry categories."
+            />
+          } @else {
+            <app-donut-chart [slices]="trendSlices()" />
+          }
+        }
       </section>
     }
 
@@ -110,12 +135,16 @@
           <ul class="pf-rows">
             @for (row of awaiting(); track row.id) {
               <li class="pf-row">
+                <span class="dashboard-avatar" aria-hidden="true">{{
+                  icons.initials(row.title ?? '')
+                }}</span>
                 <div class="pf-row__main">
                   <a class="pf-row__title" [routerLink]="['/requests', row.id]">
                     {{ row.title || 'Untitled request' }}
                   </a>
                   <span class="pf-row__meta">
-                    {{ row.priority ?? 'No priority' }} ·
+                    <span class="pf-badge" [class]="priorityTone(row.priority)"> {{ row.priority ?? 'MEDIUM' }} </span>
+                    ·
                     <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
                   </span>
                 </div>
@@ -150,6 +179,8 @@
                   <span class="pf-row__meta">
                     <pf-status-badge [status]="row.status ?? ''" /> ·
                     <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
+                    ·
+                    {{ timeAgo(row.createdAt) }}
                   </span>
                 </div>
               </li>
