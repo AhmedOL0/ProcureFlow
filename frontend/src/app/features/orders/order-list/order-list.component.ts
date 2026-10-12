@@ -23,7 +23,8 @@ import { ErrorStateComponent } from '../../../shared/components/error-state/erro
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { Plus, Search, Truck } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
+import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { OrderService, PurchaseOrder } from '../orders.service';
 import { CreateOrderDialogComponent, CreateOrderDialogResult } from '../dialogs/create-order.dialog';
@@ -62,6 +63,8 @@ export class OrderListComponent {
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   private readonly rows = signal<PurchaseOrder[]>([]);
   private readonly supplierNames = signal(new Map<string, string>());
   private readonly sort = signal<Sort>({ active: '', direction: '' });
@@ -149,6 +152,16 @@ export class OrderListComponent {
 
   setStatusFilter(status: string | null): void {
     this.statusFilter.setValue(status);
+  }
+
+  /** Filtered orders as xlsx; the supplier search stays client-side upstream. */
+  exportXlsx(): void {
+    runDownload(
+      this.orders.exportXlsx(this.statusFilter.value),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
   }
 
   onSort(sort: Sort): void {

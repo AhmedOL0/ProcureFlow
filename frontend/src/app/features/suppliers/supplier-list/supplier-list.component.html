@@ -5,13 +5,25 @@
     [breadcrumbs]="[{ label: 'Suppliers' }]"
   >
     <div slot="actions">
+      <button mat-stroked-button (click)="exportXlsx()" [disabled]="busyExport()">
+        @if (busyExport()) {
+          <mat-spinner diameter="16" />
+        } @else {
+          Export Excel
+        }
+      </button>
       @if (canWrite) {
+        <button mat-stroked-button (click)="openImport()">Import</button>
         <button mat-flat-button color="primary" (click)="openCreate()">
           <lucide-angular [img]="icons.plus" [size]="16" /> Add supplier
         </button>
       }
     </div>
   </pf-page-header>
+
+  @if (exportError()) {
+    <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
+  }
 
   @if (!loading() && !failure()) {
     <div class="pf-kpis" role="region" aria-label="Supplier summary">

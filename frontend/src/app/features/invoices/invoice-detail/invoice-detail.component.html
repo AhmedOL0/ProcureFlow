@@ -29,6 +29,13 @@
       [breadcrumbs]="[{ label: 'Invoices', url: '/invoices' }, { label: current.number ?? 'File' }]"
     >
       <div slot="actions">
+        <button mat-stroked-button (click)="downloadPdf()" [disabled]="busyExport()">
+          @if (busyExport()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            PDF
+          }
+        </button>
         @if (canWrite && remaining() > 0) {
           <button mat-flat-button color="primary" (click)="openPay()" [disabled]="acting()">
             Record payment
@@ -36,6 +43,10 @@
         }
       </div>
     </pf-page-header>
+
+    @if (exportError()) {
+      <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
+    }
 
     <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />

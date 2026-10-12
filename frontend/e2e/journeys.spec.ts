@@ -316,6 +316,94 @@ test.describe('critical journeys', () => {
     await expect(page.getByRole('link', { name: 'Acme Supplies' })).toBeVisible({ timeout: 10000 });
   });
 
+  test('supplier export downloads the server file', async ({ page }) => {
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
+        departments: [], users: [], notifications: [],
+      }),
+    ]);
+    // Binary route after the catch-all: this pattern must win over
+    // stubApi's generic matcher (verified: the reverse order aborts the
+    // request). Mirrors production, including the CORS-exposed filename
+    // header — without the exposure the browser hides Content-Disposition
+    // and the download falls back to a generic name.
+    await page.route('**/suppliers/export.xlsx', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers: {
+          'Content-Disposition': 'attachment; filename="suppliers-acme-2026-10-12.xlsx"',
+          'Access-Control-Expose-Headers': 'Content-Disposition',
+        },
+        body: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      });
+    });
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/suppliers');
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Export Excel' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('suppliers-acme-2026-10-12.xlsx');
+  });
+
+  test('supplier import rejects bad files client-side', async ({ page }) => {
+    let uploads = 0;
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
+        departments: [], users: [], notifications: [],
+      }),
+      {
+        method: 'POST',
+        match: '/suppliers/import',
+        handle: () => {
+          uploads += 1;
+          return { status: 200, body: { created: 1, errors: [] } };
+        },
+      },
+    ]);
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/suppliers');
+    await page.getByRole('button', { name: 'Import' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('Bulk-create');
+
+    await dialog.getByLabel('Import file').setInputFiles({
+      name: 'notes.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('name\nAcme\n'),
+    });
+    await expect(dialog).toContainText('Only .xlsx and .csv');
+    expect(uploads).toBe(0);
+
+    await dialog.getByLabel('Import file').setInputFiles({
+      name: 'big.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.alloc(6 * 1024 * 1024),
+    });
+    await expect(dialog).toContainText('5 MB');
+    expect(uploads).toBe(0);
+
+    await dialog.getByLabel('Import file').setInputFiles({
+      name: 'suppliers.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from('name\nAcme\n'),
+    });
+    await dialog.getByRole('button', { name: 'Import', exact: true }).click();
+    await expect(dialog).toContainText('1 supplier created.');
+    expect(uploads).toBe(1);
+  });
+
   test('request draft, submit and approve', async ({ page }) => {
     const requests: Record<string, unknown>[] = [];
     let decision: Record<string, unknown> | null = null;

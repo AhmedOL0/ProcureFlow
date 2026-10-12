@@ -1,0 +1,55 @@
+<h2 mat-dialog-title>Import suppliers</h2>
+<mat-dialog-content>
+  <p class="pf-muted">
+    Bulk-create from <strong>.xlsx</strong> or <strong>.csv</strong> (max 5 MB, 500 rows).
+    Columns: <span class="pf-data-mono">name</span> required,
+    <span class="pf-data-mono">email, phone, tax_id, address, status, categories</span> optional
+    (status: active, inactive, suspended; categories separated with
+    <span class="pf-data-mono">;</span>). Every row validates first — any failure imports
+    <strong>nothing</strong>; fix the rows and re-upload.
+  </p>
+  <div class="import-pick">
+    <input
+      type="file"
+      accept=".xlsx,.csv"
+      aria-label="Import file"
+      (change)="pick($event)"
+      #fileInput
+    />
+    <button mat-stroked-button (click)="template()">Download template</button>
+  </div>
+  @if (fileName()) {
+    <p class="pf-muted">Selected: {{ fileName() }}</p>
+  }
+  @if (created() !== null) {
+    <p class="import-done" role="status">{{ created() }} supplier{{ created() === 1 ? '' : 's' }} created.</p>
+  }
+  @if (failure()) {
+    <p class="dialog-error" role="alert">{{ failure() }}</p>
+  }
+  @if (rowErrors().length > 0) {
+    <ul class="import-errors">
+      @for (error of rowErrors(); track $index) {
+        <li>
+          <span class="pf-data-mono">Row {{ error.row }} · {{ error.field }}</span>
+          <span>{{ error.message }}</span>
+        </li>
+      }
+    </ul>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Close</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="upload()"
+    [disabled]="!fileName() || busy() || created() !== null"
+  >
+    @if (busy()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Import
+    }
+  </button>
+</mat-dialog-actions>

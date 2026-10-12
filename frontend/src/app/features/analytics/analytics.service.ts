@@ -1,9 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
+import { Download, toDownload } from '../../shared/utils/download';
 
 export type SpendResponse = components['schemas']['SpendResponse'];
 export type SpendMonth = components['schemas']['MonthResponse'];
@@ -51,5 +52,35 @@ export class AnalyticsService {
 
   currentPeriodUtc(): string {
     return new Date().toISOString().slice(0, 7);
+  }
+
+  private reportParams(period: string | null): HttpParams {
+    let params = new HttpParams();
+    if (period) {
+      params = params.set('period', period);
+    }
+    return params;
+  }
+
+  /** Spend report over the page aggregates as PDF. */
+  reportPdf(period: string | null): Observable<Download> {
+    return this.http
+      .get(`${this.base}/analytics/spend/report.pdf`, {
+        params: this.reportParams(period),
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'spend-report.pdf')));
+  }
+
+  /** Spend report over the page aggregates as 4-sheet xlsx. */
+  reportXlsx(period: string | null): Observable<Download> {
+    return this.http
+      .get(`${this.base}/analytics/spend/report.xlsx`, {
+        params: this.reportParams(period),
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'spend-report.xlsx')));
   }
 }

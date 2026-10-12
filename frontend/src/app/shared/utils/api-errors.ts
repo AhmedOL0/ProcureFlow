@@ -4,19 +4,28 @@ export interface ApiFailure {
   status: number;
   code: string | null;
   message: string;
+  details: Record<string, string>;
 }
 
 /** Normalizes Http failures into the backend's ApiError envelope shape. */
 export function parseApiFailure(error: unknown): ApiFailure {
   if (error instanceof HttpErrorResponse) {
-    const body = (error.error ?? {}) as { code?: unknown; message?: unknown };
+    const body = (error.error ?? {}) as { code?: unknown; message?: unknown; details?: unknown };
     return {
       status: error.status,
       code: typeof body.code === 'string' ? body.code : null,
       message: typeof body.message === 'string' && body.message ? body.message : fallbackMessage(error.status),
+      details: isStringMap(body.details) ? body.details : {},
     };
   }
-  return { status: 0, code: null, message: 'Something went wrong. Try again.' };
+  return { status: 0, code: null, message: 'Something went wrong. Try again.', details: {} };
+}
+
+function isStringMap(value: unknown): value is Record<string, string> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  return Object.values(value).every((entry) => typeof entry === 'string');
 }
 
 function fallbackMessage(status: number): string {
@@ -45,6 +54,16 @@ const CODE_MESSAGES: Record<string, string> = {
   INVALID_CREDENTIALS: 'Invalid email or password.',
   CONTACT_NOT_FOUND: 'This contact no longer exists.',
   SUPPLIER_NOT_FOUND: 'This supplier no longer exists in your workspace.',
+  IMPORT_VALIDATION_FAILED: 'Some rows failed validation — nothing was imported. Fix the rows below and re-upload.',
+  MISSING_COLUMNS: "The file needs at least a 'name' column.",
+  UNSUPPORTED_FILE: 'Only .xlsx and .csv files can be imported.',
+  CORRUPT_FILE: 'The file could not be parsed. Check it opens in Excel first.',
+  EMPTY_FILE: 'The uploaded file is empty.',
+  FILE_TOO_LARGE: 'The file exceeds the 5 MB import limit.',
+  TOO_MANY_ROWS: 'Import is limited to 500 rows per file.',
+  NO_DATA_ROWS: 'The file has no data rows.',
+  EXPORT_TOO_LARGE: 'Too many rows for one export — narrow the filters and try again.',
+  MALFORMED_UPLOAD: 'The upload could not be read. Try again.',
 };
 
 export function userMessageFor(failure: ApiFailure): string {

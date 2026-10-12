@@ -111,6 +111,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/suppliers/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bulk-create suppliers from .xlsx/.csv (all-or-nothing, max 500 rows) */
+        post: operations["importFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/supplier-categories": {
         parameters: {
             query?: never;
@@ -934,6 +951,23 @@ export interface paths {
         patch: operations["updateWorkflow"];
         trace?: never;
     };
+    "/api/v1/suppliers/export.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the filtered supplier directory as xlsx (max 5000 rows) */
+        get: operations["export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchase-requests/mine": {
         parameters: {
             query?: never;
@@ -951,6 +985,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchase-requests/export.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export filtered requests as xlsx (max 5000 rows) */
+        get: operations["export_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchase-orders/{id}": {
         parameters: {
             query?: never;
@@ -960,6 +1011,40 @@ export interface paths {
         };
         /** One order with its lines and total */
         get: operations["get_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/document.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Printable purchase order (supplier, lines, total) */
+        get: operations["document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/export.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export filtered orders as xlsx (max 5000 rows) */
+        get: operations["export_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -994,6 +1079,40 @@ export interface paths {
         };
         /** One invoice with its 3-way match and paid total */
         get: operations["get_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invoices/{id}/document.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Printable invoice (supplier, lines, total, paid, balance) */
+        get: operations["document_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invoices/export.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export filtered invoices as xlsx (max 5000 rows) */
+        get: operations["export_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1114,6 +1233,40 @@ export interface paths {
         };
         /** Spend totals with category and monthly breakdowns */
         get: operations["spend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/spend/report.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Spend report over the page aggregates (xlsx, 4 sheets) */
+        get: operations["reportXlsx"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/spend/report.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Spend report over the page aggregates (PDF) */
+        get: operations["reportPdf"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1312,6 +1465,17 @@ export interface components {
             id?: string;
             name?: string;
             description?: string;
+        };
+        ImportResult: {
+            /** Format: int32 */
+            created?: number;
+            errors?: components["schemas"]["RowError"][];
+        };
+        RowError: {
+            /** Format: int32 */
+            row?: number;
+            field?: string;
+            message?: string;
         };
         CreateCategoryRequest: {
             name: string;
@@ -2227,6 +2391,33 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CategoryResponse"][];
+                };
+            };
+        };
+    };
+    importFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ImportResult"];
                 };
             };
         };
@@ -3889,6 +4080,29 @@ export interface operations {
             };
         };
     };
+    export: {
+        parameters: {
+            query?: {
+                status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
     mine: {
         parameters: {
             query?: {
@@ -3914,6 +4128,29 @@ export interface operations {
             };
         };
     };
+    export_1: {
+        parameters: {
+            query?: {
+                status?: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "ORDERED" | "CANCELLED";
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
     get_4: {
         parameters: {
             query?: never;
@@ -3932,6 +4169,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["OrderResponse"];
+                };
+            };
+        };
+    };
+    document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    export_2: {
+        parameters: {
+            query?: {
+                status?: "DRAFT" | "SENT" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CLOSED" | "CANCELLED";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };
@@ -3978,6 +4259,51 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["InvoiceResponse"];
+                };
+            };
+        };
+    };
+    document_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    export_3: {
+        parameters: {
+            query?: {
+                status?: "UNPAID" | "PARTIAL" | "PAID";
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };
@@ -4152,6 +4478,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SpendResponse"];
+                };
+            };
+        };
+    };
+    reportXlsx: {
+        parameters: {
+            query?: {
+                period?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    reportPdf: {
+        parameters: {
+            query?: {
+                period?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };

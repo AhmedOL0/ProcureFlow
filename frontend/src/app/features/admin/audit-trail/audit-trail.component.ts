@@ -37,6 +37,8 @@ const AUDIT_ACTIONS = [
   'REQUEST_DECIDED',
   'USER_STATUS_CHANGED',
   'USER_ROLES_CHANGED',
+  'SUPPLIER_IMPORTED',
+  'DOCUMENT_EXPORTED',
 ] as const;
 
 const AUDIT_TYPES = ['budget', 'invoice', 'purchase_order', 'purchase_request', 'user'] as const;

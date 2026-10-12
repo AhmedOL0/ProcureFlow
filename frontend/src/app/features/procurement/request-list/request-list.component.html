@@ -9,6 +9,15 @@
     [breadcrumbs]="[{ label: mineOnly ? 'My requests' : 'Requests' }]"
   >
     <div slot="actions">
+      @if (!mineOnly) {
+        <button mat-stroked-button (click)="exportXlsx()" [disabled]="busyExport()">
+          @if (busyExport()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            Export Excel
+          }
+        </button>
+      }
       @if (canRequest) {
         <a mat-flat-button color="primary" routerLink="/requests/new">
           <lucide-angular [img]="icons.plus" [size]="16" /> New request
@@ -16,6 +25,10 @@
       }
     </div>
   </pf-page-header>
+
+  @if (exportError()) {
+    <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
+  }
 
   <div class="pf-table-card">
     <div class="pf-filters">

@@ -13,6 +13,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { Truck } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { SuppliersService } from '../../suppliers/suppliers.service';
 import { OrderService, PurchaseOrder } from '../orders.service';
@@ -47,6 +48,8 @@ export class OrderDetailComponent {
 
   protected readonly loading = signal(true);
   protected readonly acting = signal(false);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly order = signal<PurchaseOrder | null>(null);
   protected readonly supplierName = signal<string>('…');
@@ -103,7 +106,7 @@ export class OrderDetailComponent {
   reload(): void {
     const id = this.orderId();
     if (!id) {
-      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.' });
+      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.', details: {} });
       this.loading.set(false);
       return;
     }
@@ -140,6 +143,20 @@ export class OrderDetailComponent {
 
   send(): void {
     this.transition('sent', (id) => this.orders.send(id));
+  }
+
+  /** Printable order as PDF; failures show inline below the header. */
+  downloadPdf(): void {
+    const current = this.order();
+    if (!current?.id) {
+      return;
+    }
+    runDownload(
+      this.orders.document(current.id),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
   }
 
   close(): void {

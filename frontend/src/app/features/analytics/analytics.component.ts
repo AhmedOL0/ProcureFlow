@@ -17,7 +17,8 @@ import { ErrorStateComponent } from '../../shared/components/error-state/error-s
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { SpendChartComponent, SpendPoint } from '../../shared/components/spend-chart/spend-chart.component';
 import { Inbox, Truck, Wallet } from '../../shared/icons';
-import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
+import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
+import { csvCell, runDownload, saveBlob } from '../../shared/utils/download';
 import { formatMinor } from '../../shared/utils/money';
 import {
   AiUsage,
@@ -70,6 +71,8 @@ export class AnalyticsComponent {
 
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   protected readonly spend = signal<SpendResponse | null>(null);
   protected readonly supplierKpis = signal<SupplierKpi[]>([]);
   protected readonly approvalKpis = signal<ApprovalKpi | null>(null);
@@ -175,8 +178,8 @@ export class AnalyticsComponent {
 
   /**
    * CSV of exactly what the page shows (loaded aggregates, not a server
-   * export — there is no export endpoint). Built client-side and
-   * downloaded via Blob; fields are quoted so commas in names survive.
+   * export). Built client-side and downloaded via Blob; fields are quoted
+   * so commas in names survive, and guarded so Excel never executes them.
    */
   exportCsv(): void {
     const period = this.periodBox.value.trim() === '' ? 'all-time' : this.periodBox.value.trim();
@@ -204,13 +207,35 @@ export class AnalyticsComponent {
         row.avgQuality ?? '',
       ].map(csvCell).join(','));
     }
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `procureflow-analytics-${period}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    saveBlob(
+      new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' }),
+      `procureflow-analytics-${period}.csv`,
+    );
+  }
+
+  private reportPeriod(): string | null {
+    const period = this.periodBox.value.trim();
+    return period === '' ? null : period;
+  }
+
+  /** Server spend report (same aggregates, PDF with parties and footers). */
+  reportPdf(): void {
+    runDownload(
+      this.analytics.reportPdf(this.reportPeriod()),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
+  }
+
+  /** Server spend report as a 4-sheet workbook. */
+  reportXlsx(): void {
+    runDownload(
+      this.analytics.reportXlsx(this.reportPeriod()),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
   }
 
   /** Chart drill: a month bar narrows the whole page to that period. */
@@ -230,7 +255,8 @@ export class AnalyticsComponent {
     this.categoryBox.setValue(category);
   }
 
-  barWidth(value: number, max: number): number {    if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
+  barWidth(value: number, max: number): number {
+    if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
       return 0;
     }
     return Math.min(100, Math.max(0, (value / max) * 100));
@@ -242,9 +268,4 @@ export class AnalyticsComponent {
     }
     return `${value.toFixed(1)}h`;
   }
-}
-
-function csvCell(value: string | number): string {
-  const text = `${value ?? ''}`;
-  return `"${text.replace(/"/g, '""')}"`;
 }
