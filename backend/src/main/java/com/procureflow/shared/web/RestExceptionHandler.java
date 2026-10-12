@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Single translation point from exceptions to the {@link ApiError} envelope.
@@ -100,6 +101,15 @@ public class RestExceptionHandler {
     public ResponseEntity<ApiError> handleBrokenUpload(MultipartException ex) {
         return ResponseEntity.badRequest()
                 .body(ApiError.of("MALFORMED_UPLOAD", "Request is not a valid multipart upload"));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleUnknownPath(NoResourceFoundException ex) {
+        // Unmapped public paths (docs disabled, stray probes) are client
+        // faults: without this the generic handler answers 500 and scanners
+        // read every typo as a server fault.
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of("NOT_FOUND", "No such path: " + ex.getResourcePath()));
     }
 
     @ExceptionHandler(Exception.class)

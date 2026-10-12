@@ -44,4 +44,15 @@ class CsvTest {
         byte[] content = "\"unterminated".getBytes(StandardCharsets.UTF_8);
         assertThatThrownBy(() -> Csv.parse(content)).isInstanceOf(ApiException.class);
     }
+
+    @Test
+    void capsRowsInsteadOfReadingForever() {
+        StringBuilder csv = new StringBuilder("name\n");
+        for (int i = 0; i <= Upload.MAX_IMPORT_ROWS; i++) {
+            csv.append("Supplier ").append(i).append('\n');
+        }
+        assertThatThrownBy(() -> Csv.parse(csv.toString().getBytes(StandardCharsets.UTF_8)))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("500 rows");
+    }
 }

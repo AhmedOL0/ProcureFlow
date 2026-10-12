@@ -50,6 +50,20 @@ class InvalidPathVariableIT extends AbstractIntegrationTest {
         assertTrue(response.getBody().contains("INVALID_PATH_VARIABLE"));
     }
 
+    @Test
+    void unknownPublicPathAnswersNotFound() {
+        // /swagger-ui/** is permitAll, so an unmapped asset falls through to
+        // the resource handler instead of the auth layer: still a 404 with
+        // the envelope, never a 500. (Unknown authenticated paths answer
+        // 401/404 through the security chain by design.)
+        ResponseEntity<String> response =
+                rest.getForEntity("/swagger-ui/no-such-asset", String.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("NOT_FOUND"));
+    }
+
     private String provision(String slug) {
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",

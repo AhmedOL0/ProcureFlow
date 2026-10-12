@@ -41,6 +41,12 @@ class PdfTest {
     }
 
     @Test
+    void foldsGlyphsHelveticaLacks() {
+        assertThat(Pdf.fold("a — b · c…")).isEqualTo("a - b - c.");
+        assertThat(Pdf.fold(null)).isEqualTo("");
+    }
+
+    @Test
     void paginatesLongTablesWithNumberedFooters() throws Exception {
         List<List<String>> rows = new ArrayList<>();
         for (int i = 0; i < 80; i++) {
