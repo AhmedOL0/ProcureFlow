@@ -33,42 +33,59 @@ public final class Spreadsheet {
     private Spreadsheet() {
     }
 
+    /** One sheet of a multi-sheet workbook. */
+    public record SheetData(String name, List<String> headers, List<List<Object>> rows) {
+    }
+
     public static byte[] book(String sheetName, List<String> headers, List<List<Object>> rows) {
+        return bookMulti(List.of(new SheetData(sheetName, headers, rows)));
+    }
+
+    public static byte[] bookMulti(List<SheetData> sheets) {
         try (Workbook book = new XSSFWorkbook();
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Sheet sheet = book.createSheet(sheetName == null || sheetName.isBlank() ? "Export" : sheetName);
-            CellStyle head = head(book);
-            CellStyle decimals = decimals(book);
-            CellStyle stamp = stamp(book, decimals);
-
-            Row header = sheet.createRow(0);
-            for (int i = 0; i < headers.size(); i++) {
-                Cell cell = header.createCell(i);
-                cell.setCellValue(CellText.safe(headers.get(i)));
-                cell.setCellStyle(head);
-            }
-            for (int r = 0; r < rows.size(); r++) {
-                Row row = sheet.createRow(r + 1);
-                List<Object> values = rows.get(r);
-                for (int c = 0; c < headers.size(); c++) {
-                    write(row.createCell(c), c < values.size() ? values.get(c) : null, decimals, stamp);
-                }
-            }
-            if (!rows.isEmpty()) {
-                sheet.createFreezePane(0, 1);
-                sheet.setAutoFilter(
-                        new org.apache.poi.ss.util.CellRangeAddress(0, rows.size(), 0, headers.size() - 1));
-            }
-            for (int c = 0; c < headers.size(); c++) {
-                sheet.autoSizeColumn(c);
-                if (sheet.getColumnWidth(c) > AUTOSIZE_CAP * 256) {
-                    sheet.setColumnWidth(c, AUTOSIZE_CAP * 256);
-                }
+            for (SheetData sheet : sheets) {
+                fill(book, sheet);
             }
             book.write(out);
             return out.toByteArray();
         } catch (IOException e) {
             throw new IllegalStateException("Spreadsheet rendering failed", e);
+        }
+    }
+
+    private static void fill(Workbook book, SheetData data) {
+        Sheet sheet = book.createSheet(
+                data.name() == null || data.name().isBlank() ? "Export" : data.name());
+        List<String> headers = data.headers();
+        List<List<Object>> rows = data.rows();
+        CellStyle head = head(book);
+        CellStyle decimals = decimals(book);
+        CellStyle stamp = stamp(book, decimals);
+
+        Row header = sheet.createRow(0);
+        for (int i = 0; i < headers.size(); i++) {
+            Cell cell = header.createCell(i);
+            cell.setCellValue(CellText.safe(headers.get(i)));
+            cell.setCellStyle(head);
+        }
+        for (int r = 0; r < rows.size(); r++) {
+            Row row = sheet.createRow(r + 1);
+            List<Object> values = rows.get(r);
+            for (int c = 0; c < headers.size(); c++) {
+                write(row.createCell(c), c < values.size() ? values.get(c) : null, decimals, stamp);
+            }
+        }
+        if (!rows.isEmpty()) {
+            sheet.createFreezePane(0, 1);
+            sheet.setAutoFilter(
+                    new org.apache.poi.ss.util.CellRangeAddress(0, rows.size(), 0, headers.size() - 1));
+        }
+        for (int c = 0; c < headers.size(); c++) {
+            sheet.autoSizeColumn(c);
+            if (sheet.getColumnWidth(c) > AUTOSIZE_CAP * 256) {
+                sheet.setColumnWidth(c, AUTOSIZE_CAP * 256);
+            }
         }
     }
 

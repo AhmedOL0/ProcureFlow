@@ -89,6 +89,11 @@ public final class Pdf {
         return text.replace('\u2014', '-').replace('\u00B7', '-').replace('\u2026', '.');
     }
 
+    /** UTC stamp for document meta lines, e.g. {@code 2026-10-12 13:00 UTC}. */
+    public static String stamp(Instant at) {
+        return at == null ? "-" : STAMP.format(at);
+    }
+
     private static void footer(
             PDDocument doc, String footerNote, Instant generatedAt, PDFont font) throws IOException {
         int total = doc.getNumberOfPages();

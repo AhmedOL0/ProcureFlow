@@ -13,14 +13,14 @@
       type="file"
       accept=".xlsx,.csv"
       aria-label="Import file"
+      class="import-file"
       (change)="pick($event)"
       #fileInput
     />
+    <button mat-stroked-button (click)="fileInput.click()">Choose file</button>
+    <span class="pf-muted">{{ fileName() ?? 'No file chosen' }}</span>
     <button mat-stroked-button (click)="template()">Download template</button>
   </div>
-  @if (fileName()) {
-    <p class="pf-muted">Selected: {{ fileName() }}</p>
-  }
   @if (created() !== null) {
     <p class="import-done" role="status">{{ created() }} supplier{{ created() === 1 ? '' : 's' }} created.</p>
   }

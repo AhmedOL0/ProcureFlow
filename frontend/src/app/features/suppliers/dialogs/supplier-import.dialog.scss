@@ -7,6 +7,16 @@
   margin: var(--pf-space-md) 0;
 }
 
+// Native control stays accessible but invisible; the styled button above
+// opens it so the dialog keeps one visual language.
+.import-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .import-done {
   font: var(--pf-label-lg);
   color: var(--pf-success-text);
