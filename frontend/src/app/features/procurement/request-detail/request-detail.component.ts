@@ -16,6 +16,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { FileText, Pencil, Plus, Trash2 } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { slaStatus } from '../../../shared/utils/time';
 import { SuppliersService } from '../../suppliers/suppliers.service';
@@ -61,6 +62,8 @@ export class RequestDetailComponent {
 
   protected readonly loading = signal(true);
   protected readonly acting = signal(false);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly request = signal<PurchaseRequest | null>(null);
   protected readonly decision = signal<Decision | null>(null);
@@ -276,12 +279,25 @@ export class RequestDetailComponent {
     });
   }
 
+  /** Printable dossier as PDF; failures show inline below the header. */
+  downloadPdf(): void {
+    const current = this.request();
+    if (!current?.id) {
+      return;
+    }
+    runDownload(
+      this.requests.document(current.id),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
+  }
+
   submit(): void {
     const current = this.request();
     if (!current?.id || this.acting()) {
       return;
-    }
-    this.acting.set(true);
+    }    this.acting.set(true);
     this.requests.submit(current.id).subscribe({
       next: () => {
         this.acting.set(false);

@@ -352,6 +352,60 @@ test.describe('critical journeys', () => {
     expect(download.suggestedFilename()).toBe('suppliers-acme-2026-10-12.xlsx');
   });
 
+  test('budget export and import ride the same download plumbing', async ({ page }) => {
+    let uploads = 0;
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
+        departments: [], users: [], notifications: [],
+      }),
+      { method: 'GET', match: '/budgets', handle: () => ({ status: 200, body: asPage([]) }) },
+      {
+        method: 'POST',
+        match: '/budgets/import',
+        handle: () => {
+          uploads += 1;
+          return { status: 200, body: { created: 2, errors: [] } };
+        },
+      },
+    ]);
+    // Binary route after the catch-all (see the supplier export test).
+    await page.route('**/budgets/export.xlsx', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers: {
+          'Content-Disposition': 'attachment; filename="budgets-acme-2026-10-12.xlsx"',
+          'Access-Control-Expose-Headers': 'Content-Disposition',
+        },
+        body: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      });
+    });
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/budgets');
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Export Excel' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('budgets-acme-2026-10-12.xlsx');
+
+    await page.getByRole('button', { name: 'Import' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('Bulk-open');
+    await dialog.getByLabel('Import file').setInputFiles({
+      name: 'budgets.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from('name,period,amount\nOps,2026-10,100\n'),
+    });
+    await dialog.getByRole('button', { name: 'Import', exact: true }).click();
+    await expect(dialog).toContainText('2 pots opened.');
+    expect(uploads).toBe(1);
+  });
+
   test('supplier import rejects bad files client-side', async ({ page }) => {
     let uploads = 0;
     await stubApi(page, [

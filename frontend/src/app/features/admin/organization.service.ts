@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
+import { Download, toDownload } from '../../shared/utils/download';
 
 export type Tenant = components['schemas']['TenantResponse'];
 export type Department = components['schemas']['DepartmentResponse'];
@@ -124,8 +125,7 @@ export class AuditService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/api/v1`;
 
-  page(
-    entityType: string | null,
+  page(    entityType: string | null,
     entityId: string | null,
     query: string | null,
     pageIndex: number,
@@ -149,5 +149,20 @@ export class AuditService {
           total: result?.totalElements ?? 0,
         })),
       );
+  }
+
+  /** Filtered trail as xlsx (who/what/when; payloads stay in the trail UI). */
+  exportXlsx(query: string | null): Observable<Download> {
+    let params = new HttpParams();
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get(`${this.base}/audit-events/export.xlsx`, {
+        params,
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'audit-trail.xlsx')));
   }
 }

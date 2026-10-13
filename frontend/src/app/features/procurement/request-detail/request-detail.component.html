@@ -29,6 +29,13 @@
       [breadcrumbs]="[{ label: 'Requests', url: '/requests' }, { label: current.title ?? 'File' }]"
     >
       <div slot="actions">
+        <button mat-stroked-button (click)="downloadPdf()" [disabled]="busyExport()">
+          @if (busyExport()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            PDF
+          }
+        </button>
         @if (canEdit()) {
           <button mat-stroked-button (click)="openEdit()">
             <lucide-angular [img]="icons.pencil" [size]="16" /> Edit
@@ -57,6 +64,10 @@
         }
       </div>
     </pf-page-header>
+
+    @if (exportError()) {
+      <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
+    }
 
     <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />

@@ -1,0 +1,55 @@
+<h2 mat-dialog-title>Import budget pots</h2>
+<mat-dialog-content>
+  <p class="import-intro">
+    Bulk-open from <strong>.xlsx</strong> or <strong>.csv</strong> (max 5 MB, 500 rows).
+    Columns: <span class="pf-data-mono">name</span>,
+    <span class="pf-data-mono">period</span> (YYYY-MM) and
+    <span class="pf-data-mono">amount</span> (major units, up to 2 decimals) required,
+    <span class="pf-data-mono">currency</span> optional (default MAD). Every row validates
+    first — any failure opens <strong>nothing</strong>; fix the rows and re-upload.
+  </p>
+  <div class="import-pick">
+    <input
+      type="file"
+      accept=".xlsx,.csv"
+      aria-label="Import file"
+      class="import-file"
+      (change)="pick($event)"
+      #fileInput
+    />
+    <button mat-stroked-button (click)="fileInput.click()">Choose file</button>
+    <span class="import-file-name">{{ fileName() ?? 'No file chosen' }}</span>
+    <button mat-stroked-button (click)="template()">Download template</button>
+  </div>
+  @if (created() !== null) {
+    <p class="import-done" role="status">{{ created() }} pot{{ created() === 1 ? '' : 's' }} opened.</p>
+  }
+  @if (failure()) {
+    <p class="dialog-error" role="alert">{{ failure() }}</p>
+  }
+  @if (rowErrors().length > 0) {
+    <ul class="import-errors">
+      @for (error of rowErrors(); track $index) {
+        <li>
+          <span class="pf-data-mono">Row {{ error.row }} · {{ error.field }}</span>
+          <span>{{ error.message }}</span>
+        </li>
+      }
+    </ul>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Close</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="upload()"
+    [disabled]="!fileName() || busy() || created() !== null"
+  >
+    @if (busy()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      Import
+    }
+  </button>
+</mat-dialog-actions>
