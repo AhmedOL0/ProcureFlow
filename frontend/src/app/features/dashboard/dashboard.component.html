@@ -57,9 +57,14 @@
         Financial figures did not load — operational data above is unaffected.
       </p>
     }
+    @if (mixedSpend()) {
+      <p class="pf-notice pf-notice--error" role="alert">
+        Spend mixes {{ spendCodes().join(', ') }} — figures below are per-currency on
+        <a routerLink="/analytics">Analytics</a>, never merged here.
+      </p>
+    }
 
-    @if (approvalKpis(); as flow) {
-      <div class="dashboard-flow" role="region" aria-label="Approval flow">
+    @if (approvalKpis(); as flow) {      <div class="dashboard-flow" role="region" aria-label="Approval flow">
         <div class="dashboard-flow__stat">
           <span class="dashboard-flow__value pf-data-mono">{{ flow.pending }}</span>
           <span class="dashboard-flow__label">pending</span>
@@ -103,12 +108,24 @@
           </mat-chip-listbox>
         </div>
         @if (trendMode() === 'monthly') {
+          @if (mixedSpend()) {
+            <pf-empty-state
+              title="Mixed currencies"
+              message="Monthly bars would merge codes — open the per-currency split on Analytics."
+            />
+          } @else {
             <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics($event)" />
+          }
         } @else {
           @if (trendSlices().length === 0) {
             <pf-empty-state
               title="No categorized spend"
               message="Category totals appear once ordered lines carry categories."
+            />
+          } @else if (mixedSpend()) {
+            <pf-empty-state
+              title="Mixed currencies"
+              message="Category shares would merge codes — open the per-currency split on Analytics."
             />
           } @else {
             <app-donut-chart [slices]="trendSlices()" />
