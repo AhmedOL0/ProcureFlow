@@ -32,6 +32,8 @@
         <!-- Document import/export: Apache-2.0 licensed, Java 21 ready. -->
         <poi.version>5.4.0</poi.version>
         <pdfbox.version>3.0.2</pdfbox.version>
+        <!-- Logstash encoder 8.x targets logback 1.5 (Boot 3.5); not Boot-managed. -->
+        <logstash.version>8.0</logstash.version>
         <!-- Pinned past Boot's managed version for CVE-2026-54291
              (SCRAM downgrade in pgjdbc); drop the pin once Boot manages >= 42.7.12. -->
         <postgresql.version>42.7.12</postgresql.version>
@@ -147,6 +149,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-csv</artifactId>
+        </dependency>
+        <!-- JSON log encoder for machine-readable profiles -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash.version}</version>
         </dependency>
 
         <!-- Tests -->
