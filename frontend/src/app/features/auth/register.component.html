@@ -1,16 +1,26 @@
-<div class="auth-brand" aria-hidden="true">ProcureFlow</div>
-<main class="auth-main">
-  <mat-card class="auth-card">
-    <mat-card-header>
-      <mat-card-title
-        ><h1 class="auth-title">
-          {{ mode() === 'join' ? 'Join your workspace' : 'Create your workspace' }}
-        </h1></mat-card-title
-      >
+<div class="auth-shell">
+  <aside class="auth-brand-panel" aria-label="About ProcureFlow">
+    <img class="auth-logo" src="/brand/logo.png" alt="ProcureFlow — Smarter Procurement. Stronger Teams." />
+    <p class="auth-tagline">One record per purchase, from request to payment.</p>
+    <ol class="auth-steps">
+      <li>Describe what you need to buy, line by line with quantities.</li>
+      <li>The right approvers are notified, with the budget impact attached.</li>
+      <li>Order, receive and pay against the same record.</li>
+    </ol>
+    <p class="auth-assurance">Your workspace is private to your company. Every change is logged.</p>
+  </aside>
+  <main class="auth-main">
+    <mat-card class="auth-card">
+      <mat-card-header>
+        <mat-card-title
+          ><h1 class="auth-title">
+            {{ mode() === 'join' ? 'Join your workspace' : 'Create your workspace' }}
+          </h1></mat-card-title
+        >
       <mat-card-subtitle>{{
         mode() === 'join'
           ? 'Your slug plus the code from your invite link.'
-          : 'A new slug starts a workspace — you become its admin.'
+          : 'A new slug starts a workspace. You become its admin.'
       }}</mat-card-subtitle>
     </mat-card-header>
 
@@ -104,5 +114,6 @@
     <mat-card-actions class="auth-actions">
       <span class="auth-switch">Have an account? <a routerLink="/login">Sign in</a></span>
     </mat-card-actions>
-  </mat-card>
-</main>
+    </mat-card>
+  </main>
+</div>

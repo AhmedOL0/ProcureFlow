@@ -755,20 +755,137 @@ p.pf-muted {
   white-space: nowrap;
 }
 
-// Auth masthead: navy wordmark above the sign-in/register card.
-.auth-brand {
-  font: var(--pf-headline-lg);
-  color: var(--pf-navy);
-  letter-spacing: -0.01em;
+// Auth shell: split screen on desktop (brand panel + form card), single
+// column on small screens. The panel stays white — the brand lockup is
+// drawn for light surfaces — with procurement-specific truths, never
+// decoration. No gradients, no glass, no motion beyond Material defaults.
+.auth-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(400px, 480px) 1fr;
+  background: var(--pf-canvas);
+}
+
+.auth-brand-panel {
+  background: var(--pf-card);
+  border-right: 1px solid var(--pf-rail-border);
+  padding: var(--pf-space-xl) var(--pf-space-lg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--pf-space-lg);
+}
+
+.auth-logo {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+}
+
+.auth-tagline {
+  font: var(--pf-headline-sm);
+  color: var(--pf-slate);
+  margin: 0;
+}
+
+.auth-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-md);
+  counter-reset: auth-step;
+}
+
+.auth-steps li {
+  display: flex;
+  gap: var(--pf-space-md);
+  align-items: flex-start;
+  font: var(--pf-body-md);
+  color: var(--pf-text);
+}
+
+.auth-steps li::before {
+  counter-increment: auth-step;
+  content: counter(auth-step);
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--pf-radius-pill);
+  background: var(--pf-navy);
+  color: var(--pf-on-navy);
+  font: var(--pf-label-md);
+  line-height: 28px;
   text-align: center;
-  margin: 10vh auto var(--pf-space-lg);
+}
+
+.auth-assurance {
+  font: var(--pf-body-sm);
+  color: var(--pf-slate);
+  margin: 0;
+  padding-top: var(--pf-space-md);
+  border-top: 1px solid var(--pf-rail-border);
+}
+
+.auth-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pf-space-lg) var(--pf-space-md);
+  min-width: 0;
+}
+
+.auth-main .auth-card {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+// Compact centered lockup for the single-column auth pages
+// (forgot/reset/verify): same brand, no panel.
+.auth-masthead {
+  display: block;
+  width: 220px;
+  height: auto;
+  margin: 8vh auto var(--pf-space-lg);
+}
+
+@media (max-width: 1023px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-brand-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--pf-rail-border);
+    padding: var(--pf-space-lg) var(--pf-space-md) var(--pf-space-md);
+    gap: var(--pf-space-sm);
+  }
+
+  .auth-logo {
+    max-width: 220px;
+  }
+
+  .auth-tagline,
+  .auth-steps,
+  .auth-assurance {
+    display: none;
+  }
+
+  .auth-main {
+    align-items: flex-start;
+    padding-top: var(--pf-space-md);
+  }
 }
 
 // Auth form primitives (single definition — feature auth styles must
 // not redeclare them). Field explanations live in normal flow as
 // .auth-note: mat-hint renders in the fixed subscript overlay and
 // collides with the alert below it once the hint wraps. The alert
-// region always reserves two lines so the button never jumps.
+// region reserves one line so the button never jumps on single-line
+// failures ("Invalid email or password."); multi-line errors are
+// exceptional and may push the button rather than tax every render.
 .auth-note {
   color: var(--pf-muted-text);
   font: var(--pf-body-sm);
@@ -776,18 +893,22 @@ p.pf-muted {
 }
 
 .auth-alert {
-  min-height: 2.9em;
+  min-height: 1.6em;
 }
 
 .auth-error {
   color: var(--pf-danger-text);
   font: var(--pf-body-md);
-  margin: var(--pf-space-xs) 0 var(--pf-space-sm);
+  margin: 0 0 var(--pf-space-sm);
 }
 
+// Footer links are distinct paths (switch workspace vs recover access),
+// so they sit at opposite ends instead of running together; they wrap
+// into a calm stack on narrow cards.
 mat-card-actions.auth-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   column-gap: var(--pf-space-lg);
   row-gap: var(--pf-space-xs);
   padding: 0 var(--pf-space-lg) var(--pf-space-md);

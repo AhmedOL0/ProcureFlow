@@ -13,7 +13,24 @@ guard on every exported string; `EXPORT_TOO_LARGE` past 5000 rows;
 exposed over CORS. Gates: backend 166 IT green (`verify`), frontend
 tsc + build + 52 Vitest + 58 e2e green. Follow-ups: budget import,
 request PDF dossier, EXPORT_TOO_LARGE IT (needs 5000-row fixture).
-Uncommitted ops follow-up (this session): request correlation id in MDC
+**Brand-auth slice (feature/brand-auth, this change).** Real logo lockup
+(`public/brand/logo.png`, absolute `/brand/logo.png` so nested shell
+routes resolve) on all auth pages + rail brand (replaces inline SVG +
+text wordmark); login/register get a split-screen brand panel with
+grounded copy (no filler voice, no em dashes) collapsing to a logo-only
+masthead ≤1023px; dead `.auth-brand` CSS removed; login rhythm calmed
+(one-line alert reserve, separated footer paths). Evidence
+`docs/screens/36-login-brand.png`, `37-register-brand.png`,
+`38-login-mobile.png`. Gates: tsc 0, build 0, 54 Vitest, e2e 32 chromium
++ 32 firefox green (one transient firefox axe flake on suppliers, clean
+on full re-run).
+Docs follow-up (same branch): `docs/demo.md` gains a 4-shot gallery
+(36 + refreshed 01-dashboard / 04-approvals / 06-analytics with the new
+rail, captured live against the compose demo seed); README screens table
++ test counts synced (54 Vitest, 64 e2e). Ops note: Docker Desktop was
+simply not started (service stopped, no engine pipe) — launched the app,
+stack auto-resumed, frontend image rebuilt so compose serves the brand.
+Ops follow-up (merged as PR #32): request correlation id in MDC
 (`trace=`, `ApiError.traceId`) plus a `json` Spring profile
 (`application-json.yml` → `logging.config: classpath:logback-json.xml`,
 logstash-encoder 8.0) emitting one JSON object per line with `traceId`;
