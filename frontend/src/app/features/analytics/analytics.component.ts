@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged, forkJoin, of } from 'rxjs';
 
@@ -60,6 +60,7 @@ import {
 export class AnalyticsComponent {
   private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly icons = { wallet: Wallet, truck: Truck, inbox: Inbox };
   protected readonly formatMinor = formatMinor;
@@ -162,7 +163,11 @@ export class AnalyticsComponent {
   });
 
   constructor() {
-    this.periodBox.setValue(this.analytics.currentPeriodUtc());
+    // Deep link from the dashboard trajectory: a ?period=YYYY-MM opens the
+    // page narrowed to that month instead of the current one. Anything else
+    // falls back to the current month.
+    const linked = this.route.snapshot.queryParamMap.get('period') ?? '';
+    this.periodBox.setValue(/^\d{4}-(0[1-9]|1[0-2])$/.test(linked) ? linked : this.analytics.currentPeriodUtc());
     this.categoryBox.valueChanges
       .pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((value) => this.categoryQuery.set(value));

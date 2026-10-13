@@ -336,9 +336,9 @@ export class DashboardComponent {
       });
   }
 
-  /** Chart drill: a trend month opens the full trajectory. */
-  openAnalytics(): void {
-    void this.router.navigate(['/analytics']);
+  /** Chart drill: a trend month opens the full trajectory at that month. */
+  openAnalytics(period: string): void {
+    void this.router.navigate(['/analytics'], { queryParams: period ? { period } : {} });
   }
 
   /** Priority chip tone: urgency reads danger, routine reads neutral. */
