@@ -61,6 +61,11 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      # Liveness/readiness split for container orchestration: liveness stays
+      # UP while the process lives (mail outages must not restart the app),
+      # readiness reflects dependencies. Compose probes liveness.
+      probes:
+        enabled: true
 
 springdoc:
   api-docs:

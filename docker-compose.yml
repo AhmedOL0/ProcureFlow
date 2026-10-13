@@ -98,6 +98,14 @@ services:
       MAIL_FROM: ${MAIL_FROM:-no-reply@example.com}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+    # Liveness (not aggregate health): a Brevo outage must never restart
+    # the app, so the probe reads the liveness group, not /health.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/actuator/health/liveness"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
 
   # ---- Nightly database dumps (opt-in: not part of the default stack) ----
   # One-shot: docker compose --profile backup run --rm db-backup sh /backup.sh once
@@ -131,10 +139,17 @@ services:
     container_name: procureflow-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       # Container serves unprivileged 8080 (non-root image); host stays 4200.
       - "${FRONTEND_PORT:-4200}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
   pgdata:
