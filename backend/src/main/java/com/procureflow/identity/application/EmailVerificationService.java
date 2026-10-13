@@ -57,7 +57,7 @@ public class EmailVerificationService {
         }
         String rawToken = AuthService.randomToken();
         tokens.save(new EmailVerificationToken(user, AuthService.hash(rawToken), Instant.now().plus(TTL)));
-        String root = frontendUrl.replaceAll("/+$", "");
+        String root = FrontendLinks.base(frontendUrl);
         String body = "Confirm your ProcureFlow mailbox to unlock password resets.\n\nVerify here (valid 24 hours,"
                 + " single use):\n" + root + "/verify-email?token=" + rawToken + "\n\nIf that was not you, ignore"
                 + " this email.";

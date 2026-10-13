@@ -6,7 +6,6 @@ import com.procureflow.identity.infrastructure.PasswordResetTokenRepository;
 import com.procureflow.identity.infrastructure.RefreshTokenRepository;
 import com.procureflow.identity.infrastructure.UserRepository;
 import com.procureflow.shared.web.ApiException;
-import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -140,18 +139,7 @@ public class PasswordResetService {
     }
 
     private String resetUrl(String rawToken) {
-        URI base;
-        try {
-            base = URI.create(frontendUrl);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("app.frontend.url is misconfigured", e);
-        }
-        if (!("http".equalsIgnoreCase(base.getScheme()) || "https".equalsIgnoreCase(base.getScheme()))
-                || base.getHost() == null) {
-            throw new IllegalStateException("app.frontend.url must be an absolute http(s) URL");
-        }
-        String root = base.toString().replaceAll("/+$", "");
-        return root + "/reset-password?token=" + rawToken;
+        return FrontendLinks.base(frontendUrl) + "/reset-password?token=" + rawToken;
     }
 
     private static String emailBucket(String email, String tenantSlug) {

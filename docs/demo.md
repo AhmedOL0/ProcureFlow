@@ -7,6 +7,14 @@ every state, 4 orders, 2 invoices, a full audit trail and populated
 inboxes. Everything here is fictional. **Password for all six accounts:
 `ProcureFlow-2026!`** (demo-only; never reuse in production).
 
+> Rotation policy: the demo password is a shared secret the moment it
+> appears in a screenshot, recording, or shared environment. Before any
+> shared demo, change it via `change-password` on all six accounts (you know
+> the current one, so no reset flow is needed). Reseeding (`docker compose
+> down -v` plus a dev-profile run) starts clean but restores this default —
+> it is not rotation. Never point a shared demo at a
+> database holding real tenant data.
+
 ```bash
 # One-shot seed against the compose database (mail stays suppressed):
 MAIL_PROVIDER=log docker compose run --rm -e SPRING_PROFILES_ACTIVE=dev backend

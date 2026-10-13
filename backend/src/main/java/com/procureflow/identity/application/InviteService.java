@@ -112,7 +112,7 @@ public class InviteService {
     }
 
     private void mailInvite(String to, String rawToken) {
-        String root = frontendUrl.replaceAll("/+$", "");
+        String root = FrontendLinks.base(frontendUrl);
         String body = "You are invited to join a ProcureFlow workspace.\n\nAccept here (valid 7 days, single use):\n"
                 + root + "/register?invite=" + rawToken + "\n\nIf that was not you, ignore this email.";
         try {
