@@ -52,10 +52,10 @@ async function stubApi(page: Page, token: string): Promise<void> {
   });
 }
 
-async function signIn(page: Page): Promise<void> {
-  // Limited authorities: the dashboard renders its operations pulse only,
+async function signIn(page: Page, authorities = ['procurement:request']): Promise<void> {
+  // Limited authorities by default: the dashboard renders its operations pulse only,
   // so the stub surface stays small and deterministic.
-  const token = fakeJwt(['procurement:request']);
+  const token = fakeJwt(authorities);
   await stubApi(page, token);
   await page.goto('/login');
   await page.getByLabel('Work email').fill('boss@acme.test');
@@ -114,5 +114,32 @@ test.describe('accessibility', () => {
     await page.goto('/settings');
     await expect(page.getByText('Account settings')).toBeVisible();
     await expectAxeClean(page);
+  });
+
+  test('supplier import dialog has no axe violations', async ({ page }) => {
+    await signIn(page, ['procurement:request', 'supplier:read', 'supplier:write']);
+    await page.goto('/suppliers');
+    await page.getByRole('button', { name: 'Import' }).click();
+    await expect(page.getByRole('dialog')).toContainText('Bulk-create');
+    // Wait for the theme override to land: single-test runs race the cold
+    // dev server's style compilation, and axe would otherwise judge the
+    // pre-theme azure fallback. This also pins the brand-emerald wiring.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const label = document.querySelector(
+            '[role="dialog"] .mdc-button--outlined .mdc-button__label',
+          );
+          return label ? getComputedStyle(label as HTMLElement).color : '';
+        }),
+      )
+      .toBe('rgb(4, 120, 87)');
+    // Scoped to the dialog: the dimmed page behind a modal fails contrast
+    // by construction, and the suppliers page itself is axe-clean above.
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .include('[role="dialog"]')
+      .analyze();
+    expect(results.violations).toEqual([]);
   });
 });

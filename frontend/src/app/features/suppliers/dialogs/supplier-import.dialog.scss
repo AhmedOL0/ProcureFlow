@@ -1,4 +1,16 @@
 // Supplier import dialog: picker row, result states, row-error list.
+//
+// Body copy uses the dialog surface text color, not .pf-muted: the muted
+// token is calibrated for white cards and falls below 4.5:1 on the dialog
+// surface (caught by the import-dialog axe test — keep it that way).
+.import-intro {
+  color: var(--pf-text);
+  margin: 0;
+}
+
+.import-file-name {
+  color: var(--pf-text);
+}
 .import-pick {
   display: flex;
   align-items: center;

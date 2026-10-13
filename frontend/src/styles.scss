@@ -35,6 +35,11 @@ html {
       density: 0,
     )
   );
+
+  // Outlined (stroked) buttons resolve their label from the azure theme
+  // palette (#389279: 3.2:1 on dialog gray, fail). Brand emerald holds
+  // 5:1 on white and 7:1 on dialog surfaces — same token family as links.
+  --mat-outlined-button-label-text-color: var(--pf-blue);
 }
 
 // --- Brand & surface -------------------------------------------------

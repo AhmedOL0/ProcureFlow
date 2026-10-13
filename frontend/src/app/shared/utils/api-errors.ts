@@ -65,6 +65,7 @@ const CODE_MESSAGES: Record<string, string> = {
   NO_DATA_ROWS: 'The file has no data rows.',
   EXPORT_TOO_LARGE: 'Too many rows for one export — narrow the filters and try again.',
   MALFORMED_UPLOAD: 'The upload could not be read. Try again.',
+  TOO_MANY_REQUESTS: 'Too many attempts — wait a little and try again.',
 };
 
 export function userMessageFor(failure: ApiFailure): string {

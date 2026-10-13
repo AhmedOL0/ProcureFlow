@@ -28,6 +28,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -173,7 +174,18 @@ class SupplierImportIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    void importFloodsAnswerTooManyRequests() {
+        Fixture admin = provision(uniqueSlug("import"));
+        HttpStatusCode last = null;
+        // Distinct names so validation never trips: only the throttle fires.
+        for (int i = 0; i < 31; i++) {
+            byte[] csv = ("name\nFlood Supplier " + i + "\n").getBytes(StandardCharsets.UTF_8);
+            last = importFile(admin.token(), "s.csv", csv).getStatusCode();
+        }
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, last);
+    }
+
+    @Test
     void oversizedDirectoryExportsRefuseInsteadOfOoming() {
         Fixture admin = provision(uniqueSlug("import"));
         Tenant tenant = tenants.findBySlug(admin.slug()).orElseThrow();

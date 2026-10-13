@@ -1,6 +1,7 @@
 package com.procureflow.supplier.application;
 
 import com.procureflow.audit.application.AuditTrailLogged;
+import com.procureflow.identity.application.AuthAttemptThrottle;
 import com.procureflow.shared.document.Csv;
 import com.procureflow.shared.document.Table;
 import com.procureflow.shared.document.Upload;
@@ -40,12 +41,17 @@ public class SupplierImportService {
 
     private final SupplierService suppliers;
     private final CategoryService categories;
+    private final AuthAttemptThrottle throttles;
     private final ApplicationEventPublisher events;
 
     public SupplierImportService(
-            SupplierService suppliers, CategoryService categories, ApplicationEventPublisher events) {
+            SupplierService suppliers,
+            CategoryService categories,
+            AuthAttemptThrottle throttles,
+            ApplicationEventPublisher events) {
         this.suppliers = suppliers;
         this.categories = categories;
+        this.throttles = throttles;
         this.events = events;
     }
 
@@ -57,6 +63,7 @@ public class SupplierImportService {
 
     @Transactional
     public ImportResult importFile(String tenantSlug, UUID actorId, String filename, byte[] content) {
+        throttles.checkImport(actorId);
         Upload.FileKind kind = Upload.inspect(filename, content);
         Table table = kind == Upload.FileKind.XLSX ? Xlsx.read(content) : Csv.parse(content);
         if (!table.has("name")) {
