@@ -5,6 +5,7 @@ import com.procureflow.budget.domain.BudgetReservation;
 import com.procureflow.budget.infrastructure.BudgetRepository;
 import com.procureflow.budget.infrastructure.BudgetReservationRepository;
 import com.procureflow.organization.application.TenantProvisioning;
+import com.procureflow.shared.document.Spreadsheet;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.shared.web.Paged;
 import com.procureflow.audit.application.AuditTrailLogged;
@@ -161,6 +162,44 @@ public class BudgetService implements BudgetReservationPort {
     @Transactional(readOnly = true)
     public BudgetView get(String tenantSlug, UUID id) {
         return view(scoped(tenantSlug, id));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByNameAndPeriod(String tenantSlug, String name, String period) {
+        return budgets.existsByTenantIdAndNameAndPeriod(tenants.requireTenantId(tenantSlug), name, period);
+    }
+
+    /** Import validation without throwing: mirrors the YYYY-MM rule. */
+    static boolean isPeriod(String period) {
+        return period != null && PERIOD.matcher(period).matches();
+    }
+
+    /**
+     * Full filtered pot list for xlsx export. Counts first so oversized
+     * workspaces fail with EXPORT_TOO_LARGE instead of OOMing the workbook.
+     */
+    @Transactional(readOnly = true)
+    public List<BudgetView> exportRows(String tenantSlug, String period, String query, UUID actorId) {
+        long total = pagedViews(tenantSlug, period, query, 0, 1).totalElements();
+        if (total > Spreadsheet.MAX_EXPORT_ROWS) {
+            throw ApiException.badRequest(
+                    "EXPORT_TOO_LARGE",
+                    "Export is limited to " + Spreadsheet.MAX_EXPORT_ROWS + " rows; narrow the filters",
+                    Map.of("matching", String.valueOf(total)));
+        }
+        if (total == 0) {
+            return List.of();
+        }
+        List<BudgetView> rows = pagedViews(tenantSlug, period, query, 0, (int) total).content();
+        events.publishEvent(AuditTrailLogged.now(
+                tenantSlug,
+                actorId,
+                "DOCUMENT_EXPORTED",
+                "budget",
+                null,
+                Map.of(),
+                Map.of("format", "xlsx", "rows", rows.size())));
+        return rows;
     }
 
     @Transactional(readOnly = true)

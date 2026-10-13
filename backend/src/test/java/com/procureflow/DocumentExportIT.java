@@ -119,8 +119,38 @@ class DocumentExportIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void requestsExportCarriesRequesterAndTotal() throws Exception {
+    void requestDocumentIsAPdfWithLines() throws Exception {
         Fixture admin = provision(uniqueSlug("docs"));
+        UUID request = approved(admin.token());
+
+        ResponseEntity<byte[]> document =
+                getBytes("/api/v1/purchase-requests/" + request + "/document.pdf", admin.token());
+        assertEquals(HttpStatus.OK, document.getStatusCode());
+        String text = pdfText(document.getBody());
+        assertTrue(text.contains("Purchase request"));
+        assertTrue(text.contains("Laptops"));
+        assertTrue(text.contains("ThinkPad"));
+        assertTrue(text.contains("MAD 1,798.00"));
+        assertTrue(text.contains("Page 1 of 1"));
+    }
+
+    @Test
+    void auditExportRoundTrips() throws Exception {
+        Fixture admin = provision(uniqueSlug("docs"));
+        createBudget(admin.token());
+
+        ResponseEntity<byte[]> exported =
+                getBytes("/api/v1/audit-events/export.xlsx?q=BUDGET_CREATED", admin.token());
+        assertEquals(HttpStatus.OK, exported.getStatusCode());
+        try (Workbook book = new XSSFWorkbook(new ByteArrayInputStream(exported.getBody()))) {
+            var row = book.getSheet("Audit").getRow(1);
+            assertEquals("BUDGET_CREATED", row.getCell(2).getStringCellValue());
+            assertEquals("budget", row.getCell(3).getStringCellValue());
+        }
+    }
+
+    @Test
+    void requestsExportCarriesRequesterAndTotal() throws Exception {        Fixture admin = provision(uniqueSlug("docs"));
         createRequest(admin.token());
 
         ResponseEntity<byte[]> exported = getBytes("/api/v1/purchase-requests/export.xlsx", admin.token());
@@ -232,12 +262,21 @@ class DocumentExportIT extends AbstractIntegrationTest {
         return login.getBody();
     }
 
-    private UUID createSupplier(String token, String name) {
-        ResponseEntity<Map> response = rest.exchange(
+    private UUID createSupplier(String token, String name) {        ResponseEntity<Map> response = rest.exchange(
                 "/api/v1/suppliers", HttpMethod.POST, new HttpEntity<>(Map.of("name", name), bearer(token)), Map.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         return UUID.fromString(response.getBody().get("id").toString());
+    }
+
+    private void createBudget(String token) {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("name", "Ops");
+        body.put("period", java.time.YearMonth.now(java.time.ZoneOffset.UTC).toString());
+        body.put("amountMinor", 500000L);
+        ResponseEntity<Map> response =
+                rest.exchange("/api/v1/budgets", HttpMethod.POST, new HttpEntity<>(body, bearer(token)), Map.class);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 
     private UUID createRequest(String token) {

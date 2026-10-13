@@ -1,11 +1,18 @@
 package com.procureflow.audit.api;
 
 import com.procureflow.audit.application.AuditService;
+import com.procureflow.audit.domain.AuditEvent;
 import com.procureflow.identity.application.AuthenticatedUser;
+import com.procureflow.shared.document.Filenames;
+import com.procureflow.shared.document.Spreadsheet;
 import com.procureflow.shared.web.Paged;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,5 +55,41 @@ public class AuditController {
                         Paged.pageOrThrow(page),
                         Paged.sizeOrThrow(size))
                 .map(AuditEventResponse::from));
+    }
+
+    @GetMapping("/export.xlsx")
+    @PreAuthorize("hasAuthority('audit:read')")
+    @Operation(summary = "Export the filtered trail as xlsx (who/what/when, no payloads, max 5000 rows)")
+    public ResponseEntity<byte[]> export(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) String entityType,
+            @RequestParam(required = false) UUID entityId,
+            @RequestParam(required = false) String q) {
+        List<List<Object>> body = trail.exportRows(principal.tenantId(), entityType, entityId, q).stream()
+                .map(AuditController::row)
+                .toList();
+        byte[] content = Spreadsheet.book(
+                "Audit",
+                List.of("created_at", "actor", "action", "entity_type", "entity_id"),
+                body);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.xlsx("audit-trail", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(content);
+    }
+
+    private static List<Object> row(AuditEvent event) {
+        return List.of(
+                event.getCreatedAt(),
+                event.getActorId() == null ? "" : event.getActorId().toString(),
+                event.getAction() == null ? "" : event.getAction(),
+                event.getEntityType() == null ? "" : event.getEntityType(),
+                event.getEntityId() == null ? "" : event.getEntityId().toString());
     }
 }

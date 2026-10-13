@@ -1,6 +1,7 @@
 package com.procureflow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -249,6 +250,103 @@ class BudgetIT extends AbstractIntegrationTest {
 
     private ResponseEntity<Map> createBudgetRaw(String token, Object body) {
         return rest.exchange("/api/v1/budgets", HttpMethod.POST, new HttpEntity<>(body, bearer(token)), Map.class);
+    }
+
+    @Test
+    void budgetsExportRoundTrips() throws Exception {
+        Fixture admin = provision(uniqueSlug("acme"));
+        createBudget(admin.token(), "Ops", currentPeriod(), 500000L, "MAD");
+
+        ResponseEntity<byte[]> exported = getBytes("/api/v1/budgets/export.xlsx", admin.token());
+        assertEquals(HttpStatus.OK, exported.getStatusCode());
+        assertNotNull(exported.getBody());
+        try (org.apache.poi.ss.usermodel.Workbook book = new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+                new java.io.ByteArrayInputStream(exported.getBody()))) {
+            var row = book.getSheet("Budgets").getRow(1);
+            assertEquals("Ops", row.getCell(0).getStringCellValue());
+            assertEquals(5000.0, row.getCell(2).getNumericCellValue());
+        }
+    }
+
+    @Test
+    void budgetImportCreatesPots() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        String csv = "name,period,amount,currency\nOps," + currentPeriod() + ",50000.00,MAD\nTravel,"
+                + currentPeriod() + ",1200.50,EUR\n";
+        ResponseEntity<Map> imported =
+                importFile(admin.token(), "budgets.csv", csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertEquals(HttpStatus.OK, imported.getStatusCode());
+        assertNotNull(imported.getBody());
+        assertEquals(2, imported.getBody().get("created"));
+
+        ResponseEntity<String> list = get("/api/v1/budgets", admin.token(), String.class);
+        assertEquals(HttpStatus.OK, list.getStatusCode());
+        assertTrue(list.getBody().contains("Travel"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void budgetImportRejectsBadRows() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        String period = currentPeriod();
+        String csv = "name,period,amount\nBad Period,2030-13,100\nNegative," + period + ",-5\nOps," + period
+                + ",100\nOps," + period + ",100\n";
+        ResponseEntity<Map> rejected =
+                importFile(admin.token(), "b.csv", csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertEquals(HttpStatus.BAD_REQUEST, rejected.getStatusCode());
+        assertNotNull(rejected.getBody());
+        assertEquals("IMPORT_VALIDATION_FAILED", rejected.getBody().get("code"));
+        Map<String, String> details = (Map<String, String>) rejected.getBody().get("details");
+        assertNotNull(details);
+        assertTrue(details.containsKey("row.1.period"));
+        assertTrue(details.containsKey("row.2.amount"));
+        assertTrue(details.containsKey("row.4.name"));
+
+        ResponseEntity<String> list = get("/api/v1/budgets", admin.token(), String.class);
+        assertEquals(HttpStatus.OK, list.getStatusCode());
+        assertFalse(list.getBody().contains("Bad Period"));
+    }
+
+    @Test
+    void memberCannotImportBudgets() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        String email = "min@" + admin.slug() + ".test";
+        ResponseEntity<AuthResponse> created = rest.exchange(
+                "/api/v1/users",
+                HttpMethod.POST,
+                new HttpEntity<>(
+                        Map.of("email", email, "password", "correct-horse-123", "roleNames", List.of("MEMBER")),
+                        bearer(admin.token())),
+                AuthResponse.class);
+        assertEquals(HttpStatus.CREATED, created.getStatusCode());
+        ResponseEntity<AuthResponse> login = rest.postForEntity(
+                "/api/v1/auth/login",
+                Map.of("email", email, "password", "correct-horse-123", "tenantSlug", admin.slug()),
+                AuthResponse.class);
+        assertEquals(HttpStatus.OK, login.getStatusCode());
+        assertNotNull(login.getBody());
+
+        byte[] csv = "name,period,amount\nOps,2026-10,100\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        assertEquals(
+                HttpStatus.FORBIDDEN,
+                importFile(login.getBody().accessToken(), "b.csv", csv).getStatusCode());
+    }
+
+    private ResponseEntity<Map> importFile(String token, String filename, byte[] content) {
+        org.springframework.http.HttpHeaders headers = bearer(token);
+        headers.setContentType(org.springframework.http.MediaType.MULTIPART_FORM_DATA);
+        org.springframework.util.MultiValueMap<String, Object> body = new org.springframework.util.LinkedMultiValueMap<>();
+        body.add("file", new org.springframework.core.io.ByteArrayResource(content) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        });
+        return rest.exchange("/api/v1/budgets/import", HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
+    }
+
+    private ResponseEntity<byte[]> getBytes(String url, String token) {
+        return rest.exchange(url, HttpMethod.GET, new HttpEntity<>(bearer(token)), byte[].class);
     }
 
     private UUID submitted(String token) {

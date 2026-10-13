@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.procureflow.audit.domain.AuditEvent;
 import com.procureflow.audit.infrastructure.AuditEventRepository;
 import com.procureflow.organization.application.TenantProvisioning;
+import com.procureflow.shared.document.Spreadsheet;
 import com.procureflow.shared.web.ApiException;
 import com.procureflow.shared.web.Paged;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -95,6 +97,31 @@ public class AuditService {
             found = events.searchByTenantIdOrderByCreatedAtDesc(tenantId, query, pageable);
         }
         return Paged.of(found.getContent(), page, size, found.getTotalElements());
+    }
+
+    /**
+     * Full filtered trail for xlsx export. Reuses the paged branches above
+     * (count, then one bounded fetch) so filters cannot drift between the
+     * list and the file. Payloads stay out: the export carries who/what/when,
+     * before/after JSON stays in the trail UI. Deliberately unaudited — an
+     * export row inside the exported trail is self-reference noise, and the
+     * endpoint already requires audit:read.
+     */
+    @Transactional(readOnly = true)
+    public List<AuditEvent> exportRows(
+            String tenantSlug, String entityType, UUID entityId, String q) {
+        long total = page(tenantSlug, entityType, entityId, q, 0, 1).totalElements();
+        if (total > Spreadsheet.MAX_EXPORT_ROWS) {
+            throw ApiException.badRequest(
+                    "EXPORT_TOO_LARGE",
+                    "Export is limited to " + Spreadsheet.MAX_EXPORT_ROWS
+                            + " rows; narrow the filters",
+                    Map.of("matching", String.valueOf(total)));
+        }
+        if (total == 0) {
+            return List.of();
+        }
+        return page(tenantSlug, entityType, entityId, q, 0, (int) total).content();
     }
 
     private String toJson(Map<String, Object> payload) {

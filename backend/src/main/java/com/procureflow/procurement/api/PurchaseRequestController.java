@@ -5,6 +5,7 @@ import com.procureflow.identity.application.PermissionCodes;
 import com.procureflow.procurement.application.PurchaseRequestService;
 import com.procureflow.procurement.application.PurchaseRequestService.Creation;
 import com.procureflow.procurement.application.PurchaseRequestService.ItemInput;
+import com.procureflow.procurement.application.RequestDocumentService;
 import com.procureflow.procurement.application.RequestExportService;
 import com.procureflow.procurement.domain.PurchaseRequest;
 import com.procureflow.shared.document.Filenames;
@@ -48,10 +49,13 @@ public class PurchaseRequestController {
 
     private final PurchaseRequestService requests;
     private final RequestExportService exports;
+    private final RequestDocumentService documents;
 
-    public PurchaseRequestController(PurchaseRequestService requests, RequestExportService exports) {
+    public PurchaseRequestController(
+            PurchaseRequestService requests, RequestExportService exports, RequestDocumentService documents) {
         this.requests = requests;
         this.exports = exports;
+        this.documents = documents;
     }
 
     @PostMapping
@@ -116,6 +120,23 @@ public class PurchaseRequestController {
     public ResponseEntity<PurchaseRequestResponse> get(
             @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
         return ResponseEntity.ok(toResponse(requests.get(principal.tenantId(), id)));
+    }
+
+    @GetMapping("/{id}/document.pdf")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Printable request dossier (requester, lines, total)")
+    public ResponseEntity<byte[]> document(
+            @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
+        byte[] content = documents.document(principal.tenantId(), principal.userId(), id);
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(Filenames.pdf("purchase-request", principal.tenantId()))
+                                .build()
+                                .toString())
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(content);
     }
 
     @GetMapping("/export.xlsx")
