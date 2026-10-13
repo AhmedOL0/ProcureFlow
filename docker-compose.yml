@@ -145,7 +145,9 @@ services:
       # Container serves unprivileged 8080 (non-root image); host stays 4200.
       - "${FRONTEND_PORT:-4200}:8080"
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/"]
+      # 127.0.0.1, not localhost: nginx listens IPv4-only, and localhost
+      # resolves to ::1 first inside the container (connection refused).
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
       interval: 15s
       timeout: 5s
       retries: 5
