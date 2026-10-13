@@ -22,6 +22,12 @@ removed. Evidence `docs/screens/36-login-brand.png`,
 `37-register-brand.png`, `38-login-mobile.png`. Gates: tsc 0, build 0,
 54 Vitest, e2e 32 chromium + 32 firefox green (one transient firefox
 axe flake on suppliers, clean on full re-run).
+Docs follow-up (same branch): `docs/demo.md` gains a 4-shot gallery
+(36 + refreshed 01-dashboard / 04-approvals / 06-analytics with the new
+rail, captured live against the compose demo seed); README screens table
++ test counts synced (54 Vitest, 64 e2e). Ops note: Docker Desktop was
+simply not started (service stopped, no engine pipe) — launched the app,
+stack auto-resumed, frontend image rebuilt so compose serves the brand.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:

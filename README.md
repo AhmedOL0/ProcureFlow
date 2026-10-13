@@ -50,6 +50,7 @@ for the permission matrix):
 | Users & roles administration | ![users](docs/screens/07-users.png) |
 | Approval lanes, steps and delegations | ![workflows](docs/screens/08-workflows.png) |
 | ProcureAI copilot with cited answers | ![copilot](docs/screens/09-copilot.png) |
+| Sign-in with the brand panel | ![login](docs/screens/36-login-brand.png) |
 
 ## Architecture
 
@@ -155,10 +156,10 @@ every push):
   account (incl. token races),
   roles, metrics. JaCoCo floors (line 0.70 / branch 0.40) fail the build
   on regression.
-- Frontend unit: `cd frontend && npm test` (Vitest, 52 tests)
+- Frontend unit: `cd frontend && npm test` (Vitest, 54 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-  (58 runs: 29 tests × chromium + firefox — 14 stubbed critical journeys
-  incl. chart drills and document download/import, 7 auth, 6 axe, 1 smoke: request-to-approval,
+  (64 runs: 32 tests × chromium + firefox — 17 stubbed critical journeys
+  incl. chart drills and document download/import, 7 auth, 7 axe, 1 smoke: request-to-approval,
   unsaved-draft guard, budget, order, invoice, admin, analytics,
   copilot success/failure, notifications, settings, session expiry)
 - API types: regenerate after any API change and commit the result.

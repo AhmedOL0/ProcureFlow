@@ -39,6 +39,16 @@ Extras: `member@demo.test` sees 9 rail entries and a 403 behind `/budgets`;
 `AI_ENABLED=true` in `.env`, otherwise an honest disabled message);
 Users & Roles creates accounts with any of the six roles.
 
+## What you'll see (live captures from the seed above)
+
+![Sign-in with the brand panel](screens/36-login-brand.png)
+
+![Minute 1 — procurement overview dashboard](screens/01-dashboard.png)
+
+![Minute 2 — approval inbox with verdicts](screens/04-approvals.png)
+
+![Minute 4 — spend analytics over server aggregates](screens/06-analytics.png)
+
 ## Reset procedure
 
 Demo data lives in the shared `pgdata` volume alongside everything else.
