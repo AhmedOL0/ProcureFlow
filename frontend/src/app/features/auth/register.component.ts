@@ -86,17 +86,17 @@ export class RegisterComponent {
           this.busy.set(false);
           const code = this.auth.apiErrorCode(error);
           if (code === 'EMAIL_IN_USE') {
-            this.failure.set('This email is already registered in this workspace — try signing in.');
+            this.failure.set('This email is already registered in this workspace. Try signing in instead.');
           } else if (code === 'INVITE_REQUIRED') {
             this.setMode('join');
-            this.failure.set('That workspace exists — paste the invite code from a workspace admin.');
+            this.failure.set('That workspace exists. Paste the invite code from a workspace admin.');
           } else if (code === 'TENANT_NAME_REQUIRED') {
             this.setMode('create');
             this.failure.set('A workspace name is required to create a new workspace.');
           } else if (code === 'WEAK_PASSWORD') {
             this.failure.set('Password must be at least 12 characters.');
           } else if (code === 'PASSWORD_TOO_LONG') {
-            this.failure.set('That password is too long for secure hashing — use at most 72 characters.');
+            this.failure.set('That password is too long for secure hashing. Use at most 72 characters.');
           } else {
             this.failure.set('Registration failed. Check the workspace slug and try again.');
           }

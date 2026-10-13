@@ -56,7 +56,7 @@ export class LoginComponent {
         this.busy.set(false);
         if (this.auth.apiErrorCode(error) === 'LOGIN_AMBIGUOUS') {
           this.needsTenant.set(true);
-          this.failure.set('This email lives in several workspaces — enter your workspace slug.');
+          this.failure.set('This email lives in several workspaces. Enter your workspace slug below.');
           return;
         }
         this.failure.set('Invalid email or password.');
