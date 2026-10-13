@@ -13,6 +13,11 @@ guard on every exported string; `EXPORT_TOO_LARGE` past 5000 rows;
 exposed over CORS. Gates: backend 166 IT green (`verify`), frontend
 tsc + build + 52 Vitest + 58 e2e green. Follow-ups: budget import,
 request PDF dossier, EXPORT_TOO_LARGE IT (needs 5000-row fixture).
+Uncommitted ops follow-up (this session): request correlation id in MDC
+(`trace=`, `ApiError.traceId`) plus a `json` Spring profile
+(`application-json.yml` → `logging.config: classpath:logback-json.xml`,
+logstash-encoder 8.0) emitting one JSON object per line with `traceId`;
+live-verified on a throwaway jar boot for both `json` and default formats.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:

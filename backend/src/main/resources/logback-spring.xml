@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Human-readable console logs with the request correlation id appended.
-     Same shape as Spring Boot's default pattern plus trace=<mdc>; JSON
-     logging stays deferred until a collector exists to consume it. -->
+     Same shape as Spring Boot's default pattern plus trace=<mdc>.
+     Machine profile (`SPRING_PROFILES_ACTIVE=json`, prod deployments):
+     application-json.yml points logging.config at logback-json.xml, which
+     emits one JSON object per line. Format selection lives in that single
+     explicit property — not in profile-conditional roots here. -->
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">

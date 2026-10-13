@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- JSON console logging for machine consumption (prod/collector deployments).
+     Activated via the `json` Spring profile: application-json.yml sets
+     logging.config to this file. Plain <configuration> on purpose — files
+     loaded through logging.config do not support <springProfile>, and all
+     profile selection lives in that single explicit property. -->
+<configuration>
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="JSON"/>
+    </root>
+</configuration>
