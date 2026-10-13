@@ -4,15 +4,25 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 16 — document import/export (this change).** Supplier xlsx/csv
-import (all-or-nothing, row errors, 5 MB / 500 rows) plus printable
-order/invoice PDFs and filtered xlsx exports (orders, invoices, requests,
-suppliers) and spend reports (PDF + 4-sheet xlsx). Formula-injection
-guard on every exported string; `EXPORT_TOO_LARGE` past 5000 rows;
-`SUPPLIER_IMPORTED` / `DOCUMENT_EXPORTED` audit rows; Content-Disposition
-exposed over CORS. Gates: backend 166 IT green (`verify`), frontend
-tsc + build + 52 Vitest + 58 e2e green. Follow-ups: budget import,
-request PDF dossier, EXPORT_TOO_LARGE IT (needs 5000-row fixture).
+**Phase 17 — hardening pass (this change, PR #30 open, CI green).**
+Phase A (correctness): DB-side all-time analytics grouping + query gates
+(≤20 loads/≤16 queries, measured 13), EXPORT_TOO_LARGE IT (5001 rows),
+concurrent-create 409 race IT, 72-byte password ceiling (login-safe).
+Phase B (currency reality): per-currency spend breakdowns + mixed UI (warning,
+per-currency KPIs, tagged tables) + mixed IT + live probes; found+fixed a live
+High — deleting any draft with lines 500'd (no cascade, zero coverage) — now
+204 + IT. Phase C (import security + a11y): per-actor 30/h throttle + 429 IT,
+dialog contrast fix (brand-emerald token override), import-dialog axe gate.
+Phase D (ops): X-Request-Id + MDC trace, liveness/readiness probe paths,
+compose healthchecks (both healthy live; IPv4-loopback fix for nginx).
+Phase E (document gaps): budget export/import, request PDF dossier, audit
+export + UI + BUDGET_IMPORTED chip. Phase F (polish): drill ?period= (M-15),
+server unread totals (M-16), FrontendLinks parity, currency symmetry
+(mad→MAD + IT), AI validator tests, demo rotation policy, dead CSS pruned.
+Deferred (needs product call): uniform register/join errors. Blocked: H-2
+target, Brevo IP, load harness.
+Gates: backend 182 IT + 75 unit (`verify`), frontend tsc + build + 54 Vitest
++ 64 e2e, JaCoCo 84.9/68.1, Trivy observed green, live probes all green.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:
