@@ -68,8 +68,7 @@ class InvalidPathVariableIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void responsesCarryRequestCorrelation() {
-        // Generated when absent so every response (even 404s) is traceable.
+    void responsesCarryRequestCorrelation() {        // Generated when absent so every response (even 404s) is traceable.
         ResponseEntity<String> anonymous =
                 rest.getForEntity("/swagger-ui/no-such-asset", String.class);
         assertNotNull(anonymous.getHeaders().getFirst("X-Request-Id"));
@@ -80,6 +79,16 @@ class InvalidPathVariableIT extends AbstractIntegrationTest {
         ResponseEntity<String> traced = rest.exchange(
                 "/swagger-ui/no-such-asset", HttpMethod.GET, new HttpEntity<>(echo), String.class);
         assertEquals("probe-123", traced.getHeaders().getFirst("X-Request-Id"));
+    }
+
+    @Test
+    void livenessProbeIsPublic() {
+        // Container orchestration probes without credentials; only statuses
+        // leak (details stay authorized).
+        ResponseEntity<String> liveness = rest.getForEntity("/actuator/health/liveness", String.class);
+        assertEquals(HttpStatus.OK, liveness.getStatusCode());
+        assertNotNull(liveness.getBody());
+        assertTrue(liveness.getBody().contains("\"status\":\"UP\""));
     }
 
     private String provision(String slug) {
