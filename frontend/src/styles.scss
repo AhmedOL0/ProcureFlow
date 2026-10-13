@@ -883,7 +883,9 @@ p.pf-muted {
 // not redeclare them). Field explanations live in normal flow as
 // .auth-note: mat-hint renders in the fixed subscript overlay and
 // collides with the alert below it once the hint wraps. The alert
-// region always reserves two lines so the button never jumps.
+// region reserves one line so the button never jumps on single-line
+// failures ("Invalid email or password."); multi-line errors are
+// exceptional and may push the button rather than tax every render.
 .auth-note {
   color: var(--pf-muted-text);
   font: var(--pf-body-sm);
@@ -891,18 +893,22 @@ p.pf-muted {
 }
 
 .auth-alert {
-  min-height: 2.9em;
+  min-height: 1.6em;
 }
 
 .auth-error {
   color: var(--pf-danger-text);
   font: var(--pf-body-md);
-  margin: var(--pf-space-xs) 0 var(--pf-space-sm);
+  margin: 0 0 var(--pf-space-sm);
 }
 
+// Footer links are distinct paths (switch workspace vs recover access),
+// so they sit at opposite ends instead of running together; they wrap
+// into a calm stack on narrow cards.
 mat-card-actions.auth-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   column-gap: var(--pf-space-lg);
   row-gap: var(--pf-space-xs);
   padding: 0 var(--pf-space-lg) var(--pf-space-md);
