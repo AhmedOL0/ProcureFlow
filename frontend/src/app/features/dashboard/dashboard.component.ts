@@ -158,14 +158,14 @@ export class DashboardComponent {
     return [
       {
         label: 'Ordered spend (all time)',
-        value: flow ? formatMinor(flow.orderedMinor) : '—',
-        sub: orderedDelta ?? 'committed to suppliers',
+        value: this.mixedSpend() ? `${this.spendCodes().length} currencies` : flow ? formatMinor(flow.orderedMinor, this.spendCode()) : '—',
+        sub: this.mixedSpend() ? 'split per currency on Analytics' : (orderedDelta ?? 'committed to suppliers'),
         icon: ChartColumn,
       },
       {
         label: 'Paid out (all time)',
-        value: flow ? formatMinor(flow.paidMinor) : '—',
-        sub: paidDelta ?? 'settled with suppliers',
+        value: this.mixedSpend() ? `${this.spendCodes().length} currencies` : flow ? formatMinor(flow.paidMinor, this.spendCode()) : '—',
+        sub: this.mixedSpend() ? 'split per currency on Analytics' : (paidDelta ?? 'settled with suppliers'),
         icon: CircleCheck,
       },
       {
@@ -183,12 +183,28 @@ export class DashboardComponent {
     ];
   });
 
+  /** Distinct ISO codes behind the spend aggregates; more than one means mixed. */
+  protected readonly mixedSpend = computed(() => (this.spend()?.currencies ?? []).length > 1);
+
+  /** Codes behind the aggregates, for the mixed notice and KPI labels. */
+  protected readonly spendCodes = computed<string[]>(() => this.spend()?.currencies ?? []);
+
+  /** Display code for single-currency aggregates; legacy responses default MAD. */
+  protected spendCode(): string {
+    const codes = this.spendCodes();
+    return codes.length === 1 ? (codes[0] ?? 'MAD') : 'MAD';
+  }
+
   /**
    * Month-over-month delta from the spend aggregates (complete monthly
-   * buckets, never sampled rows). Absent with fewer than two months —
-   * the KPI falls back to its plain subtitle instead of inventing one.
+   * buckets, never sampled rows). Absent with fewer than two months — or
+   * with mixed currencies, where a merged percentage would lie — and the
+   * KPI falls back to its plain subtitle instead of inventing one.
    */
   private monthDelta(pick: (month: SpendMonth) => number): string | null {
+    if (this.mixedSpend()) {
+      return null;
+    }
     const months = [...(this.spend()?.byPeriod ?? [])]
       .filter((month) => typeof month.period === 'string')
       .sort((a, b) => (a.period as string).localeCompare(b.period as string));
@@ -206,9 +222,9 @@ export class DashboardComponent {
   }
 
   private outstandingLabel(): { value: string; sub: string } {
-    // Outstanding = invoiced minus paid from the server aggregates (single
-    // currency per workspace, as the contract documents) — no invoice-list
-    // scan, bounded at any scale.
+    // Outstanding = invoiced minus paid from the server aggregates — no
+    // invoice-list scan, bounded at any scale. Meaningless across codes, so
+    // mixed tenants get a pointer instead of a merged figure.
     if (!this.canSeeInvoices) {
       return { value: '—', sub: 'no invoice access' };
     }
@@ -216,11 +232,14 @@ export class DashboardComponent {
     if (!flow) {
       return { value: '—', sub: 'figures unavailable' };
     }
+    if (this.mixedSpend()) {
+      return { value: 'Mixed', sub: 'split per currency on Analytics' };
+    }
     const due = (flow.invoicedMinor ?? 0) - (flow.paidMinor ?? 0);
     if (due <= 0) {
-      return { value: formatMinor(0), sub: 'nothing outstanding' };
+      return { value: formatMinor(0, this.spendCode()), sub: 'nothing outstanding' };
     }
-    return { value: formatMinor(due), sub: 'awaiting payment' };
+    return { value: formatMinor(due, this.spendCode()), sub: 'awaiting payment' };
   }
 
   private budgetLabel(): { value: string; sub: string } {

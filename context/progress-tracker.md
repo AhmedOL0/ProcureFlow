@@ -16,18 +16,25 @@ request PDF dossier, EXPORT_TOO_LARGE IT (needs 5000-row fixture).
 **Brand-auth slice (feature/brand-auth, this change).** Real logo lockup
 (`public/brand/logo.png`, absolute `/brand/logo.png` so nested shell
 routes resolve) on all auth pages + rail brand (replaces inline SVG +
-text wordmark); login/register get a split-screen brand panel (desktop)
-collapsing to a logo-only masthead ≤1023px; dead `.auth-brand` CSS
-removed. Evidence `docs/screens/36-login-brand.png`,
-`37-register-brand.png`, `38-login-mobile.png`. Gates: tsc 0, build 0,
-54 Vitest, e2e 32 chromium + 32 firefox green (one transient firefox
-axe flake on suppliers, clean on full re-run).
+text wordmark); login/register get a split-screen brand panel with
+grounded copy (no filler voice, no em dashes) collapsing to a logo-only
+masthead ≤1023px; dead `.auth-brand` CSS removed; login rhythm calmed
+(one-line alert reserve, separated footer paths). Evidence
+`docs/screens/36-login-brand.png`, `37-register-brand.png`,
+`38-login-mobile.png`. Gates: tsc 0, build 0, 54 Vitest, e2e 32 chromium
++ 32 firefox green (one transient firefox axe flake on suppliers, clean
+on full re-run).
 Docs follow-up (same branch): `docs/demo.md` gains a 4-shot gallery
 (36 + refreshed 01-dashboard / 04-approvals / 06-analytics with the new
 rail, captured live against the compose demo seed); README screens table
 + test counts synced (54 Vitest, 64 e2e). Ops note: Docker Desktop was
 simply not started (service stopped, no engine pipe) — launched the app,
 stack auto-resumed, frontend image rebuilt so compose serves the brand.
+Ops follow-up (merged as PR #32): request correlation id in MDC
+(`trace=`, `ApiError.traceId`) plus a `json` Spring profile
+(`application-json.yml` → `logging.config: classpath:logback-json.xml`,
+logstash-encoder 8.0) emitting one JSON object per line with `traceId`;
+live-verified on a throwaway jar boot for both `json` and default formats.
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:

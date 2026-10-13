@@ -275,6 +275,45 @@ test.describe('critical journeys', () => {
     await expect(page.getByText('Hardware', { exact: true })).toBeVisible();
   });
 
+  test('dashboard refuses to merge mixed currencies', async ({ page }) => {
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
+        departments: [], users: [], notifications: [],
+      }),
+      { method: 'GET', match: '/budgets', handle: () => ({ status: 200, body: asPage([]) }) },
+      {
+        method: 'GET',
+        match: '/analytics/spend',
+        body: {
+          requestedMinor: 280000,
+          orderedMinor: 0,
+          invoicedMinor: 0,
+          paidMinor: 0,
+          currencies: ['EUR', 'MAD'],
+          byCurrency: [
+            { currency: 'EUR', requestedMinor: 200000, orderedMinor: 0, invoicedMinor: 0, paidMinor: 0 },
+            { currency: 'MAD', requestedMinor: 80000, orderedMinor: 0, invoicedMinor: 0, paidMinor: 0 },
+          ],
+          byCategory: [{ category: 'Cloud', currency: 'EUR', amountMinor: 200000 }],
+          byPeriod: [],
+        },
+      },
+      {
+        method: 'GET',
+        match: '/analytics/approvals',
+        body: { pending: 0, decided: 0, avgLeadHours: null, maxLeadHours: null },
+      },
+    ]);
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page.getByRole('alert')).toContainText('EUR, MAD', { timeout: 10000 });
+    await expect(page.getByText('2 currencies').first()).toBeVisible();
+  });
+
   test('supplier creation appears in the directory', async ({ page }) => {
     const suppliers: Record<string, unknown>[] = [];
     await stubApi(page, [

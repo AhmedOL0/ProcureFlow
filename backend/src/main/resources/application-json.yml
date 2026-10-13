@@ -1,0 +1,6 @@
+# Machine-readable logging profile for prod/collector deployments.
+# Boot with SPRING_PROFILES_ACTIVE=json (or -Dspring.profiles.active=json).
+# logging.config is explicit: logback-spring.xml keeps the human console
+# format unconditionally, this file is the only thing that selects JSON.
+logging:
+  config: classpath:logback-json.xml
