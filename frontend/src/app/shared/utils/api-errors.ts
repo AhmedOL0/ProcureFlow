@@ -51,6 +51,7 @@ const CODE_MESSAGES: Record<string, string> = {
   CATEGORY_IN_USE: 'This category is assigned to suppliers and cannot be deleted.',
   EMAIL_IN_USE: 'This email is already registered in this workspace.',
   LOGIN_AMBIGUOUS: 'This email lives in several workspaces — enter your workspace slug.',
+  PASSWORD_TOO_LONG: 'That password is too long for secure hashing — use at most 72 characters.',
   INVALID_CREDENTIALS: 'Invalid email or password.',
   CONTACT_NOT_FOUND: 'This contact no longer exists.',
   SUPPLIER_NOT_FOUND: 'This supplier no longer exists in your workspace.',
@@ -64,6 +65,7 @@ const CODE_MESSAGES: Record<string, string> = {
   NO_DATA_ROWS: 'The file has no data rows.',
   EXPORT_TOO_LARGE: 'Too many rows for one export — narrow the filters and try again.',
   MALFORMED_UPLOAD: 'The upload could not be read. Try again.',
+  TOO_MANY_REQUESTS: 'Too many attempts — wait a little and try again.',
 };
 
 export function userMessageFor(failure: ApiFailure): string {

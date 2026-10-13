@@ -103,7 +103,7 @@
           </mat-chip-listbox>
         </div>
         @if (trendMode() === 'monthly') {
-          <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics()" />
+            <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics($event)" />
         } @else {
           @if (trendSlices().length === 0) {
             <pf-empty-state

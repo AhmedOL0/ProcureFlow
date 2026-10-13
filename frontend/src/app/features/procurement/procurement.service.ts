@@ -74,6 +74,16 @@ export class ProcurementService {
     return this.http.get<PurchaseRequest>(`${this.base}/purchase-requests/${id}`);
   }
 
+  /** Printable request dossier (requester, lines, total) as PDF. */
+  document(id: string): Observable<Download> {
+    return this.http
+      .get(`${this.base}/purchase-requests/${id}/document.pdf`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'purchase-request.pdf')));
+  }
+
   /** Filtered requests as xlsx (workspace scope, not the /mine slice). */
   exportXlsx(status: string | null, query: string | null): Observable<Download> {
     let params = new HttpParams();

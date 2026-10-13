@@ -8,6 +8,9 @@ import com.procureflow.identity.api.AuthResponse;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -62,6 +65,30 @@ class InvalidPathVariableIT extends AbstractIntegrationTest {
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().contains("NOT_FOUND"));
+    }
+
+    @Test
+    void responsesCarryRequestCorrelation() {        // Generated when absent so every response (even 404s) is traceable.
+        ResponseEntity<String> anonymous =
+                rest.getForEntity("/swagger-ui/no-such-asset", String.class);
+        assertNotNull(anonymous.getHeaders().getFirst("X-Request-Id"));
+
+        // Caller-provided ids echo back for end-to-end tracing.
+        HttpHeaders echo = new HttpHeaders();
+        echo.set("X-Request-Id", "probe-123");
+        ResponseEntity<String> traced = rest.exchange(
+                "/swagger-ui/no-such-asset", HttpMethod.GET, new HttpEntity<>(echo), String.class);
+        assertEquals("probe-123", traced.getHeaders().getFirst("X-Request-Id"));
+    }
+
+    @Test
+    void livenessProbeIsPublic() {
+        // Container orchestration probes without credentials; only statuses
+        // leak (details stay authorized).
+        ResponseEntity<String> liveness = rest.getForEntity("/actuator/health/liveness", String.class);
+        assertEquals(HttpStatus.OK, liveness.getStatusCode());
+        assertNotNull(liveness.getBody());
+        assertTrue(liveness.getBody().contains("\"status\":\"UP\""));
     }
 
     private String provision(String slug) {

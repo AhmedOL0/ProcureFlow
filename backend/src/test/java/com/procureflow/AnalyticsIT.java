@@ -123,6 +123,38 @@ class AnalyticsIT extends AbstractIntegrationTest {
         assertEquals(1, ((List<?>) history.getBody().get("byPeriod")).size());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void spendAllTimeIsBounded() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        for (int flow = 1; flow <= 6; flow++) {
+            paidFlow(admin.token(), "-" + flow);
+        }
+        backdateHalf(admin.slug());
+        String month = YearMonth.now(ZoneOffset.UTC).toString();
+
+        sessions.getStatistics().setStatisticsEnabled(true);
+        sessions.getStatistics().clear();
+        ResponseEntity<Map> history = get("/api/v1/analytics/spend", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, history.getStatusCode());
+        assertNotNull(history.getBody());
+        // All six flows aggregate (three current, three backdated).
+        assertEquals(6 * 181300L, number(history.getBody(), "requestedMinor"));
+        assertEquals(6 * 181300L, number(history.getBody(), "orderedMinor"));
+        assertEquals(6 * 181300L, number(history.getBody(), "paidMinor"));
+        assertEquals(2, ((List<?>) history.getBody().get("byPeriod")).size());
+        assertMonth(history.getBody(), month, 3 * 181300L, 3 * 181300L, 3 * 181300L);
+        assertMonth(history.getBody(), "2000-01", 3 * 181300L, 3 * 181300L, 3 * 181300L);
+        assertCategory(history.getBody(), "Hardware", 6 * 179800L);
+        // DB-side sums and stamp projections: no item or line collections
+        // load however large history grows. Measured 13 loads for 6 flows;
+        // the old entity scan loads 60+ here and trips this gate.
+        long loaded = sessions.getStatistics().getEntityLoadCount();
+        assertTrue(loaded <= 20, "spend(all-time) loaded " + loaded + " entities for 6 flows");
+        long queries = sessions.getStatistics().getQueryExecutionCount();
+        assertTrue(queries <= 16, "spend(all-time) issued " + queries + " queries for 6 flows");
+    }
+
     /**
      * Moves an arbitrary half of the tenant's chains into January 2000 so a
      * period filter has something to exclude. Same technique as the dev
@@ -301,6 +333,58 @@ class AnalyticsIT extends AbstractIntegrationTest {
                         Map.of("period", period, "onTimeRate", onTime, "qualityScore", quality), bearer(token)),
                 Map.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void mixedCurrenciesSplitInsteadOfMerging() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        paidFlow(admin.token());
+        // A euro draft needs no budget pot: the requested bucket is where
+        // mixing shows first, and per-currency rows keep it honest.
+        draft(admin.token(), "Serveurs", "Hardware", 1, 100000, "EUR");
+
+        ResponseEntity<Map> spend = get("/api/v1/analytics/spend", admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, spend.getStatusCode());
+        assertNotNull(spend.getBody());
+        assertEquals(List.of("EUR", "MAD"), spend.getBody().get("currencies"));
+
+        List<Map<String, Object>> byCurrency = (List<Map<String, Object>>) spend.getBody().get("byCurrency");
+        assertNotNull(byCurrency);
+        assertEquals(2, byCurrency.size());
+        Map<String, Object> eur = byCurrency.stream()
+                .filter(row -> "EUR".equals(row.get("currency")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Missing EUR breakdown"));
+        assertEquals(100000L, ((Number) eur.get("requestedMinor")).longValue());
+        assertEquals(0L, ((Number) eur.get("orderedMinor")).longValue());
+
+        List<Map<String, Object>> categories =
+                (List<Map<String, Object>>) spend.getBody().get("byCategory");
+        assertNotNull(categories);
+        assertTrue(categories.stream().anyMatch(row ->
+                "Hardware".equals(row.get("category")) && "EUR".equals(row.get("currency"))
+                        && ((Number) row.get("amountMinor")).longValue() == 100000L));
+    }
+
+    private UUID draft(String token, String title, String category, int quantity, long unitPrice, String currency) {
+        ResponseEntity<Map> created = rest.exchange(
+                "/api/v1/purchase-requests",
+                HttpMethod.POST,
+                new HttpEntity<>(
+                        Map.of(
+                                "title", title,
+                                "items", List.of(Map.of(
+                                        "description", title + " line",
+                                        "category", category,
+                                        "quantity", quantity,
+                                        "unitPriceMinor", unitPrice,
+                                        "currency", currency))),
+                        withIdempotency(token)),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, created.getStatusCode());
+        assertNotNull(created.getBody());
+        return UUID.fromString(created.getBody().get("id").toString());
     }
 
     private UUID submitted(String token) {

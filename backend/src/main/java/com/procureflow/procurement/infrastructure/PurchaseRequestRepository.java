@@ -74,6 +74,10 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.id in :ids")
     List<PurchaseRequest> findByIdInAndTenantSlug(@Param("ids") Set<UUID> ids, @Param("slug") String slug);
 
+    // Lead-time rows without item collections for the all-time approvals path.
+    @Query("select r.status, r.submittedAt, r.decidedAt from PurchaseRequest r where r.tenant.slug = :slug")
+    List<Object[]> leadRowsByTenantSlug(@Param("slug") String slug);
+
     @EntityGraph(attributePaths = {"tenant", "items"})
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.idempotencyKey = :key")
     Optional<PurchaseRequest> findByTenantSlugAndIdempotencyKey(

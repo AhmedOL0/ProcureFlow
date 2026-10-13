@@ -22,6 +22,10 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
     Page<Budget> findAllByTenantIdAndPeriodAndNameContainingIgnoreCaseOrderByNameAsc(
             UUID tenantId, String period, String name, Pageable pageable);
 
+    @Query("select count(b) > 0 from Budget b where b.tenantId = :tenantId and b.name = :name and b.period = :period")
+    boolean existsByTenantIdAndNameAndPeriod(
+            @Param("tenantId") UUID tenantId, @Param("name") String name, @Param("period") String period);
+
     @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("select b from Budget b where b.tenantId = :tenantId and b.period = :period"
             + " and b.departmentId is null order by b.id")

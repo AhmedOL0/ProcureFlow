@@ -76,7 +76,11 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/actuator/health")
+                                "/actuator/health",
+                                // Liveness/readiness probes for container orchestration:
+                                // statuses only (details stay authorized), no secrets.
+                                "/actuator/health/liveness",
+                                "/actuator/health/readiness")
                         .permitAll()
                         .anyRequest()
                         .authenticated())

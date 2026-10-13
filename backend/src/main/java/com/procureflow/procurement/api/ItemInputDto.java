@@ -12,6 +12,6 @@ public record ItemInputDto(
         @Size(max = 200) String category,
         @NotNull @Min(1) Integer quantity,
         @NotNull @Min(0) Long unitPriceMinor,
-        @Pattern(regexp = "^[A-Z]{3}$", message = "Currency must be a 3-letter ISO code") String currency,
+        @Pattern(regexp = "^[A-Za-z]{3}$", message = "Currency must be a 3-letter ISO code") String currency,
         UUID supplierId) {
 }

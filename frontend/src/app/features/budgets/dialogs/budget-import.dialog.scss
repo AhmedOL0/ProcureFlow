@@ -1,0 +1,54 @@
+// Budget import dialog: same rhythm as the supplier import dialog —
+// picker row, result states, row-error list. Body copy uses the dialog
+// surface text color, not .pf-muted (contrast, see there).
+.import-intro {
+  color: var(--pf-text);
+  margin: 0;
+}
+
+.import-file-name {
+  color: var(--pf-text);
+}
+
+.import-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-space-md);
+  flex-wrap: wrap;
+  margin: var(--pf-space-md) 0;
+}
+
+// Native control stays accessible but invisible; the styled button above
+// opens it so the dialog keeps one visual language.
+.import-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.import-done {
+  font: var(--pf-label-lg);
+  color: var(--pf-success-text);
+}
+
+.import-errors {
+  list-style: none;
+  margin: var(--pf-space-sm) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-xs);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.import-errors li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--pf-space-xs) var(--pf-space-sm);
+  border: 1px solid var(--pf-danger-border);
+  border-radius: var(--pf-radius-sm);
+}

@@ -11,7 +11,17 @@
         <mat-label>Search actions and types</mat-label>
         <input matInput [formControl]="entityFilter" placeholder="ORDER_SENT" />
       </mat-form-field>
+      <button mat-stroked-button (click)="exportXlsx()" [disabled]="busyExport()">
+        @if (busyExport()) {
+          <mat-spinner diameter="16" />
+        } @else {
+          Export Excel
+        }
+      </button>
     </div>
+    @if (exportError()) {
+      <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
+    }
     <div class="pf-chips">
       <mat-chip-listbox aria-label="Filter by action">
         @for (action of auditActions; track action) {

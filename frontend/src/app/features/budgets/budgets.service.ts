@@ -4,10 +4,12 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
+import { Download, toDownload } from '../../shared/utils/download';
 
 export type Budget = components['schemas']['BudgetResponse'];
 export type Reservation = components['schemas']['ReservationResponse'];
 export type CreateBudget = components['schemas']['CreateBudgetRequest'];
+export type BudgetImportResult = components['schemas']['ImportResult'];
 
 export interface BudgetPage {
   rows: Budget[];
@@ -57,6 +59,31 @@ export class BudgetsService {
 
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/budgets/${id}`);
+  }
+
+  /** Filtered pots as xlsx; the server filename wins. */
+  exportXlsx(period: string | null, query: string | null): Observable<Download> {
+    let params = new HttpParams();
+    if (period) {
+      params = params.set('period', period);
+    }
+    if (query?.trim()) {
+      params = params.set('q', query.trim());
+    }
+    return this.http
+      .get(`${this.base}/budgets/export.xlsx`, {
+        params,
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(map((response) => toDownload(response, 'budgets.xlsx')));
+  }
+
+  /** Bulk-open pots from .xlsx/.csv; failures arrive as ApiError details. */
+  importFile(file: File): Observable<BudgetImportResult> {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    return this.http.post<BudgetImportResult>(`${this.base}/budgets/import`, body);
   }
 
   currentPeriodUtc(): string {

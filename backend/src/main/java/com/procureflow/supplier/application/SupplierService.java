@@ -127,7 +127,16 @@ public class SupplierService {
         supplier.setEmail(email);
         supplier.setPhone(phone);
         supplier.setAddress(address);
-        return suppliers.save(supplier);
+        try {
+            Supplier created = suppliers.save(supplier);
+            // Fail inside the use case, not at commit: concurrent duplicate
+            // creates race the pre-check above, and the unique net is the
+            // only constraint on this table, so any violation is the name.
+            suppliers.flush();
+            return created;
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw ApiException.conflict("SUPPLIER_EXISTS", "A supplier with this name already exists");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -166,7 +175,13 @@ public class SupplierService {
         if (status != null) {
             supplier.setStatus(status);
         }
-        return suppliers.save(supplier);
+        try {
+            Supplier saved = suppliers.save(supplier);
+            suppliers.flush();
+            return saved;
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw ApiException.conflict("SUPPLIER_EXISTS", "A supplier with this name already exists");
+        }
     }
 
     public void delete(String tenantSlug, UUID id) {

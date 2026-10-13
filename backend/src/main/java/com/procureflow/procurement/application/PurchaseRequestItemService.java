@@ -61,8 +61,9 @@ public class PurchaseRequestItemService {
             item.setUnitPriceMinor(unitPriceMinor);
         }
         if (currency != null) {
-            requireSingleCurrency(item.getRequest().getId(), currency, item.getId());
-            item.setCurrency(currency);
+            String code = currency.trim().toUpperCase(java.util.Locale.ROOT);
+            requireSingleCurrency(item.getRequest().getId(), code, item.getId());
+            item.setCurrency(code);
         }
         if (supplierId != null) {
             if (!supplierLookup.existsInTenant(supplierId, tenantSlug)) {
@@ -99,7 +100,8 @@ public class PurchaseRequestItemService {
         PurchaseRequestItem item = new PurchaseRequestItem(
                 request, input.description(), input.quantity(), input.unitPriceMinor());
         item.setCategory(input.category());
-        String currency = input.currency() == null ? "MAD" : input.currency();
+        // Budgets coerce codes the same way: accept any case, store upper.
+        String currency = input.currency() == null ? "MAD" : input.currency().trim().toUpperCase(java.util.Locale.ROOT);
         requireSingleCurrency(request.getId(), currency, null);
         item.setCurrency(currency);
         if (input.supplierId() != null) {

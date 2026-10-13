@@ -15,7 +15,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { ScrollText } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
+import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { AuditEvent, AuditService } from '../organization.service';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -38,6 +39,7 @@ const AUDIT_ACTIONS = [
   'USER_STATUS_CHANGED',
   'USER_ROLES_CHANGED',
   'SUPPLIER_IMPORTED',
+  'BUDGET_IMPORTED',
   'DOCUMENT_EXPORTED',
 ] as const;
 
@@ -69,6 +71,8 @@ export class AuditTrailComponent {
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   protected readonly rows = signal<AuditEvent[]>([]);
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
   protected readonly expanded = signal<string | null>(null);
@@ -115,6 +119,16 @@ export class AuditTrailComponent {
   /** Chips toggle the server search; clicking the active chip clears it. */
   pickQuery(term: string): void {
     this.entityFilter.setValue(this.entityFilter.value === term ? '' : term);
+  }
+
+  /** Filtered trail as xlsx (who/what/when; payloads stay in the UI). */
+  exportXlsx(): void {
+    runDownload(
+      this.trail.exportXlsx(this.entityFilter.value),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
   }
 
   toggle(row: AuditEvent): void {

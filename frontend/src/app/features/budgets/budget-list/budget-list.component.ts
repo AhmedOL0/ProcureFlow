@@ -19,10 +19,12 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { Plus, Search, Wallet } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure } from '../../../shared/utils/api-errors';
+import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { Budget, BudgetsService } from '../budgets.service';
 import { BudgetFormDialogComponent } from '../dialogs/budget-form.dialog';
+import { BudgetImportDialogComponent } from '../dialogs/budget-import.dialog';
 
 /**
  * Budgets & spend: pots with allocation, reservation and remainder, paged
@@ -68,6 +70,8 @@ export class BudgetListComponent {
 
   readonly loading = signal(true);
   readonly failure = signal<ApiFailure | null>(null);
+  protected readonly busyExport = signal(false);
+  protected readonly exportError = signal<string | null>(null);
   private readonly rows = signal<Budget[]>([]);
   private readonly sort = signal<Sort>({ active: '', direction: '' });
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
@@ -152,6 +156,28 @@ export class BudgetListComponent {
     );
     dialog.afterClosed().subscribe((saved) => {
       if (saved) {
+        this.reload();
+      }
+    });
+  }
+
+  /** Filtered pots as xlsx; failures show inline, never a dialog. */
+  exportXlsx(): void {
+    runDownload(
+      this.budgets.exportXlsx(this.periodFilter.value, this.searchBox.value),
+      this.busyExport,
+      this.exportError,
+      (error: unknown) => userMessageFor(parseApiFailure(error)),
+    );
+  }
+
+  openImport(): void {
+    const dialog = this.dialogs.open<BudgetImportDialogComponent, undefined, boolean>(
+      BudgetImportDialogComponent,
+      { width: '520px' },
+    );
+    dialog.afterClosed().subscribe((imported) => {
+      if (imported) {
         this.reload();
       }
     });

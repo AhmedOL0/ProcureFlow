@@ -47,28 +47,35 @@
       />
     }
   } @else {
-    @if (spend(); as flow) {
+    @if (spend()) {
+      @if (mixed()) {
+        <p class="pf-notice pf-notice--error" role="alert">
+          Totals mix {{ currencies().join(', ') }} — figures below are split per currency, never merged.
+        </p>
+      }
       <div class="pf-kpis" role="region" aria-label="Spend totals">
-        <div class="pf-kpi">
-          <span class="pf-kpi__label">Requested</span>
-          <div class="pf-kpi__value">{{ formatMinor(flow.requestedMinor) }}</div>
-          <div class="pf-kpi__sub">draft demand in view</div>
-        </div>
-        <div class="pf-kpi">
-          <span class="pf-kpi__label">Ordered</span>
-          <div class="pf-kpi__value">{{ formatMinor(flow.orderedMinor) }}</div>
-          <div class="pf-kpi__sub">committed to suppliers</div>
-        </div>
-        <div class="pf-kpi">
-          <span class="pf-kpi__label">Invoiced</span>
-          <div class="pf-kpi__value">{{ formatMinor(flow.invoicedMinor) }}</div>
-          <div class="pf-kpi__sub">billed, paid or not</div>
-        </div>
-        <div class="pf-kpi">
-          <span class="pf-kpi__label">Paid</span>
-          <div class="pf-kpi__value">{{ formatMinor(flow.paidMinor) }}</div>
-          <div class="pf-kpi__sub">settled with suppliers</div>
-        </div>
+        @for (group of kpiGroups(); track group.code) {
+          <div class="pf-kpi">
+            <span class="pf-kpi__label">Requested{{ mixed() ? ' · ' + group.code : '' }}</span>
+            <div class="pf-kpi__value">{{ formatMinor(group.requested, group.code) }}</div>
+            <div class="pf-kpi__sub">draft demand in view</div>
+          </div>
+          <div class="pf-kpi">
+            <span class="pf-kpi__label">Ordered{{ mixed() ? ' · ' + group.code : '' }}</span>
+            <div class="pf-kpi__value">{{ formatMinor(group.ordered, group.code) }}</div>
+            <div class="pf-kpi__sub">committed to suppliers</div>
+          </div>
+          <div class="pf-kpi">
+            <span class="pf-kpi__label">Invoiced{{ mixed() ? ' · ' + group.code : '' }}</span>
+            <div class="pf-kpi__value">{{ formatMinor(group.invoiced, group.code) }}</div>
+            <div class="pf-kpi__sub">billed, paid or not</div>
+          </div>
+          <div class="pf-kpi">
+            <span class="pf-kpi__label">Paid{{ mixed() ? ' · ' + group.code : '' }}</span>
+            <div class="pf-kpi__value">{{ formatMinor(group.paid, group.code) }}</div>
+            <div class="pf-kpi__sub">settled with suppliers</div>
+          </div>
+        }
       </div>
     }
 
@@ -83,6 +90,41 @@
             title="No monthly movement"
             message="Ordered, invoiced and paid totals appear here once purchasing moves."
           />
+        } @else if (mixed()) {
+          <div class="pf-table-scroll">
+            <table mat-table [dataSource]="months()" class="pf-table" aria-label="Spend by period and currency">
+              <ng-container matColumnDef="period">
+                <th mat-header-cell *matHeaderCellDef>Period</th>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-button (click)="pickMonth(row.period ?? '')">{{ row.period }}</button>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="currency">
+                <th mat-header-cell *matHeaderCellDef>Currency</th>
+                <td mat-cell *matCellDef="let row">{{ row.currency }}</td>
+              </ng-container>
+              <ng-container matColumnDef="ordered">
+                <th mat-header-cell *matHeaderCellDef class="pf-num">Ordered</th>
+                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
+                  {{ formatMinor(row.orderedMinor, row.currency ?? 'MAD') }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="invoiced">
+                <th mat-header-cell *matHeaderCellDef class="pf-num">Invoiced</th>
+                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
+                  {{ formatMinor(row.invoicedMinor, row.currency ?? 'MAD') }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="paid">
+                <th mat-header-cell *matHeaderCellDef class="pf-num">Paid</th>
+                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
+                  {{ formatMinor(row.paidMinor, row.currency ?? 'MAD') }}
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="monthColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: monthColumns"></tr>
+            </table>
+          </div>
         } @else {
           <app-spend-chart [months]="spendPoints()" (monthSelected)="drillToMonth($event)" />
         }
@@ -104,6 +146,29 @@
             title="No categorized spend"
             message="Category totals appear once ordered lines carry categories."
           />
+        } @else if (mixed()) {
+          <div class="pf-table-scroll">
+            <table mat-table [dataSource]="categories()" class="pf-table" aria-label="Spend by category and currency">
+              <ng-container matColumnDef="category">
+                <th mat-header-cell *matHeaderCellDef>Category</th>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-button (click)="drillToCategory(row.category)">{{ row.category }}</button>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="currency">
+                <th mat-header-cell *matHeaderCellDef>Currency</th>
+                <td mat-cell *matCellDef="let row">{{ row.currency }}</td>
+              </ng-container>
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef class="pf-num">Amount</th>
+                <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
+                  {{ formatMinor(row.amountMinor, row.currency) }}
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="categoryColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: categoryColumns"></tr>
+            </table>
+          </div>
         } @else {
           <app-donut-chart [slices]="donutSlices()" (categorySelected)="drillToCategory($event)" />
         }

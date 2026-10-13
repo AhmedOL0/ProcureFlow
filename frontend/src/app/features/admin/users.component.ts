@@ -66,7 +66,7 @@ export class UsersComponent {
   });
   readonly newPassword = new FormControl('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.minLength(12)],
+    validators: [Validators.required, Validators.minLength(12), Validators.maxLength(72)],
   });
   readonly newRoles = new FormControl<string[]>([], { nonNullable: true });
   readonly roleOptions = ['TENANT_ADMIN', 'APPROVER', 'FINANCE', 'OFFICER', 'AUDITOR', 'MEMBER'];

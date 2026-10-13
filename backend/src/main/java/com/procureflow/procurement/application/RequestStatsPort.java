@@ -15,6 +15,12 @@ public interface RequestStatsPort {
     /** Month-bounded variant: half-open [from, to), never null at the call site. */
     List<RequestStat> requestStats(String tenantSlug, Instant from, Instant to);
 
+    /** DB-side sums for the all-time path: no request or item entities load. */
+    RequestTotals requestTotals(String tenantSlug);
+
+    /** Status stamps without collections for the all-time approvals path. */
+    List<LeadRow> requestLeads(String tenantSlug);
+
     record RequestStat(
             UUID requestId,
             String status,
@@ -26,5 +32,14 @@ public interface RequestStatsPort {
     }
 
     record ItemStat(String category, int quantity, long unitPriceMinor, String currency) {
+    }
+
+    record CategoryTotal(String category, String currency, long amountMinor) {
+    }
+
+    record RequestTotals(long requestedMinor, List<CategoryTotal> byCategory) {
+    }
+
+    record LeadRow(String status, Instant submittedAt, Instant decidedAt) {
     }
 }

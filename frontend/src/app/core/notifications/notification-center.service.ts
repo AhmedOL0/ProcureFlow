@@ -15,13 +15,13 @@ export interface PageState {
 }
 
 /**
- * Header inbox + notifications page: latest rows, unread count, mark-read.
+ * Header inbox + notifications page: latest rows, unread total, mark-read.
  * The inbox endpoint is paged server-side; `items` holds the loaded page
  * (first page by default) and `page.length` the server total. The unread
- * badge therefore counts the loaded page — exact at realistic volumes, and
- * the notifications page always shows the true total beside its paginator.
- * The read filter travels as `unreadOnly` so the Unread tab counts the
- * whole inbox, not just the loaded page; shell and workspace always read
+ * badge reads `unreadTotal` — a size-1 `unreadOnly` call whose total is the
+ * server-wide unread count, so the badge holds past the first page. The
+ * notifications page shows its own totals beside the paginator.
+ * The read filter travels as `unreadOnly`; shell and workspace always read
  * the full inbox and pass nothing.
  */
 @Injectable({ providedIn: 'root' })
@@ -33,7 +33,13 @@ export class NotificationCenterService {
   readonly page = signal<PageState>({ pageIndex: 0, pageSize: 20, length: 0 });
   readonly loading = signal(false);
   readonly failed = signal(false);
-  readonly unread = computed(() => this.items().filter((item) => !item.read).length);
+  readonly unreadTotal = signal(0);
+  /** Unread rows on the loaded page: what "mark all read" will actually mark. */
+  readonly unreadOnPage = computed(() => this.items().filter((item) => !item.read).length);
+
+  constructor() {
+    this.refreshUnreadTotal();
+  }
 
   refresh(unreadOnly = false): void {
     const current = this.page();
@@ -73,6 +79,7 @@ export class NotificationCenterService {
       .subscribe({
         next: (updated) => {
           this.items.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+          this.refreshUnreadTotal();
         },
       });
   }
@@ -102,8 +109,25 @@ export class NotificationCenterService {
         next: (updated) => {
           const byId = new Map(updated.map((row) => [row.id, row]));
           this.items.update((rows) => rows.map((row) => byId.get(row.id) ?? row));
+          this.refreshUnreadTotal();
         },
         error: () => this.refresh(),
+      });
+  }
+
+  /**
+   * Server-wide unread count via a size-1 `unreadOnly` read: one cheap query
+   * whose total is exact. Failures keep the last known value — a badge must
+   * never flash zero on a blip.
+   */
+  refreshUnreadTotal(): void {
+    this.http
+      .get<InboxPage>(`${this.api}/api/v1/notifications`, {
+        params: { page: 0, size: 1, unreadOnly: true },
+      })
+      .subscribe({
+        next: (result) => this.unreadTotal.set(result?.totalElements ?? 0),
+        error: () => undefined,
       });
   }
 }

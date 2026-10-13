@@ -42,6 +42,29 @@ public class InvoiceStatsAdapter implements InvoiceStatsPort {
         return statsOf(found);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<InvoiceTotal> invoiceTotals(String tenantSlug) {
+        List<Invoice> found =
+                invoices.findAllByTenantIdOrderByCreatedAtDesc(tenants.requireTenantId(tenantSlug));
+        if (found.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, Long> paid = new HashMap<>();
+        for (Object[] row : payments.sumPaidByInvoiceIds(found.stream().map(Invoice::getId).toList())) {
+            paid.put((UUID) row[0], (Long) row[1]);
+        }
+        return found.stream()
+                .map(invoice -> new InvoiceTotal(
+                        invoice.getId(),
+                        invoice.getStatus().name(),
+                        invoice.getCurrency(),
+                        invoice.getCreatedAt(),
+                        invoice.getTotalMinor(),
+                        paid.getOrDefault(invoice.getId(), 0L)))
+                .toList();
+    }
+
     private List<InvoiceStat> statsOf(List<Invoice> found) {
         if (found.isEmpty()) {
             return List.of();

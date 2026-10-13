@@ -158,6 +158,10 @@ public class PurchaseRequestService {
     @Transactional
     public void delete(String tenantSlug, UUID id, UUID callerId, boolean admin) {
         PurchaseRequest request = editable(tenantSlug, id, callerId, admin);
+        // Writes go through the item repository explicitly (no cascade), so
+        // the lines die here first: removing the request with a loaded items
+        // collection trips the flush over managed back-references (500).
+        items.deleteAll(request.getItems());
         requests.delete(request);
     }
 

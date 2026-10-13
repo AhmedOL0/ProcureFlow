@@ -212,6 +212,26 @@ class ProcurementIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void deletingADraftRemovesItsLines() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        UUID id = createId(
+                admin.token(),
+                "Laptops",
+                List.of(Map.of("description", "ThinkPad", "quantity", 2, "unitPriceMinor", 89900)));
+
+        ResponseEntity<String> deleted = rest.exchange(
+                "/api/v1/purchase-requests/" + id,
+                HttpMethod.DELETE,
+                new HttpEntity<>(bearer(admin.token())),
+                String.class);
+        assertEquals(HttpStatus.NO_CONTENT, deleted.getStatusCode());
+
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                get("/api/v1/purchase-requests/" + id, admin.token(), String.class).getStatusCode());
+    }
+
+    @Test
     void mixedCurrencyLinesAreRejected() {
         Fixture admin = provision(uniqueSlug("acme"));
         UUID id = createId(
@@ -255,7 +275,27 @@ class ProcurementIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void itemsLinkToTenantSuppliersOnly() {        Fixture tenantA = provision(uniqueSlug("acme"));
+    @SuppressWarnings("unchecked")
+    void lowercaseCurrencyNormalizesToUpper() {
+        // Budgets coerce codes the same way: accept any case, store upper.
+        Fixture admin = provision(uniqueSlug("acme"));
+        UUID id = createId(
+                admin.token(),
+                "Laptops",
+                List.of(Map.of("description", "ThinkPad", "quantity", 2, "unitPriceMinor", 89900, "currency", "mad")));
+
+        ResponseEntity<Map> fetched = get("/api/v1/purchase-requests/" + id, admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, fetched.getStatusCode());
+        assertNotNull(fetched.getBody());
+        List<Map<String, Object>> itemList = (List<Map<String, Object>>) fetched.getBody().get("items");
+        assertNotNull(itemList);
+        assertEquals(1, itemList.size());
+        assertEquals("MAD", itemList.get(0).get("currency"));
+    }
+
+    @Test
+    void itemsLinkToTenantSuppliersOnly() {
+        Fixture tenantA = provision(uniqueSlug("acme"));
         Fixture tenantB = provision(uniqueSlug("globex"));
         UUID supplier = createSupplier(tenantA.token(), "Acme Parts");
         UUID request = createId(tenantB.token(), "Laptops", null);

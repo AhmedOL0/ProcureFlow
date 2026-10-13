@@ -44,6 +44,26 @@ public class OrderStatsAdapter implements OrderStatsPort {
         return statsOf(found);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderStatsPort.OrderTotal> orderTotals(String tenantSlug) {
+        UUID tenantId = tenants.requireTenantId(tenantSlug);
+        Map<UUID, Long> sums = new HashMap<>();
+        for (Object[] row : lines.sumByTenantId(tenantId)) {
+            sums.put((UUID) row[0], (Long) row[1]);
+        }
+        List<OrderStatsPort.OrderTotal> totals = new ArrayList<>();
+        for (PurchaseOrder order : orders.findAllByTenantIdOrderByCreatedAtDesc(tenantId)) {
+            totals.add(new OrderStatsPort.OrderTotal(
+                    order.getId(),
+                    order.getStatus().name(),
+                    order.getCurrency(),
+                    order.getCreatedAt(),
+                    sums.getOrDefault(order.getId(), 0L)));
+        }
+        return totals;
+    }
+
     private List<OrderStat> statsOf(List<PurchaseOrder> found) {
         if (found.isEmpty()) {
             return List.of();

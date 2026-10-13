@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>Import suppliers</h2>
 <mat-dialog-content>
-  <p class="pf-muted">
+  <p class="import-intro">
     Bulk-create from <strong>.xlsx</strong> or <strong>.csv</strong> (max 5 MB, 500 rows).
     Columns: <span class="pf-data-mono">name</span> required,
     <span class="pf-data-mono">email, phone, tax_id, address, status, categories</span> optional
@@ -18,7 +18,7 @@
       #fileInput
     />
     <button mat-stroked-button (click)="fileInput.click()">Choose file</button>
-    <span class="pf-muted">{{ fileName() ?? 'No file chosen' }}</span>
+    <span class="import-file-name">{{ fileName() ?? 'No file chosen' }}</span>
     <button mat-stroked-button (click)="template()">Download template</button>
   </div>
   @if (created() !== null) {

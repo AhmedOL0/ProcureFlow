@@ -8,7 +8,7 @@ import java.util.Set;
 
 public record CreateUserRequest(
         @Email @NotBlank String email,
-        @NotBlank @Size(min = 12, message = "Password must be at least 12 characters") String password,
+        @NotBlank @Size(min = 12, max = 72, message = "Password must be 12 to 72 characters") String password,
         String firstName,
         String lastName,
         @NotEmpty Set<String> roleNames) {

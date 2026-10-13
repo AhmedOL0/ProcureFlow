@@ -352,6 +352,60 @@ test.describe('critical journeys', () => {
     expect(download.suggestedFilename()).toBe('suppliers-acme-2026-10-12.xlsx');
   });
 
+  test('budget export and import ride the same download plumbing', async ({ page }) => {
+    let uploads = 0;
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
+        departments: [], users: [], notifications: [],
+      }),
+      { method: 'GET', match: '/budgets', handle: () => ({ status: 200, body: asPage([]) }) },
+      {
+        method: 'POST',
+        match: '/budgets/import',
+        handle: () => {
+          uploads += 1;
+          return { status: 200, body: { created: 2, errors: [] } };
+        },
+      },
+    ]);
+    // Binary route after the catch-all (see the supplier export test).
+    await page.route('**/budgets/export.xlsx', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers: {
+          'Content-Disposition': 'attachment; filename="budgets-acme-2026-10-12.xlsx"',
+          'Access-Control-Expose-Headers': 'Content-Disposition',
+        },
+        body: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      });
+    });
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/budgets');
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Export Excel' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('budgets-acme-2026-10-12.xlsx');
+
+    await page.getByRole('button', { name: 'Import' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('Bulk-open');
+    await dialog.getByLabel('Import file').setInputFiles({
+      name: 'budgets.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from('name,period,amount\nOps,2026-10,100\n'),
+    });
+    await dialog.getByRole('button', { name: 'Import', exact: true }).click();
+    await expect(dialog).toContainText('2 pots opened.');
+    expect(uploads).toBe(1);
+  });
+
   test('supplier import rejects bad files client-side', async ({ page }) => {
     let uploads = 0;
     await stubApi(page, [
@@ -718,6 +772,61 @@ test.describe('critical journeys', () => {
     await page.goto('/analytics');
     await expect(page.getByText('Cloud', { exact: true })).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.spend-chart__table')).toContainText('2026-10');
+  });
+
+  test('analytics splits mixed currencies instead of merging', async ({ page }) => {
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [], requests: [], budgets: [], orders: [], invoices: [],
+        departments: [], users: [], notifications: [],
+      }),
+      {
+        method: 'GET',
+        match: '/analytics/spend',
+        body: {
+          requestedMinor: 280000,
+          orderedMinor: 80000,
+          invoicedMinor: 0,
+          paidMinor: 0,
+          currencies: ['EUR', 'MAD'],
+          byCurrency: [
+            { currency: 'EUR', requestedMinor: 200000, orderedMinor: 0, invoicedMinor: 0, paidMinor: 0 },
+            { currency: 'MAD', requestedMinor: 80000, orderedMinor: 80000, invoicedMinor: 0, paidMinor: 0 },
+          ],
+          byCategory: [
+            { category: 'Cloud', currency: 'EUR', amountMinor: 200000 },
+            { category: 'Cloud', currency: 'MAD', amountMinor: 80000 },
+          ],
+          byPeriod: [
+            { period: '2026-10', currency: 'EUR', orderedMinor: 0, invoicedMinor: 0, paidMinor: 0 },
+            { period: '2026-10', currency: 'MAD', orderedMinor: 80000, invoicedMinor: 0, paidMinor: 0 },
+          ],
+        },
+      },
+      { method: 'GET', match: '/analytics/suppliers', body: [] },
+      {
+        method: 'GET',
+        match: '/analytics/approvals',
+        body: { pending: 0, decided: 0, avgLeadHours: null, maxLeadHours: null },
+      },
+      {
+        method: 'GET',
+        match: '/ai/usage',
+        body: { calls: 0, promptTokens: 0, completionTokens: 0, byFeature: [] },
+      },
+    ]);
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await page.goto('/analytics');
+    // Warning plus per-currency KPIs; charts give way to tagged tables.
+    await expect(page.getByRole('alert')).toContainText('EUR, MAD');
+    await expect(page.getByText('Requested · EUR')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Requested · MAD')).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Spend by category and currency' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Spend by period and currency' })).toBeVisible();
   });
 
   test('analytics charts drill into filters', async ({ page }) => {

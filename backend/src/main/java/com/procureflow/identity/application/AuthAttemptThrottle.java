@@ -28,6 +28,7 @@ public class AuthAttemptThrottle {
     static final int VERIFY_REDEEM_MAX_PER_IP_PER_HOUR = 60;
     static final int ADMIN_CREATE_MAX_PER_TENANT_PER_HOUR = 200;
     static final int CHANGE_PASSWORD_MAX_PER_ACCOUNT_PER_MINUTE = 10;
+    static final int IMPORT_MAX_PER_ACTOR_PER_HOUR = 30;
 
     private final AttemptLedger ledger;
 
@@ -119,6 +120,19 @@ public class AuthAttemptThrottle {
                 "change-password:account:" + AuthService.hash(String.valueOf(userId)),
                 CHANGE_PASSWORD_MAX_PER_ACCOUNT_PER_MINUTE,
                 Duration.ofMinutes(1));
+    }
+
+    /**
+     * Bulk import: per-actor hourly budget, checked before parsing so floods
+     * fail fast instead of burning 5 MB parses. Roomy for human onboarding
+     * bursts; it damps automation abuse, not legitimate use.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void checkImport(UUID actorId) {
+        check(
+                "import:actor:" + AuthService.hash(String.valueOf(actorId)),
+                IMPORT_MAX_PER_ACTOR_PER_HOUR,
+                Duration.ofHours(1));
     }
 
     /**

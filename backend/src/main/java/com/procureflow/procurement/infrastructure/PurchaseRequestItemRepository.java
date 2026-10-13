@@ -17,4 +17,14 @@ public interface PurchaseRequestItemRepository extends JpaRepository<PurchaseReq
     Optional<PurchaseRequestItem> findByIdAndTenantSlug(@Param("id") UUID id, @Param("slug") String slug);
 
     long countByRequest_Id(UUID requestId);
+
+    // DB-side sums for the all-time analytics path: no item entities load.
+    // Cancelled requests never demanded anything, so they stay out here,
+    // mirroring the in-memory filter on the month path.
+    @Query("select i.category, i.currency, coalesce(sum(i.quantity * i.unitPriceMinor), 0)"
+            + " from PurchaseRequestItem i"
+            + " where i.request.tenant.slug = :slug"
+            + " and i.request.status <> com.procureflow.procurement.domain.PurchaseRequest.Status.CANCELLED"
+            + " group by i.category, i.currency")
+    List<Object[]> sumActiveByCategoryAndCurrency(@Param("slug") String slug);
 }

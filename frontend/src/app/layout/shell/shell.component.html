@@ -115,8 +115,8 @@
         aria-label="Notifications"
       >
         <lucide-angular [img]="icons.bell" [size]="20" />
-        @if (inbox.unread() > 0) {
-          <span class="shell__dot" aria-hidden="true">{{ inbox.unread() }}</span>
+        @if (inbox.unreadTotal() > 0) {
+          <span class="shell__dot" aria-hidden="true">{{ inbox.unreadTotal() }}</span>
         }
       </button>
       <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Account">

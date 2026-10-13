@@ -5,9 +5,9 @@
     [breadcrumbs]="[{ label: 'Notifications' }]"
   >
     <div slot="actions">
-      @if (inbox.unread() > 0) {
+      @if (inbox.unreadOnPage() > 0) {
         <button mat-stroked-button (click)="inbox.markAllRead()" [disabled]="inbox.loading()">
-          Mark all read ({{ inbox.unread() }})
+          Mark all read ({{ inbox.unreadOnPage() }})
         </button>
       }
     </div>
@@ -20,7 +20,7 @@
           All ({{ inbox.page().length }})
         </mat-chip-option>
         <mat-chip-option [selected]="unreadOnly()" (click)="showUnread()">
-          Unread ({{ inbox.unread() }})
+          Unread ({{ inbox.unreadTotal() }})
         </mat-chip-option>
       </mat-chip-listbox>
     </div>

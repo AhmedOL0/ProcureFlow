@@ -138,6 +138,41 @@ class SupplierIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void concurrentDuplicateCreatesYieldOneSupplier() throws Exception {
+        Fixture admin = provision(uniqueSlug("acme"));
+        CountDownLatch gate = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Callable<ResponseEntity<Map>> first = () -> {
+                gate.await(30, TimeUnit.SECONDS);
+                return post("/api/v1/suppliers", admin.token(), Map.of("name", "Racer"), Map.class);
+            };
+            Callable<ResponseEntity<Map>> second = () -> {
+                gate.await(30, TimeUnit.SECONDS);
+                return post("/api/v1/suppliers", admin.token(), Map.of("name", "Racer"), Map.class);
+            };
+            Future<ResponseEntity<Map>> racerA = pool.submit(first);
+            Future<ResponseEntity<Map>> racerB = pool.submit(second);
+            gate.countDown();
+
+            // Whatever the interleaving — pre-check or unique net — exactly
+            // one create wins and the loser answers 409, never 500.
+            var statusA = racerA.get(60, TimeUnit.SECONDS).getStatusCode();
+            var statusB = racerB.get(60, TimeUnit.SECONDS).getStatusCode();
+            assertTrue(
+                    (statusA == HttpStatus.CREATED && statusB == HttpStatus.CONFLICT)
+                            || (statusA == HttpStatus.CONFLICT && statusB == HttpStatus.CREATED));
+
+            ResponseEntity<Map> search = get("/api/v1/suppliers?q=Racer", admin.token(), Map.class);
+            assertEquals(HttpStatus.OK, search.getStatusCode());
+            assertNotNull(search.getBody());
+            assertEquals(1, ((List<?>) search.getBody().get("content")).size());
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
     void concurrentPrimaryContactsYieldOnePrimary() throws Exception {
         Fixture admin = provision(uniqueSlug("acme"));
         UUID supplier = createSupplier(admin.token(), "Acme Parts");
