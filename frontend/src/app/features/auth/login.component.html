@@ -1,10 +1,20 @@
-<div class="auth-brand" aria-hidden="true">ProcureFlow</div>
-<main class="auth-main">
-  <mat-card class="auth-card">
-    <mat-card-header>
-      <mat-card-title><h1 class="auth-title">Sign in to ProcureFlow</h1></mat-card-title>
-      <mat-card-subtitle>Buying workspace for your whole company</mat-card-subtitle>
-    </mat-card-header>
+<div class="auth-shell">
+  <aside class="auth-brand-panel" aria-label="About ProcureFlow">
+    <img class="auth-logo" src="/brand/logo.png" alt="ProcureFlow — Smarter Procurement. Stronger Teams." />
+    <p class="auth-tagline">The buying workspace for your whole company.</p>
+    <ol class="auth-steps">
+      <li>Raise a request with lines — totals computed server-side, never in the browser.</li>
+      <li>Route approvals with budget holds before any money moves.</li>
+      <li>Order, receive, invoice and pay down one audited trail.</li>
+    </ol>
+    <p class="auth-assurance">Tenant-isolated workspaces · every action audited.</p>
+  </aside>
+  <main class="auth-main">
+    <mat-card class="auth-card">
+      <mat-card-header>
+        <mat-card-title><h1 class="auth-title">Sign in to ProcureFlow</h1></mat-card-title>
+        <mat-card-subtitle>Buying workspace for your whole company</mat-card-subtitle>
+      </mat-card-header>
 
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
@@ -72,5 +82,6 @@
       <span class="auth-switch">New here? <a routerLink="/register">Create a workspace</a></span>
       <span class="auth-switch"><a routerLink="/forgot-password">Forgot password?</a></span>
     </mat-card-actions>
-  </mat-card>
-</main>
+    </mat-card>
+  </main>
+</div>

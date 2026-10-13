@@ -13,6 +13,15 @@ guard on every exported string; `EXPORT_TOO_LARGE` past 5000 rows;
 exposed over CORS. Gates: backend 166 IT green (`verify`), frontend
 tsc + build + 52 Vitest + 58 e2e green. Follow-ups: budget import,
 request PDF dossier, EXPORT_TOO_LARGE IT (needs 5000-row fixture).
+**Brand-auth slice (feature/brand-auth, this change).** Real logo lockup
+(`public/brand/logo.png`, absolute `/brand/logo.png` so nested shell
+routes resolve) on all auth pages + rail brand (replaces inline SVG +
+text wordmark); login/register get a split-screen brand panel (desktop)
+collapsing to a logo-only masthead ≤1023px; dead `.auth-brand` CSS
+removed. Evidence `docs/screens/36-login-brand.png`,
+`37-register-brand.png`, `38-login-mobile.png`. Gates: tsc 0, build 0,
+54 Vitest, e2e 32 chromium + 32 firefox green (one transient firefox
+axe flake on suppliers, clean on full re-run).
 Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
 #12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
 Playwright green, live-verified screens in `docs/screens/`. This pass:
