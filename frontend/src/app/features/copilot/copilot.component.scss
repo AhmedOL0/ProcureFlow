@@ -112,6 +112,45 @@
   color: var(--pf-text);
 }
 
+.copilot-history {
+  padding: 0 var(--pf-space-lg) var(--pf-space-lg);
+  border-top: 1px solid var(--pf-border);
+}
+.copilot-history__title {
+  font: var(--pf-headline-sm);
+  color: var(--pf-navy);
+  margin: var(--pf-space-md) 0 0;
+}
+.copilot-history__list {
+  list-style: none;
+  margin: var(--pf-space-sm) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-space-sm);
+}
+.copilot-history__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pf-space-md);
+  padding: var(--pf-space-sm) var(--pf-space-md);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-md);
+}
+.copilot-history__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.copilot-history__text strong {
+  font: var(--pf-label-lg);
+  color: var(--pf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .copilot-quotes {
   padding: var(--pf-space-lg);
   border-bottom: 1px solid var(--pf-border);

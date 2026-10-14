@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { components } from '../../../lib/api-types.gen';
@@ -8,6 +8,13 @@ import { components } from '../../../lib/api-types.gen';
 export type ChatAnswer = components['schemas']['ChatResponse'];
 export type RequestDraft = components['schemas']['DraftResponse'];
 export type DraftItem = components['schemas']['DraftItemResponse'];
+export type Extraction = components['schemas']['ExtractionResponse'];
+export type ExtractionCreation = components['schemas']['ExtractionRequestResponse'];
+
+export interface ExtractionPage {
+  rows: Extraction[];
+  total: number;
+}
 
 /**
  * ProcureAI copilot calls. Every action needs ai:use and a live provider:
@@ -34,5 +41,28 @@ export class CopilotService {
 
   compareQuotations(quotes: { supplier: string; amountMinor: number }[]): Observable<ChatAnswer> {
     return this.http.post<ChatAnswer>(`${this.base}/compare-quotations`, { quotes });
+  }
+
+  /**
+   * Validated extraction history, newest first. Derived store with 90-day
+   * retention: an empty shelf is a real empty shelf (reads 503 when the
+   * store itself is unreachable).
+   */
+  history(): Observable<ExtractionPage> {
+    const params = new HttpParams().set('page', 0).set('size', 20);
+    return this.http
+      .get<components['schemas']['PagedExtractionResponse']>(`${this.base}/extractions`, { params })
+      .pipe(map((result) => ({ rows: result?.content ?? [], total: result?.totalElements ?? 0 })));
+  }
+
+  /**
+   * Creates a real draft from a stored extraction through the guarded,
+   * idempotent server path (single-currency, validation, X-Replay on
+   * reuse). The server links the extraction to the draft.
+   */
+  createFromExtraction(id: string, idempotencyKey: string): Observable<ExtractionCreation> {
+    return this.http.post<ExtractionCreation>(`${this.base}/extractions/${id}/request`, null, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
   }
 }

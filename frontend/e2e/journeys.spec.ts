@@ -1044,6 +1044,60 @@ test.describe('critical journeys', () => {
     await expect(page.getByText(/disabled/)).toBeVisible({ timeout: 10000 });
   });
 
+  test('copilot history creates requests from stored extractions', async ({ page }) => {
+    await stubApi(page, [
+      ...baseStubs({
+        suppliers: [],
+        requests: [],
+        budgets: [],
+        orders: [],
+        invoices: [],
+        departments: [],
+        users: [],
+        notifications: [],
+      }),
+      {
+        method: 'GET',
+        match: '/ai/extractions',
+        body: asPage([
+          {
+            id: 'e-1',
+            title: 'Laptops',
+            items: [{ description: 'ThinkPad', quantity: 20, unitPriceMinor: 89900 }],
+            modelIdentifier: 'stub',
+            createdRequestId: null,
+          },
+          {
+            id: 'e-2',
+            title: 'Chairs',
+            items: [],
+            modelIdentifier: 'stub',
+            createdRequestId: 'r-2',
+          },
+        ]),
+      },
+      {
+        method: 'POST',
+        match: '/ai/extractions/e-1/request',
+        body: { requestId: 'r-9' },
+      },
+    ]);
+    await page.goto('/login');
+    await page.getByLabel('Work email').fill('boss@acme.test');
+    await page.getByLabel('Password', { exact: true }).fill('x');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    await page.goto('/copilot');
+    await page.getByRole('option', { name: 'Draft from words' }).click();
+    await expect(page.getByText('Recent drafts')).toBeVisible();
+    await expect(page.getByText('Laptops')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Opened' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Create request' }).click();
+    await expect(page).toHaveURL(/\/requests\/r-9/);
+  });
+
   test('notifications mark-read and settings save', async ({ page }) => {
     const notifications: Record<string, unknown>[] = [
       {

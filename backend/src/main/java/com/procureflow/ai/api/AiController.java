@@ -3,6 +3,7 @@ package com.procureflow.ai.api;
 import com.procureflow.ai.application.AiValidator;
 import com.procureflow.ai.application.CopilotService;
 import com.procureflow.identity.application.AuthenticatedUser;
+import com.procureflow.procurement.application.RequestDrafting;
 import com.procureflow.shared.web.Paged;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -123,6 +126,22 @@ public class AiController {
         return ResponseEntity.ok(extraction(copilot.historyOne(principal.tenantId(), id)));
     }
 
+    @PostMapping("/extractions/{id}/request")
+    @PreAuthorize("hasAuthority('ai:use') and hasAuthority('procurement:request')")
+    @Operation(summary = "Create a draft from an extraction (idempotent per Idempotency-Key)")
+    public ResponseEntity<ExtractionRequestResponse> createFromExtraction(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @PathVariable String id,
+            @RequestHeader("Idempotency-Key") String key) {
+        RequestDrafting.Creation created =
+                copilot.createFromExtraction(principal.tenantId(), principal.userId(), id, key);
+        ExtractionRequestResponse body = new ExtractionRequestResponse(created.requestId().toString());
+        if (created.replayed()) {
+            return ResponseEntity.ok().header("X-Replay", "true").body(body);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    }
+
     private static ExtractionResponse extraction(CopilotService.ExtractionView view) {
         return new ExtractionResponse(
                 view.id(),
@@ -167,6 +186,9 @@ public class AiController {
     public record ExtractionResponse(String id, int schemaVersion, String modelIdentifier, String promptVersion,
             String input, String title, String priority, List<DraftItemResponse> items, String createdRequestId,
             String createdAt) {
+    }
+
+    public record ExtractionRequestResponse(String requestId) {
     }
 
     public record FeatureUsageResponse(String feature, long calls, long promptTokens, long completionTokens) {

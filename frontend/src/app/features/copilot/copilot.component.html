@@ -228,6 +228,34 @@
           />
         }
       </div>
+      <div class="copilot-history">
+        <h3 class="copilot-history__title">Recent drafts</h3>
+        <p class="copilot-muted">Validated extractions from this workspace, newest first.</p>
+        @if (history().length > 0) {
+          <ul class="copilot-history__list">
+            @for (row of history(); track row.id) {
+              <li class="copilot-history__row">
+                <div class="copilot-history__text">
+                  <strong>{{ row.title || 'Untitled draft' }}</strong>
+                  <span class="copilot-muted"
+                    >{{ row.items?.length ?? 0 }} line{{ (row.items?.length ?? 0) === 1 ? '' : 's' }} ·
+                    {{ row.modelIdentifier }}</span
+                  >
+                </div>
+                @if (row.createdRequestId) {
+                  <a class="pf-row-link" [routerLink]="['/requests', row.createdRequestId]">Opened</a>
+                } @else if (canRequest) {
+                  <button mat-stroked-button (click)="createFromHistory(row)" [disabled]="busy()">
+                    Create request
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="copilot-muted">No saved extractions yet — structure a draft above.</p>
+        }
+      </div>
     </section>
   }
 
