@@ -10,9 +10,13 @@ import java.util.UUID;
  */
 public interface SupplierStatsPort {
 
-    List<ScoreStat> scores(String tenantSlug);
+    /**
+     * One grouped row per supplier: exact sums plus non-null counts so the
+     * caller divides with scale-2 HALF_UP semantics, matching the row scan.
+     */
+    List<ScoreSummary> scoreSummaries(String tenantSlug);
 
-    record ScoreStat(UUID supplierId, String supplierName, String period, BigDecimal onTimeRate,
-            BigDecimal qualityScore) {
+    record ScoreSummary(UUID supplierId, String supplierName, long periods, BigDecimal onTimeSum, long onTimeCount,
+            BigDecimal qualitySum, long qualityCount) {
     }
 }

@@ -18,8 +18,12 @@ public interface RequestStatsPort {
     /** DB-side sums for the all-time path: no request or item entities load. */
     RequestTotals requestTotals(String tenantSlug);
 
-    /** Status stamps without collections for the all-time approvals path. */
-    List<LeadRow> requestLeads(String tenantSlug);
+    /**
+     * Approval KPIs in one grouped row: no request entities load however
+     * large tenant history grows. Lead sums arrive in millis (null when no
+     * decided row carries both stamps); the caller rounds exactly once.
+     */
+    ApprovalSummary approvalSummary(String tenantSlug);
 
     record RequestStat(
             UUID requestId,
@@ -40,6 +44,6 @@ public interface RequestStatsPort {
     record RequestTotals(long requestedMinor, List<CategoryTotal> byCategory) {
     }
 
-    record LeadRow(String status, Instant submittedAt, Instant decidedAt) {
+    record ApprovalSummary(long pending, long decided, Double leadMillisSum, Double leadMillisMax) {
     }
 }

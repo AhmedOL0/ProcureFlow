@@ -74,9 +74,28 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.id in :ids")
     List<PurchaseRequest> findByIdInAndTenantSlug(@Param("ids") Set<UUID> ids, @Param("slug") String slug);
 
-    // Lead-time rows without item collections for the all-time approvals path.
-    @Query("select r.status, r.submittedAt, r.decidedAt from PurchaseRequest r where r.tenant.slug = :slug")
-    List<Object[]> leadRowsByTenantSlug(@Param("slug") String slug);
+    // Approval KPIs in one grouped row: pending counts every SUBMITTED row
+    // (no stamp filter, matching the service contract); decided rows need
+    // both stamps. Lead sums stay in millis so the service rounds exactly
+    // once, the same rounding the row scan applied per row.
+    // Native SQL: the EXTRACT(EPOCH FROM interval) lead arithmetic has no
+    // JPQL spelling, and this product is Postgres-only by migration chain.
+    // Declared as a list (one row: aggregates without GROUP BY always
+    // return exactly one row, even over an empty table) following the
+    // leadRows convention this replaces.
+    @Query(value = "select "
+            + "count(*) filter (where r.status = 'SUBMITTED'), "
+            + "count(*) filter (where r.status in ('APPROVED', 'REJECTED', 'ORDERED')"
+            + " and r.submitted_at is not null and r.decided_at is not null), "
+            + "sum(extract(epoch from (r.decided_at - r.submitted_at)) * 1000)"
+            + " filter (where r.status in ('APPROVED', 'REJECTED', 'ORDERED')"
+            + " and r.submitted_at is not null and r.decided_at is not null), "
+            + "max(extract(epoch from (r.decided_at - r.submitted_at)) * 1000)"
+            + " filter (where r.status in ('APPROVED', 'REJECTED', 'ORDERED')"
+            + " and r.submitted_at is not null and r.decided_at is not null) "
+            + "from purchase_requests r join tenants t on t.id = r.tenant_id where t.slug = :slug",
+            nativeQuery = true)
+    List<Object[]> approvalSummaryByTenantSlug(@Param("slug") String slug);
 
     @EntityGraph(attributePaths = {"tenant", "items"})
     @Query("select r from PurchaseRequest r where r.tenant.slug = :slug and r.idempotencyKey = :key")
