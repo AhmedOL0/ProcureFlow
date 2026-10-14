@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -202,17 +201,16 @@ public class AnalyticsService {
 
     @Transactional(readOnly = true)
     public List<SupplierKpi> suppliers(String tenantSlug) {
-        Map<UUID, List<SupplierStatsPort.ScoreStat>> grouped = suppliers.scores(tenantSlug).stream()
-                .collect(Collectors.groupingBy(
-                        SupplierStatsPort.ScoreStat::supplierId, LinkedHashMap::new, Collectors.toList()));
+        // One grouped row per supplier from the DB; the service only sorts
+        // and divides. Supplier count bounds memory, not history size.
         List<SupplierKpi> result = new ArrayList<>();
-        for (List<SupplierStatsPort.ScoreStat> rows : grouped.values()) {
+        for (SupplierStatsPort.ScoreSummary row : suppliers.scoreSummaries(tenantSlug)) {
             result.add(new SupplierKpi(
-                    rows.get(0).supplierId(),
-                    rows.get(0).supplierName(),
-                    rows.size(),
-                    average(rows.stream().map(SupplierStatsPort.ScoreStat::onTimeRate).toList()),
-                    average(rows.stream().map(SupplierStatsPort.ScoreStat::qualityScore).toList())));
+                    row.supplierId(),
+                    row.supplierName(),
+                    (int) row.periods(),
+                    divide(row.onTimeSum(), row.onTimeCount()),
+                    divide(row.qualitySum(), row.qualityCount())));
         }
         result.sort((a, b) -> a.supplierName().compareToIgnoreCase(b.supplierName()));
         return result;
@@ -220,29 +218,17 @@ public class AnalyticsService {
 
     @Transactional(readOnly = true)
     public ApprovalKpi approvals(String tenantSlug) {
-        long pending = 0;
-        long decided = 0;
-        List<Double> leadHours = new ArrayList<>();
-        for (RequestStatsPort.LeadRow request : requests.requestLeads(tenantSlug)) {
-            if ("SUBMITTED".equals(request.status())) {
-                pending++;
-            }
-            // ORDERED implies approved: the request passed a decision on its way out.
-            if (("APPROVED".equals(request.status()) || "REJECTED".equals(request.status())
-                            || "ORDERED".equals(request.status()))
-                    && request.submittedAt() != null
-                    && request.decidedAt() != null) {
-                decided++;
-                leadHours.add((request.decidedAt().toEpochMilli() - request.submittedAt().toEpochMilli()) / 3600000.0);
-            }
-        }
-        Double avg = leadHours.isEmpty()
+        // One grouped row from the DB; the service only rounds. Pending
+        // counts every SUBMITTED row, decided rows need both stamps —
+        // the same contract the row scan applied.
+        RequestStatsPort.ApprovalSummary summary = requests.approvalSummary(tenantSlug);
+        Double avg = summary.leadMillisSum() == null || summary.decided() == 0
                 ? null
-                : Math.round(leadHours.stream().mapToDouble(Double::doubleValue).average().orElse(0.0) * 100.0) / 100.0;
-        Double max = leadHours.isEmpty()
+                : Math.round(summary.leadMillisSum() / summary.decided() / 3600000.0 * 100.0) / 100.0;
+        Double max = summary.leadMillisMax() == null
                 ? null
-                : Math.round(leadHours.stream().mapToDouble(Double::doubleValue).max().orElse(0.0) * 100.0) / 100.0;
-        return new ApprovalKpi(pending, decided, avg, max);
+                : Math.round(summary.leadMillisMax() / 3600000.0 * 100.0) / 100.0;
+        return new ApprovalKpi(summary.pending(), summary.decided(), avg, max);
     }
 
     private static boolean inPeriod(Instant at, String period) {
@@ -253,13 +239,11 @@ public class AnalyticsService {
         return YearMonth.from(LocalDate.ofInstant(at, ZoneOffset.UTC)).toString();
     }
 
-    private static BigDecimal average(List<BigDecimal> values) {
-        List<BigDecimal> present = values.stream().filter(v -> v != null).toList();
-        if (present.isEmpty()) {
+    private static BigDecimal divide(BigDecimal sum, long count) {
+        if (count == 0 || sum == null) {
             return null;
         }
-        BigDecimal sum = present.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-        return sum.divide(BigDecimal.valueOf(present.size()), 2, RoundingMode.HALF_UP);
+        return sum.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
     }
 
     private static void requirePeriod(String period) {

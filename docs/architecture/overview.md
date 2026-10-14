@@ -11,8 +11,6 @@ database is a single PostgreSQL cluster with tenant-scoped rows.
 flowchart LR
   Browser[Angular SPA] --> API[Spring Boot API]
   API --> PG[(PostgreSQL)]
-  API --> Redis[(Redis)]
-  API --> MQ[RabbitMQ]
   API --> Groq[Groq API]
   API --> Prom[Prometheus]
   Prom --> Grafana[Grafana]
@@ -31,8 +29,9 @@ Rendered source of truth: `docs/diagrams/architecture.mmd`.
 3. **API-first.** The OpenAPI document (served at `/v3/api-docs`) is the
    contract; frontend types are generated from it starting Phase 3.
 4. **Async by events.** Modules communicate across boundaries via domain
-   events (`shared.kernel.DomainEvent`), in-process now, RabbitMQ later.
-   No synchronous calls from one module's API layer into another module.
+    events (`shared.kernel.DomainEvent`), in-process Spring events; a
+    broker arrives only with a second deployable consumer (ADR-010).
+    No synchronous calls from one module's API layer into another module.
 5. **AI behind a port.** Business logic never imports a provider SDK;
    the `ai` module owns prompts, validation and metering. See ADR-005.
 6. **No fake production.** Placeholders are labeled as such and fail fast;

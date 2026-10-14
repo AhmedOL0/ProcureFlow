@@ -971,6 +971,24 @@ test.describe('critical journeys', () => {
     await expect(categoryBox).toHaveValue('Cloud', {
       timeout: 10000,
     });
+
+    // The center total is an HTML overlay, not canvas paint: it must sit
+    // in the donut hole (box centers coincide), so segments can never
+    // cover it however the ring animates.
+    const total = page.locator('.donut-chart__total');
+    await expect(total).toBeVisible();
+    const totalBox = await total.boundingBox();
+    const stageBox = await donutCanvas.boundingBox();
+    if (totalBox && stageBox) {
+      const dx = Math.abs(
+        totalBox.x + totalBox.width / 2 - (stageBox.x + stageBox.width / 2),
+      );
+      const dy = Math.abs(
+        totalBox.y + totalBox.height / 2 - (stageBox.y + stageBox.height / 2),
+      );
+      expect(dx).toBeLessThan(stageBox.width * 0.05);
+      expect(dy).toBeLessThan(stageBox.height * 0.05);
+    }
   });
 
   test('copilot answers with citations and survives provider failure', async ({ page }) => {

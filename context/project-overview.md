@@ -49,8 +49,8 @@ Requesters, approvers/managers, procurement officers, finance, tenant admins.
 
 ## Scope boundaries
 
-- In scope: web SPA + REST API, one modular monolith, Postgres/Redis/
-  RabbitMQ via compose, Groq behind the `ai` module only.
+- In scope: web SPA + REST API, one modular monolith, Postgres via
+  compose, Groq behind the `ai` module only.
 - Out of scope: mobile app, OAuth/social login, per-tenant schemas or
   encryption, microservices, cloud deployment (designed, not built).
 

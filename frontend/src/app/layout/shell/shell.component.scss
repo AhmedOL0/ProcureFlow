@@ -64,11 +64,11 @@
 }
 .shell__rail .mat-mdc-list-item .mdc-list-item__primary-text {
   font: var(--pf-label-lg);
+  color: var(--pf-rail-dim);
 }
-// Material paints item text and icons with its own on-surface tokens;
-// re-assert the rail palette so labels stay legible on white. (No .mat-icon
-// branches: the rail renders lucide SVGs, never Material icons.)
-.shell__rail .mat-mdc-list-item .mdc-list-item__primary-text,
+// Material paints icons with its own on-surface tokens; re-assert the rail
+// palette so they stay legible on white. (No .mat-icon branches: the rail
+// renders lucide SVGs, never Material icons.)
 .shell__rail .mat-mdc-list-item lucide-angular {
   color: var(--pf-rail-dim);
 }

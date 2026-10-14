@@ -17,10 +17,6 @@ spring:
         generate_statistics: true
   flyway:
     enabled: true
-  rabbitmq:
-    listener:
-      simple:
-        auto-startup: false
 
 app:
   jwt:

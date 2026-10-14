@@ -4,44 +4,47 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 16 — document import/export (this change).** Supplier xlsx/csv
-import (all-or-nothing, row errors, 5 MB / 500 rows) plus printable
-order/invoice PDFs and filtered xlsx exports (orders, invoices, requests,
-suppliers) and spend reports (PDF + 4-sheet xlsx). Formula-injection
-guard on every exported string; `EXPORT_TOO_LARGE` past 5000 rows;
-`SUPPLIER_IMPORTED` / `DOCUMENT_EXPORTED` audit rows; Content-Disposition
-exposed over CORS. Gates: backend 166 IT green (`verify`), frontend
-tsc + build + 52 Vitest + 58 e2e green. Follow-ups: budget import,
-request PDF dossier, EXPORT_TOO_LARGE IT (needs 5000-row fixture).
-**Brand-auth slice (feature/brand-auth, this change).** Real logo lockup
-(`public/brand/logo.png`, absolute `/brand/logo.png` so nested shell
-routes resolve) on all auth pages + rail brand (replaces inline SVG +
-text wordmark); login/register get a split-screen brand panel with
-grounded copy (no filler voice, no em dashes) collapsing to a logo-only
-masthead ≤1023px; dead `.auth-brand` CSS removed; login rhythm calmed
-(one-line alert reserve, separated footer paths). Evidence
-`docs/screens/36-login-brand.png`, `37-register-brand.png`,
-`38-login-mobile.png`. Gates: tsc 0, build 0, 54 Vitest, e2e 32 chromium
-+ 32 firefox green (one transient firefox axe flake on suppliers, clean
-on full re-run).
-Docs follow-up (same branch): `docs/demo.md` gains a 4-shot gallery
-(36 + refreshed 01-dashboard / 04-approvals / 06-analytics with the new
-rail, captured live against the compose demo seed); README screens table
-+ test counts synced (54 Vitest, 64 e2e). Ops note: Docker Desktop was
-simply not started (service stopped, no engine pipe) — launched the app,
-stack auto-resumed, frontend image rebuilt so compose serves the brand.
-Ops follow-up (merged as PR #32): request correlation id in MDC
-(`trace=`, `ApiError.traceId`) plus a `json` Spring profile
-(`application-json.yml` → `logging.config: classpath:logback-json.xml`,
-logstash-encoder 8.0) emitting one JSON object per line with `traceId`;
-live-verified on a throwaway jar boot for both `json` and default formats.
-Phases 1–11 are delivered (see Completed + the merged PRs #1–#11 and open
-#12/#13): backend 113 IT + unit/ArchUnit green, frontend 24 Vitest + 18
-Playwright green, live-verified screens in `docs/screens/`. This pass:
-regression gates, security/a11y/perf review with evidence, infra + CI
-review, README/portfolio overhaul, demo workspace docs.
+**Phase 17 — ops readiness (feature/ops-readiness, this change).**
+Local-only, deployment-ready program: k6 read-mix first ruler (5 VU/2m,
+0/2322 failed, p95 20.5 ms); live Prometheus+Grafana+Loki pipeline
+(opt-in profile, 2/2 targets UP, labeled log queries, dashboard
+provisioned); approvals + supplier analytics collapsed to grouped DB
+rows with exact-value locks (avg=max=2.0h deterministic, 90.0/80.0
+averages) + load/query gates; ClamAV INSTREAM enforced on imports
+(422 + zero-persistence ITs); Redis/RabbitMQ removed (zero code refs);
+shell budget calibrated, donut centering locked; prod overlay drilled
+(TLS edge, WAL+PITR replay to latest with zero loss, encrypted
+dump/restore exact, RTO ~100 s, Hetzner target validated never applied).
+Outbox deliberately NOT built (ADR-010 stands, no trigger met).
 
 ## Completed
+
+### Phase 16 — document import/export (merged PR #29)
+- Supplier xlsx/csv import (all-or-nothing, row errors, 5 MB / 500 rows),
+  printable order/invoice PDFs, filtered xlsx exports (orders, invoices,
+  requests, suppliers), spend reports (PDF + 4-sheet xlsx).
+  Formula-injection guard, `EXPORT_TOO_LARGE` past 5000 rows,
+  `SUPPLIER_IMPORTED` / `DOCUMENT_EXPORTED` audit rows, Content-Disposition
+  over CORS. Follow-ups landed in hardening: budget import, request PDF
+  dossier, EXPORT_TOO_LARGE IT, import throttle, import-dialog axe gate.
+
+### Hardening correctness (merged PR #30) + follow-ups (merged PR #31)
+- Request-delete 500 fix (204 + IT), analytics bounds (DB-side all-time
+  grouping + query gates ≤20/≤16, measured 13), mixed-currency refusal +
+  dashboard splits (ADR-011 proposed), container healthchecks, request
+  correlation (X-Request-Id + MDC), audit export, drill month, server
+  unread totals. Gates at merge: 182 IT + 75 unit, 54 Vitest, 64 e2e.
+
+### JSON logging profile (merged PR #32)
+- `json` Spring profile (`application-json.yml` → `logback-json.xml`,
+  logstash-encoder 8.0): one JSON object per line with `traceId`;
+  live-verified on throwaway boots for both formats.
+
+### Brand auth (merged PR #33)
+- Real logo lockup (`public/brand/logo.png`, absolute paths) on all auth
+  pages + rail brand; split-screen brand panel with grounded dash-free
+  copy; P-mark favicon; demo.md 4-shot gallery + refreshed backbone
+  screens (01/04/06); README counts synced. Gates: 54 Vitest, 33+33 e2e.
 
 ### Phase 13a — C1 invite-gated join + email verification (merged)
 - V17 invites (single-use atomic redeem) + V18 email verification

@@ -29,15 +29,6 @@ spring:
     enabled: true
     locations: classpath:db/migration
     validate-on-migrate: true
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:procureflow}
-    password: ${RABBITMQ_PASSWORD:change-me}
   mail:
     host: ${MAIL_HOST:}
     port: ${MAIL_PORT:587}
@@ -101,3 +92,9 @@ app:
     # log = local sink (default, no SMTP needed); smtp = Brevo adapter.
     provider: ${MAIL_PROVIDER:log}
     from: ${MAIL_FROM:no-reply@example.com}
+  antivirus:
+    # Blank host disables scanning (local dev default, warned once).
+    # Set CLAMAV_HOST=clamav with the scan compose profile to enforce.
+    host: ${CLAMAV_HOST:}
+    port: ${CLAMAV_PORT:3310}
+    timeout-ms: ${CLAMAV_TIMEOUT_MS:10000}

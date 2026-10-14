@@ -1,8 +1,10 @@
 # ============================================================
 # ProcureFlow — local infrastructure
-# Backend + frontend are built from source. Phase 1 focus:
-# postgres, redis, rabbitmq. Backend/frontend join the same
-# network so the stack can be exercised end to end later.
+# Backend + frontend are built from source. Phase 1 focus: postgres.
+# Backend/frontend join the same network so the stack can be exercised
+# end to end later. Redis/RabbitMQ were removed 2026-10-14: zero code
+# ever touched either (in-process Spring events per ADR-010, DB-backed
+# throttles), so the topology matches reality.
 # Usage: `docker compose up -d --build` (see README.md)
 # ============================================================
 
@@ -27,39 +29,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: procureflow-redis
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: procureflow-rabbitmq
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-procureflow}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set (see .env.example)}
-    ports:
-      - "5672:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-    volumes:
-      - rabbitdata:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-
   # ---- Application services (wired in Phase 2; build context ready) ----
   backend:
     build:
@@ -70,20 +39,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-procureflow}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-procureflow}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (see .env.example)}
-      REDIS_HOST: redis
-      REDIS_ENABLED: "true"
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USER: ${RABBITMQ_USER:-procureflow}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
       AI_ENABLED: ${AI_ENABLED:-false}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
@@ -96,6 +56,11 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-no-reply@example.com}
+      # Antivirus: blank host disables scanning (dev default, warned once
+      # per boot). Enforce with: CLAMAV_HOST=clamav + --profile scan.
+      CLAMAV_HOST: ${CLAMAV_HOST:-}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      CLAMAV_TIMEOUT_MS: ${CLAMAV_TIMEOUT_MS:-10000}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     # Liveness (not aggregate health): a Brevo outage must never restart
@@ -111,7 +76,10 @@ services:
   # One-shot: docker compose --profile backup run --rm db-backup sh /backup.sh once
   # Scheduled sidecar: docker compose --profile backup up -d db-backup
   db-backup:
-    image: postgres:16-alpine
+    # Built (not stock): pg_dump at the server version plus openssl for the
+    # optional encrypted-dump branch. Same script, same defaults.
+    build:
+      context: ./infrastructure/docker/backup
     container_name: procureflow-backup
     profiles: [backup]
     depends_on:
@@ -153,8 +121,85 @@ services:
       retries: 5
       start_period: 20s
 
+  # ---- Observability pipeline (opt-in: not part of the default stack) ----
+  # Up: docker compose --profile observability up -d prometheus grafana loki promtail
+  # Then: Prometheus :9090 (targets + rules), Grafana :3000 (provisioned
+  # Prometheus + Loki datasources, starter dashboard), Loki :3100.
+  # No healthchecks here: prom/grafana/loki images carry no probe tooling
+  # worth depending on; these services are auxiliary, never in app paths.
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: procureflow-prometheus
+    profiles: [observability]
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./infrastructure/monitoring/prometheus:/etc/prometheus:ro
+      - promdata:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: procureflow-grafana
+    profiles: [observability]
+    depends_on:
+      - prometheus
+      - loki
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set (see .env.example)}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ./infrastructure/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafanadata:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: procureflow-loki
+    profiles: [observability]
+    command: ["-config.file=/etc/loki/loki.yml"]
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./infrastructure/monitoring/loki:/etc/loki:ro
+      - lokidata:/loki
+
+  promtail:
+    # 3.x, not 2.9.x: the 2.9 Docker client speaks API v1.42 and current
+    # Docker Desktop daemons refuse it (minimum v1.44), so docker_sd
+    # discovery never lists a container. Push API is unchanged.
+    image: grafana/promtail:3.5.0
+    container_name: procureflow-promtail
+    profiles: [observability]
+    depends_on:
+      - loki
+    command: ["-config.file=/etc/promtail/promtail.yml"]
+    volumes:
+      - ./infrastructure/monitoring/promtail:/etc/promtail:ro
+      - obspositions:/positions
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # ---- Malware scanning (opt-in: not part of the default stack) ----
+  # Up: CLAMAV_HOST=clamav docker compose --profile scan up -d clamav
+  # (first boot downloads signature DBs, a few minutes). Imports are
+  # scanned after the size/sniff guards and before any parse; infected
+  # files answer 422 VIRUS_DETECTED. Without the profile the backend
+  # logs one warning per boot and skips scanning (documented).
+  clamav:
+    image: clamav/clamav:1.4
+    container_name: procureflow-clamav
+    profiles: [scan]
+    volumes:
+      - clamdb:/var/lib/clamav
+
 volumes:
   pgdata:
-  redisdata:
-  rabbitdata:
   pgbackups:
+  promdata:
+  lokidata:
+  grafanadata:
+  obspositions:
+  clamdb:

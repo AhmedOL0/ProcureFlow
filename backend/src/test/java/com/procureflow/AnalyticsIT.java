@@ -188,6 +188,8 @@ class AnalyticsIT extends AbstractIntegrationTest {
         score(admin.token(), supplier, "2026-01", 80, 70);
         score(admin.token(), supplier, "2026-02", 100, 90);
 
+        sessions.getStatistics().setStatisticsEnabled(true);
+        sessions.getStatistics().clear();
         ResponseEntity<List> response = get("/api/v1/analytics/suppliers", admin.token(), List.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -198,6 +200,12 @@ class AnalyticsIT extends AbstractIntegrationTest {
         assertEquals(2, ((Number) row.get("periods")).intValue());
         assertEquals(90.0, ((Number) row.get("avgOnTime")).doubleValue());
         assertEquals(80.0, ((Number) row.get("avgQuality")).doubleValue());
+        // DB-side grouping: one grouped row per supplier, no performance or
+        // supplier entities load however many periods exist.
+        long loaded = sessions.getStatistics().getEntityLoadCount();
+        assertTrue(loaded <= 5, "suppliers loaded " + loaded + " entities for 1 supplier");
+        long queries = sessions.getStatistics().getQueryExecutionCount();
+        assertTrue(queries <= 5, "suppliers issued " + queries + " queries for 1 supplier");
     }
 
     @Test
@@ -205,14 +213,28 @@ class AnalyticsIT extends AbstractIntegrationTest {
         Fixture admin = provision(uniqueSlug("acme"));
         paidFlow(admin.token());
         submitted(admin.token());
+        // Pin the lead to exactly two hours so the average and max are
+        // deterministic, locking the millis divisor end to end.
+        UUID tenant = jdbc.queryForObject("SELECT id FROM tenants WHERE slug = ?", UUID.class, admin.slug());
+        assertNotNull(tenant);
+        jdbc.update("UPDATE purchase_requests SET submitted_at = decided_at - INTERVAL '2 hours'"
+                + " WHERE tenant_id = ? AND decided_at IS NOT NULL", tenant);
 
+        sessions.getStatistics().setStatisticsEnabled(true);
+        sessions.getStatistics().clear();
         ResponseEntity<Map> kpis = get("/api/v1/analytics/approvals", admin.token(), Map.class);
         assertEquals(HttpStatus.OK, kpis.getStatusCode());
         assertNotNull(kpis.getBody());
         assertEquals(1L, number(kpis.getBody(), "pending"));
         assertEquals(1L, number(kpis.getBody(), "decided"));
-        assertNotNull(kpis.getBody().get("avgLeadHours"));
-        assertNotNull(kpis.getBody().get("maxLeadHours"));
+        assertEquals(2.0, ((Number) kpis.getBody().get("avgLeadHours")).doubleValue());
+        assertEquals(2.0, ((Number) kpis.getBody().get("maxLeadHours")).doubleValue());
+        // One grouped row from the DB: no request entities load however
+        // large tenant history grows.
+        long loaded = sessions.getStatistics().getEntityLoadCount();
+        assertTrue(loaded <= 5, "approvals loaded " + loaded + " entities for 2 requests");
+        long queries = sessions.getStatistics().getQueryExecutionCount();
+        assertTrue(queries <= 5, "approvals issued " + queries + " queries for 2 requests");
     }
 
     @Test

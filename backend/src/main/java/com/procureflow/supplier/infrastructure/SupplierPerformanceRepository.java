@@ -14,9 +14,15 @@ public interface SupplierPerformanceRepository extends JpaRepository<SupplierPer
             + " and p.supplier.tenant.slug = :slug order by p.period desc")
     List<SupplierPerformance> findAllBySupplier(@Param("supplierId") UUID supplierId, @Param("slug") String slug);
 
-    @Query("select p from SupplierPerformance p join fetch p.supplier s where s.tenant.slug = :slug"
-            + " order by s.name asc, p.period asc")
-    List<SupplierPerformance> findAllByTenantSlug(@Param("slug") String slug);
+    // Scorecard summaries grouped per supplier: exact sums plus non-null
+    // counts so the service divides with the same HALF_UP scale-2
+    // semantics as the row scan, while no performance or supplier
+    // entities load however many periods exist.
+    @Query("select s.id, s.name, count(p),"
+            + " sum(p.onTimeRate), count(p.onTimeRate), sum(p.qualityScore), count(p.qualityScore)"
+            + " from SupplierPerformance p join p.supplier s where s.tenant.slug = :slug"
+            + " group by s.id, s.name")
+    List<Object[]> scoreSummariesByTenantSlug(@Param("slug") String slug);
 
     boolean existsBySupplier_IdAndPeriod(UUID supplierId, String period);
 }

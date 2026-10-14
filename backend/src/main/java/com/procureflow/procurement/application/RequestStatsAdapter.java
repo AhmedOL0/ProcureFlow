@@ -55,13 +55,14 @@ public class RequestStatsAdapter implements RequestStatsPort {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LeadRow> requestLeads(String tenantSlug) {
-        List<LeadRow> leads = new ArrayList<>();
-        for (Object[] row : requests.leadRowsByTenantSlug(tenantSlug)) {
-            leads.add(new LeadRow(
-                    ((PurchaseRequest.Status) row[0]).name(), (Instant) row[1], (Instant) row[2]));
-        }
-        return leads;
+    public ApprovalSummary approvalSummary(String tenantSlug) {
+        List<Object[]> rows = requests.approvalSummaryByTenantSlug(tenantSlug);
+        Object[] row = rows.isEmpty() ? new Object[] {0L, 0L, null, null} : rows.get(0);
+        return new ApprovalSummary(
+                row[0] == null ? 0L : ((Number) row[0]).longValue(),
+                row[1] == null ? 0L : ((Number) row[1]).longValue(),
+                row[2] == null ? null : ((Number) row[2]).doubleValue(),
+                row[3] == null ? null : ((Number) row[3]).doubleValue());
     }
 
     private static RequestStat stat(PurchaseRequest request) {

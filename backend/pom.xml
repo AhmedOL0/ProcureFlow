@@ -79,18 +79,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Caching / rate limiting (see docs/architecture/overview.md for intended uses) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <!-- Async messaging boundary (no listeners in Phase 1; transport arrives later) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
-        </dependency>
-
         <!-- Outbound mail (Brevo SMTP adapter behind the MailPort; log-mode when unconfigured) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

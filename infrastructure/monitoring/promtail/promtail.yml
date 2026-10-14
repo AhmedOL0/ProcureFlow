@@ -1,0 +1,35 @@
+# Promtail ships compose container logs to Loki. Backend lines carry the
+# request correlation id as `trace=` (see CorrelationFilter); the stage
+# below promotes level + trace to Loki labels. Logback disables ANSI
+# colors on non-tty sinks, so the human console format parses cleanly.
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  # Survives container recreates via the obspositions volume, so restarts
+  # resume shipping instead of re-sending everything docker still holds.
+  filename: /positions/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        regex: '/procureflow-.*'
+        action: keep
+      - source_labels: [__meta_docker_container_name]
+        regex: '/(.*)'
+        target_label: container
+    pipeline_stages:
+      - regex:
+          # e.g. "2026-10-13 12:30:21.898  INFO 33292 --- [main] ... trace=abc : ..."
+          expression: '^\S+ \S+\s+(?P<level>TRACE|DEBUG|INFO|WARN|ERROR)\b.*trace=(?P<trace>\S*)'
+      - labels:
+          level:
+          trace:

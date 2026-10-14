@@ -54,8 +54,8 @@ for the permission matrix):
 
 ## Architecture
 
-Modular Spring Boot monolith (Java 21) + Angular SPA, PostgreSQL, Redis,
-RabbitMQ. Business domains own their code vertically
+Modular Spring Boot monolith (Java 21) + Angular SPA, PostgreSQL.
+Business domains own their code vertically
 (`domain / application / infrastructure / api`); ArchUnit tests enforce the
 boundaries in CI. Twelve modules: identity, organization, supplier,
 procurement, approval, budget, purchaseorder, invoice, notification, audit,
@@ -81,7 +81,7 @@ port with validated, KPI-cited outputs instead of a chat widget stapled on.
 |---|---|
 | Frontend | Angular 21, TypeScript, Signals, RxJS, Reactive Forms, Vitest, Playwright |
 | Backend | Java 21, Spring Boot 3.5, Security, Data JPA, Flyway, ArchUnit |
-| Data | PostgreSQL 16 (Flyway V1–V13, no `ddl-auto=create` in prod), Redis 7, RabbitMQ 3 |
+| Data | PostgreSQL 16 (Flyway V1–V19, no `ddl-auto=create` in prod) |
 | AI | Groq (`openai/gpt-oss-120b`) behind an `AiProvider` port (backend only; needs `GROQ_API_KEY` + `AI_ENABLED=true`) |
 | Mail | Brevo SMTP behind a `MailPort` (log-mode sink by default; needs `MAIL_*` + `MAIL_PROVIDER=smtp`) |
 | Infra | Docker Compose, GitHub Actions, Prometheus + Grafana, Terraform skeleton |
@@ -92,7 +92,7 @@ Prerequisites: JDK 21, Node 24, Docker.
 
 ```bash
 cp .env.example .env   # then fill in POSTGRES_PASSWORD, JWT_SECRET (≥64 chars), ...
-docker compose up -d postgres redis rabbitmq
+docker compose up -d postgres
 cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev   # needs the .env vars EXPORTED in this shell
 cd frontend && npm install && npm start   # http://localhost:4200
 ```
