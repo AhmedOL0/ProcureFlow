@@ -121,19 +121,33 @@ test.describe('accessibility', () => {
     await page.goto('/suppliers');
     await page.getByRole('button', { name: 'Import' }).click();
     await expect(page.getByRole('dialog')).toContainText('Bulk-create');
-    // Wait for the theme override to land: single-test runs race the cold
-    // dev server's style compilation, and axe would otherwise judge the
-    // pre-theme azure fallback. This also pins the brand-emerald wiring.
+    // Wait for the theme override to land on EVERY outlined action, not
+    // just the first: single-test runs race the cold dev server's style
+    // compilation, and axe would otherwise judge the pre-theme azure
+    // fallback. This also pins the brand-emerald wiring.
     await expect
       .poll(() =>
         page.evaluate(() => {
-          const label = document.querySelector(
-            '[role="dialog"] .mdc-button--outlined .mdc-button__label',
+          const labels = Array.from(
+            document.querySelectorAll(
+              '[role="dialog"] .mdc-button--outlined .mdc-button__label',
+            ),
           );
-          return label ? getComputedStyle(label as HTMLElement).color : '';
+          if (labels.length === 0) {
+            return '';
+          }
+          const colors = new Set(
+            labels.map((label) => getComputedStyle(label as HTMLElement).color),
+          );
+          return colors.size === 1 ? [...colors][0] : [...colors].join('|');
         }),
       )
       .toBe('rgb(4, 120, 87)');
+    // Let the dialog enter animation settle: axe snapshots computed color,
+    // and a mid-fade frame reads the brand emerald at partial opacity as a
+    // contrast failure (firefox paces the animation frames slower, so it
+    // hits this reliably under suite load while chromium rarely does).
+    await page.waitForTimeout(500);
     // Scoped to the dialog: the dimmed page behind a modal fails contrast
     // by construction, and the suppliers page itself is axe-clean above.
     const results = await new AxeBuilder({ page })

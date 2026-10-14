@@ -3,9 +3,12 @@ package com.procureflow.ai.application;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.procureflow.ai.domain.AiUsageRecord;
 import com.procureflow.ai.infrastructure.AiUsageRecordRepository;
+import com.procureflow.ai.infrastructure.ExtractionRecord;
+import com.procureflow.ai.infrastructure.ExtractionRecordRepository;
 import com.procureflow.analytics.application.AnalyticsService;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
+import com.procureflow.shared.web.Paged;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -19,6 +22,8 @@ import java.util.regex.Pattern;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +42,7 @@ public class CopilotService {
     private final AiProvider provider;
     private final AnalyticsService analytics;
     private final AiUsageRecordRepository usage;
+    private final ExtractionRecordRepository extractions;
     private final TenantProvisioning tenants;
     private final ObjectMapper json;
     private final MeterRegistry meters;
@@ -46,6 +52,7 @@ public class CopilotService {
             ObjectProvider<AiProvider> providers,
             AnalyticsService analytics,
             AiUsageRecordRepository usage,
+            ExtractionRecordRepository extractions,
             TenantProvisioning tenants,
             ObjectMapper json,
             MeterRegistry meters,
@@ -55,6 +62,7 @@ public class CopilotService {
         this.provider = providers.getIfAvailable();
         this.analytics = analytics;
         this.usage = usage;
+        this.extractions = extractions;
         this.tenants = tenants;
         this.json = json;
         this.meters = meters;
@@ -119,7 +127,32 @@ public class CopilotService {
                 tenantSlug, "extract", Prompts.EXTRACT_SYSTEM, sentence, 400, 0.0));
         AiValidator.DraftRequest draft = AiValidator.draft(result.text(), json);
         meter(tenantSlug, "extract", result);
+        recordExtraction(tenantSlug, sentence, draft, result.model());
         return draft;
+    }
+
+    /**
+     * Freezes the validated draft into history. Best-effort by design: the
+     * extraction store is derived, so a down Mongo answers the draft anyway
+     * while a counter (alertable) records the gap — never silent loss.
+     */
+    private void recordExtraction(
+            String tenantSlug, String sentence, AiValidator.DraftRequest draft, String model) {
+        try {
+            extractions.save(ExtractionRecord.create(
+                    tenantSlug,
+                    model,
+                    Prompts.VERSION,
+                    sentence,
+                    draft.title(),
+                    draft.priority(),
+                    draft.items().stream()
+                            .map(i -> new ExtractionRecord.DraftItem(
+                                    i.description(), i.quantity(), i.unitPriceMinor()))
+                            .toList()));
+        } catch (Exception e) {
+            meters.counter("procureflow.ai.history_dropped").increment();
+        }
     }
 
     @Transactional
@@ -207,6 +240,58 @@ public class CopilotService {
         meters.counter("procureflow.ai.calls", "feature", feature).increment();
     }
 
+    /**
+     * Validated extraction history, newest first. Reads fail loud (503):
+     * unlike the write path, an empty page would lie about the shelf.
+     */
+    @Transactional(readOnly = true)
+    public Paged<ExtractionView> history(String tenantSlug, int page, int size) {
+        try {
+            Page<ExtractionRecord> found = extractions.findByTenantSlugOrderByCreatedAtDesc(
+                    tenantSlug, PageRequest.of(page, size));
+            return Paged.of(
+                    found.getContent().stream().map(CopilotService::view).toList(),
+                    found.getNumber(),
+                    found.getSize(),
+                    found.getTotalElements());
+        } catch (Exception e) {
+            throw ApiException.unavailable("HISTORY_UNAVAILABLE", "Extraction history is unreachable; try again");
+        }
+    }
+
+    /**
+     * One extraction by id; unknown ids and foreign tenants answer 404
+     * (tenant-before-permission, matching the relational convention).
+     */
+    @Transactional(readOnly = true)
+    public ExtractionView historyOne(String tenantSlug, String id) {
+        try {
+            return view(extractions
+                    .findByIdAndTenantSlug(id, tenantSlug)
+                    .orElseThrow(() -> ApiException.notFound("EXTRACTION_NOT_FOUND", "No such extraction")));
+        } catch (ApiException e) {
+            throw e;
+        } catch (Exception e) {
+            throw ApiException.unavailable("HISTORY_UNAVAILABLE", "Extraction history is unreachable; try again");
+        }
+    }
+
+    private static ExtractionView view(ExtractionRecord record) {
+        return new ExtractionView(
+                record.getId(),
+                record.getSchemaVersion(),
+                record.getModelIdentifier(),
+                record.getPromptVersion(),
+                record.getInput(),
+                record.getTitle(),
+                record.getPriority(),
+                record.getItems().stream()
+                        .map(i -> new ItemView(i.getDescription(), i.getQuantity(), i.getUnitPriceMinor()))
+                        .toList(),
+                record.getCreatedRequestId(),
+                record.getCreatedAt().toString());
+    }
+
     private static String monthOf(AiUsageRecord row) {
         return YearMonth.from(LocalDate.ofInstant(row.getCreatedAt(), ZoneOffset.UTC)).toString();
     }
@@ -221,6 +306,14 @@ public class CopilotService {
     }
 
     public record QuoteInput(String supplier, long amountMinor) {
+    }
+
+    public record ItemView(String description, int quantity, long unitPriceMinor) {
+    }
+
+    public record ExtractionView(String id, int schemaVersion, String modelIdentifier, String promptVersion,
+            String input, String title, String priority, List<ItemView> items, String createdRequestId,
+            String createdAt) {
     }
 
     public record UsageView(long calls, long promptTokens, long completionTokens, List<FeatureUsage> byFeature) {

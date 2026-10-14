@@ -29,6 +29,13 @@ spring:
     enabled: true
     locations: classpath:db/migration
     validate-on-migrate: true
+  data:
+    mongodb:
+      # AI extraction history (derived docs; PG stays authoritative).
+      # No auth locally; compose overrides the host to the mongo service.
+      # Tight server-selection bound: history writes are best-effort, so a
+      # dead Mongo delays answers by ~2 s instead of the 30 s default.
+      uri: ${MONGODB_URI:mongodb://localhost:27017/procureflow?serverSelectionTimeoutMS=2000&connectTimeoutMS=2000}
   mail:
     host: ${MAIL_HOST:}
     port: ${MAIL_PORT:587}
@@ -92,6 +99,7 @@ app:
     # log = local sink (default, no SMTP needed); smtp = Brevo adapter.
     provider: ${MAIL_PROVIDER:log}
     from: ${MAIL_FROM:no-reply@example.com}
+    host: ${MAIL_HOST:}
   antivirus:
     # Blank host disables scanning (local dev default, warned once).
     # Set CLAMAV_HOST=clamav with the scan compose profile to enforce.

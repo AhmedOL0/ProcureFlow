@@ -4,20 +4,25 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 17 — ops readiness (feature/ops-readiness, this change).**
-Local-only, deployment-ready program: k6 read-mix first ruler (5 VU/2m,
-0/2322 failed, p95 20.5 ms); live Prometheus+Grafana+Loki pipeline
-(opt-in profile, 2/2 targets UP, labeled log queries, dashboard
-provisioned); approvals + supplier analytics collapsed to grouped DB
-rows with exact-value locks (avg=max=2.0h deterministic, 90.0/80.0
-averages) + load/query gates; ClamAV INSTREAM enforced on imports
-(422 + zero-persistence ITs); Redis/RabbitMQ removed (zero code refs);
-shell budget calibrated, donut centering locked; prod overlay drilled
-(TLS edge, WAL+PITR replay to latest with zero loss, encrypted
-dump/restore exact, RTO ~100 s, Hetzner target validated never applied).
-Outbox deliberately NOT built (ADR-010 stands, no trigger met).
+**Phase 18 — AI extraction history on MongoDB
+(feature/ai-extraction-history, this change).** Validated
+extract-request drafts persist as versioned tenant-scoped docs
+(model, prompt version, input, 90-day TTL, compound index); PG stays
+authoritative. Best-effort writes (warn + meter, still answers), loud
+503 reads, indistinguishable 404s. `GET /api/v1/ai/extractions` paged +
+`GET …/{id}` behind `ai:use`; api-types regenerated. Compose mongo
+default-on with healthcheck. Gates: backend 192 IT green, 54 Vitest,
+e2e 33+33 green (firefox import-dialog race hardened: all-labels theme
+wait + enter-animation settle).
 
 ## Completed
+
+### Phase 17 — ops readiness (merged PR #34)
+- k6 read-mix ruler, live Prometheus+Grafana+Loki pipeline, grouped
+  analytics rows with exact-value locks, ClamAV enforced imports,
+  Redis/RabbitMQ removal, shell budget calibration, donut lock, drilled
+  prod reference (TLS, PITR zero-loss replay, encrypted restores,
+  RTO ~100 s, validated-never-applied Hetzner target). Audit 73→79.
 
 ### Phase 16 — document import/export (merged PR #29)
 - Supplier xlsx/csv import (all-or-nothing, row errors, 5 MB / 500 rows),
