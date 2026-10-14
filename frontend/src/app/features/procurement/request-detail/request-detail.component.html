@@ -1,32 +1,32 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading request file">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('req.loadingFile')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     @if (problem.status === 404) {
       <pf-error-state
-        title="Request not found"
-        message="It may have been deleted, or it belongs to another workspace."
+        [title]="lang.t('req.notFound')"
+        [message]="lang.t('req.notFoundMsg')"
       />
     } @else if (problem.status === 403) {
       <pf-error-state
-        title="Not permitted"
-        message="Your workspace role cannot view purchase requests. Ask an admin for access."
+        [title]="lang.t('admin.usersForbidden')"
+        [message]="lang.t('req.forbiddenMsg')"
       />
     } @else {
       <pf-error-state
-        title="Request file did not load"
+        [title]="lang.t('req.fileFailed')"
         [message]="failureMessage()"
-        retryLabel="Retry"
+        [retryLabel]="lang.t('common.retry')"
         (retry)="reload()"
       />
     }
   } @else if (request(); as current) {
     <pf-page-header
-      [title]="current.title ?? 'Request'"
-      [description]="current.description || 'No description given.'"
-      [breadcrumbs]="[{ label: 'Requests', url: '/requests' }, { label: current.title ?? 'File' }]"
+      [title]="current.title ?? lang.t('req.fallbackTitle')"
+      [description]="current.description || lang.t('req.noDesc')"
+      [breadcrumbs]="crumbsFor(current.title)"
     >
       <div slot="actions">
         <button mat-stroked-button (click)="downloadPdf()" [disabled]="busyExport()">
@@ -38,28 +38,28 @@
         </button>
         @if (canEdit()) {
           <button mat-stroked-button (click)="openEdit()">
-            <lucide-angular [img]="icons.pencil" [size]="16" /> Edit
+            <lucide-angular [img]="icons.pencil" [size]="16" /> {{ lang.t('common.edit') }}
           </button>
           <button mat-stroked-button color="warn" (click)="confirmDelete()">
-            <lucide-angular [img]="icons.trash" [size]="16" /> Delete
+            <lucide-angular [img]="icons.trash" [size]="16" /> {{ lang.t('common.delete') }}
           </button>
         }
         @if (isDraft() && canEdit()) {
           <button mat-flat-button color="primary" (click)="submit()" [disabled]="acting()">
-            Submit for approval
+            {{ lang.t('req.submit') }}
           </button>
         }
         @if ((isDraft() || isSubmitted()) && canEdit()) {
           <button mat-stroked-button (click)="cancel()" [disabled]="acting()">
-            Cancel request
+            {{ lang.t('req.cancelReq') }}
           </button>
         }
         @if (isSubmitted() && canDecide()) {
           <button mat-flat-button color="primary" (click)="decide(true)" [disabled]="acting()">
-            Approve
+            {{ lang.t('req.approve') }}
           </button>
           <button mat-stroked-button color="warn" (click)="decide(false)" [disabled]="acting()">
-            Reject
+            {{ lang.t('req.reject') }}
           </button>
         }
       </div>
@@ -71,89 +71,94 @@
 
     <div class="pf-head-row">
       <pf-status-badge [status]="current.status" />
-      <span class="request-priority">{{ current.priority ?? 'MEDIUM' }} priority</span>
+      <span class="request-priority">{{ lang.tx('req.priorityLine', { p: current.priority ?? 'MEDIUM' }) }}</span>
       <span class="request-total pf-data-mono">{{ formatMinor(current.totalMinor) }}</span>
       @if (sla() !== 'none') {
-        <span class="pf-badge" [class]="slaTone()">Due {{ readableDate(lane()?.dueAt) }}</span>
+        <span class="pf-badge" [class]="slaTone()">{{ lang.tx('req.dueLabel', { date: readableDate(lane()?.dueAt) }) }}</span>
       }
     </div>
 
     @if (hasJustification()) {
-      <section class="pf-panel" aria-label="Business justification">
-        <h2>Business justification</h2>
+      <section class="pf-panel" [attr.aria-label]="lang.t('req.justification')">
+        <h2>{{ lang.t('req.justification') }}</h2>
         <p class="request-note">{{ current.description }}</p>
       </section>
     }
 
     @if (decision(); as verdict) {
-      <section class="pf-panel" aria-label="Decision">
-        <h2>Decision: {{ verdict.decision }}</h2>
+      <section class="pf-panel" [attr.aria-label]="lang.t('req.decisionTitle')">
+        <h2>{{ lang.tx('req.decisionHead', { d: verdict.decision ?? '' }) }}</h2>
         @if (verdict.comment) {
-          <p class="request-note">“{{ verdict.comment }}”</p>
+          <p class="request-note">"{{ verdict.comment }}"</p>
         }
         <p class="request-muted">
-          Approving reserves the request total against the monthly budget.
+          {{ lang.t('req.reserveNote') }}
         </p>
       </section>
     }
 
     @if (lane(); as assignment) {
-      <section class="pf-panel" aria-label="Approval lane">
-        <h2>Approval lane</h2>
+      <section class="pf-panel" [attr.aria-label]="lang.t('req.laneTitle')">
+        <h2>{{ lang.t('req.laneTitle') }}</h2>
         <p class="request-muted">
-          Step {{ assignment.stepOrder }} awaits its approver
+          {{ lang.tx('req.laneLine', { n: assignment.stepOrder ?? 0 }) }}
           @if (assignment.escalated) {
-            <strong>(escalated)</strong>
+            <strong>{{ lang.t('req.escalatedTag') }}</strong>
           }
-          · due {{ readableDate(assignment.dueAt) }}
+          {{ lang.tx('req.laneDue', { date: readableDate(assignment.dueAt) }) }}
         </p>
       </section>
     }
 
     @if (canSeeBudget) {
       @let pot = budget();
-      <section class="pf-panel" aria-label="Budget context">
-        <h2>Budget: this month</h2>
+      <section class="pf-panel" [attr.aria-label]="lang.t('req.budgetContext')">
+        <h2>{{ lang.t('req.budgetMonth') }}</h2>
         @if (pot === null) {
-          <p class="request-muted">Loading budget...</p>
+          <p class="request-muted">{{ lang.t('req.budgetLoading') }}</p>
         } @else if (pot === 'missing') {
           <p class="request-muted">
-            No budget configured for this month. Approvals proceed unreserved.
+            {{ lang.t('req.budgetMissing') }}
           </p>
         } @else {
           <p class="request-budget">
             <span>{{ pot.name }}</span>
-            <span class="pf-data-mono"
-              >{{ formatMinor(pot.remainingMinor) }} left of
-              {{ formatMinor(pot.amountMinor) }}</span
-            >
+            <span class="pf-data-mono">{{
+              lang.tx('req.leftOf', {
+                remaining: formatMinor(pot.remainingMinor),
+                amount: formatMinor(pot.amountMinor)
+              })
+            }}</span>
           </p>
-          <p class="request-muted">{{ formatMinor(pot.reservedMinor) }} currently reserved.</p>
+          <p class="request-muted">{{ lang.tx('req.reservedLine', { x: formatMinor(pot.reservedMinor) }) }}</p>
           @if (budgetImpact(); as impact) {
             <div
               class="request-budget-bar"
               role="img"
               [attr.aria-label]="
-                'Approving would hold ' +
-                formatMinor(impact.total) +
-                ' against ' +
-                formatMinor(impact.remaining) +
-                ' remaining'
+                lang.tx('req.impactAria', {
+                  total: formatMinor(impact.total),
+                  remaining: formatMinor(impact.remaining)
+                })
               "
             >
               <span class="pf-meter__fill" [style.width.%]="impact.used"></span>
             </div>
             <p class="request-muted">
-              Approving holds {{ formatMinor(impact.total) }} against
-              {{ formatMinor(impact.remaining) }} remaining.
+              {{
+                lang.tx('req.impactLine', {
+                  total: formatMinor(impact.total),
+                  remaining: formatMinor(impact.remaining)
+                })
+              }}
             </p>
           }
         }
       </section>
     }
 
-    <section class="pf-panel" aria-label="History">
-      <h2>History</h2>
+    <section class="pf-panel" [attr.aria-label]="lang.t('req.history')">
+      <h2>{{ lang.t('req.history') }}</h2>
       <ul class="request-history">
         @for (entry of historyEntries(); track entry.label) {
           <li>
@@ -164,34 +169,34 @@
       </ul>
     </section>
 
-    <section class="pf-panel" aria-label="Items">
+    <section class="pf-panel" [attr.aria-label]="lang.t('req.items')">
       <div class="pf-panel__head">
-        <h2>Items ({{ (current.items ?? []).length }})</h2>
+        <h2>{{ lang.tx('req.itemsHead', { n: (current.items ?? []).length }) }}</h2>
         @if (isDraft() && canEdit()) {
           <button mat-button (click)="openItem()">
-            <lucide-angular [img]="icons.plus" [size]="16" /> Add item
+            <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('req.addItem') }}
           </button>
         }
       </div>
       @if ((current.items ?? []).length === 0) {
         <pf-empty-state
           [icon]="icons.file"
-          title="No items yet"
-          message="A request needs at least one line before it can be submitted. Use Add item above."
+          [title]="lang.t('req.noItems')"
+          [message]="lang.t('req.noItemsMsg')"
         />
       } @else {
         <div class="pf-table-scroll">
-          <table class="pf-table" aria-label="Request items">
+          <table class="pf-table" [attr.aria-label]="lang.t('req.itemsTable')">
             <thead>
               <tr>
-                <th scope="col">Description</th>
-                <th scope="col">Category</th>
-                <th scope="col" class="pf-num">Qty</th>
-                <th scope="col" class="pf-num">Unit price</th>
-                <th scope="col" class="pf-num">Line total</th>
-                <th scope="col">Supplier</th>
+                <th scope="col">{{ lang.t('req.colDesc') }}</th>
+                <th scope="col">{{ lang.t('dashboard.category') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('req.colQty') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('req.colUnit') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('req.colLine') }}</th>
+                <th scope="col">{{ lang.t('req.colSupplier') }}</th>
                 @if (isDraft() && canEdit()) {
-                  <th scope="col"><span class="pf-sr-only">Actions</span></th>
+                  <th scope="col"><span class="pf-sr-only">{{ lang.t('req.colActions') }}</span></th>
                 }
               </tr>
             </thead>
@@ -223,8 +228,8 @@
                   </td>
                   @if (isDraft() && canEdit()) {
                     <td>
-                      <button mat-button (click)="openItem(item)">Edit</button>
-                      <button mat-button color="warn" (click)="removeItem(item)">Remove</button>
+                      <button mat-button (click)="openItem(item)">{{ lang.t('common.edit') }}</button>
+                      <button mat-button color="warn" (click)="removeItem(item)">{{ lang.t('admin.remove') }}</button>
                     </td>
                   }
                 </tr>

@@ -11,6 +11,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { LanguageService } from '../../core/i18n/language.service';
 import { DonutChartComponent } from '../../shared/components/donut-chart/donut-chart.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
@@ -19,6 +20,7 @@ import { SpendChartComponent, SpendPoint } from '../../shared/components/spend-c
 import { Inbox, Truck, Wallet } from '../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
 import { csvCell, runDownload, saveBlob } from '../../shared/utils/download';
+import { formatDecimal } from '../../shared/utils/format';
 import { formatMinor } from '../../shared/utils/money';
 import {
   AiUsage,
@@ -61,6 +63,9 @@ export class AnalyticsComponent {
   private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.analytics') }]);
 
   protected readonly icons = { wallet: Wallet, truck: Truck, inbox: Inbox };
   protected readonly formatMinor = formatMinor;
@@ -307,6 +312,6 @@ export class AnalyticsComponent {
     if (value === null || value === undefined || !Number.isFinite(value)) {
       return 'N/A';
     }
-    return `${value.toFixed(1)}h`;
+    return this.lang.tx('dashboard.leadHours', { n: formatDecimal(value) });
   }
 }

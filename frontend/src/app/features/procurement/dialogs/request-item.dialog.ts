@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { ProcurementService, RequestItem } from '../procurement.service';
 import { Supplier, SuppliersService } from '../../suppliers/suppliers.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-errors';
 
 export interface RequestItemDialogData {
@@ -27,6 +28,7 @@ export class RequestItemDialogComponent {
   private readonly suppliers = inject(SuppliersService);
   private readonly dialog = inject(MatDialogRef<RequestItemDialogComponent, boolean>);
   protected readonly data = inject<RequestItemDialogData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
 
   readonly form = new FormGroup({
     description: new FormControl(this.data.item?.description ?? '', {

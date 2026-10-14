@@ -1,21 +1,21 @@
 <div class="pf-page">
   <pf-page-header
-    title="Budgets & spend"
-    description="Monthly pots, what approved requests hold on them, and what is left to spend."
-    [breadcrumbs]="[{ label: 'Budgets' }]"
+    [title]="lang.t('bud.title')"
+    [description]="lang.t('bud.desc')"
+    [breadcrumbs]="crumbs()"
   >
     <div slot="actions">
       <button mat-stroked-button (click)="exportXlsx()" [disabled]="busyExport()">
         @if (busyExport()) {
           <mat-spinner diameter="16" />
         } @else {
-          Export Excel
+          {{ lang.t('admin.exportExcel') }}
         }
       </button>
       @if (canManage) {
-        <button mat-stroked-button (click)="openImport()">Import</button>
+        <button mat-stroked-button (click)="openImport()">{{ lang.t('sup.import') }}</button>
         <button mat-flat-button color="primary" (click)="openCreate()">
-          <lucide-angular [img]="icons.plus" [size]="16" /> New pot
+          <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('bud.newPot') }}
         </button>
       }
     </div>
@@ -26,33 +26,33 @@
   }
 
   @if (!loading() && !failure()) {
-    <div class="pf-kpis" role="region" aria-label="Budget summary">
+    <div class="pf-kpis" role="region" [attr.aria-label]="lang.t('bud.summary')">
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Pots in view</span>
+        <span class="pf-kpi__label">{{ lang.t('bud.potsInView') }}</span>
         <div class="pf-kpi__value">{{ totals().pots }}</div>
-        <div class="pf-kpi__sub">{{ totals().committed }} fully committed</div>
+        <div class="pf-kpi__sub">{{ lang.tx('bud.committedSub', { n: totals().committed }) }}</div>
       </div>
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Allocated</span>
+        <span class="pf-kpi__label">{{ lang.t('bud.allocated') }}</span>
         <div class="pf-kpi__value">
           @if (totals().singleCurrency) {
             {{ formatMinor(totals().allocated, totals().singleCurrency ?? 'MAD') }}
           } @else {
-            Mixed currencies
+            {{ lang.t('dashboard.mixedTitle') }}
           }
         </div>
-        <div class="pf-kpi__sub">across this page</div>
+        <div class="pf-kpi__sub">{{ lang.t('sup.acrossPage') }}</div>
       </div>
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Reserved</span>
+        <span class="pf-kpi__label">{{ lang.t('bud.reserved') }}</span>
         <div class="pf-kpi__value">
           @if (totals().singleCurrency) {
             {{ formatMinor(totals().reserved, totals().singleCurrency ?? 'MAD') }}
           } @else {
-            Mixed currencies
+            {{ lang.t('dashboard.mixedTitle') }}
           }
         </div>
-        <div class="pf-kpi__sub">held by approved requests</div>
+        <div class="pf-kpi__sub">{{ lang.t('bud.heldSub') }}</div>
       </div>
     </div>
   }
@@ -60,20 +60,20 @@
   <div class="pf-table-card">
     <div class="pf-filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Search pots</mat-label>
+        <mat-label>{{ lang.t('bud.search') }}</mat-label>
         <input matInput [formControl]="searchBox" placeholder="Engineering" />
         <lucide-angular matSuffix [img]="icons.search" [size]="18" />
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pf-filter-sm">
-        <mat-label>Period</mat-label>
+        <mat-label>{{ lang.t('sup.colPeriod') }}</mat-label>
         <input matInput type="month" [formControl]="periodFilter" />
       </mat-form-field>
     </div>
 
     <div class="pf-chips">
-      <mat-chip-listbox aria-label="Period filter">
+      <mat-chip-listbox [attr.aria-label]="lang.t('bud.periodFilter')">
         <mat-chip-option [selected]="periodFilter.value === null" (click)="setPeriod(null)">
-          All periods
+          {{ lang.t('bud.allPeriods') }}
         </mat-chip-option>
         @for (period of periods; track period) {
           <mat-chip-option [selected]="periodFilter.value === period" (click)="setPeriod(period)">
@@ -82,34 +82,34 @@
         }
       </mat-chip-listbox>
       <div class="pf-count">
-        <span>Showing {{ pageRows().length }} of {{ page().length }} pots</span>
-        <button mat-button (click)="resetFilters()">Reset filters</button>
+        <span>{{ lang.tx('bud.showing', { shown: pageRows().length, total: page().length }) }}</span>
+        <button mat-button (click)="resetFilters()">{{ lang.t('sup.resetFilters') }}</button>
       </div>
     </div>
 
     @if (loading()) {
-      <div class="pf-loading" role="status" aria-label="Loading budgets">
+      <div class="pf-loading" role="status" [attr.aria-label]="lang.t('bud.loading')">
         <mat-spinner diameter="32" />
       </div>
     } @else if (failure(); as problem) {
       @if (problem.status === 403) {
         <pf-error-state
-          title="Not permitted"
-          message="Your workspace role cannot view budgets. Ask an admin for access."
+          [title]="lang.t('admin.usersForbidden')"
+          [message]="lang.t('bud.forbiddenMsg')"
         />
       } @else {
         <pf-error-state
-          title="Budgets did not load"
+          [title]="lang.t('bud.failed')"
           [message]="problem.message"
-          retryLabel="Retry"
+          [retryLabel]="lang.t('common.retry')"
           (retry)="reload()"
         />
       }
     } @else if (pageRows().length === 0) {
       <pf-empty-state
         [icon]="icons.wallet"
-        title="No pots match"
-        message="Try a different period. Or create the first pot with New pot above."
+        [title]="lang.t('bud.noMatch')"
+        [message]="lang.t('bud.noMatchMsg')"
       />
     } @else {
       <div class="pf-table-scroll">
@@ -119,10 +119,10 @@
           matSort
           (matSortChange)="onSort($event)"
           class="pf-table"
-          aria-label="Budgets"
+          [attr.aria-label]="lang.t('bud.title')"
         >
           <ng-container matColumnDef="pot">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="pot">Pot</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="pot">{{ lang.t('bud.colPot') }}</th>
             <td mat-cell *matCellDef="let row">
               <span class="budget-cell">
                 <a class="pf-row-link" [routerLink]="[row.id]">{{ row.name }}</a>
@@ -132,7 +132,7 @@
           </ng-container>
           <ng-container matColumnDef="allocated">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="allocated" class="pf-num">
-              Allocated
+              {{ lang.t('bud.allocated') }}
             </th>
             <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
               {{ formatMinor(row.amountMinor, row.currency) }}
@@ -140,7 +140,7 @@
           </ng-container>
           <ng-container matColumnDef="reserved">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="reserved" class="pf-num">
-              Reserved
+              {{ lang.t('bud.reserved') }}
             </th>
             <td mat-cell *matCellDef="let row" class="pf-num">
               <span class="pf-meter-row">
@@ -153,16 +153,16 @@
           </ng-container>
           <ng-container matColumnDef="remaining">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="remaining" class="pf-num">
-              Remaining
+              {{ lang.t('bud.colRemaining') }}
             </th>
             <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
               {{ formatMinor(row.remainingMinor, row.currency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">Actions</span></th>
+            <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">{{ lang.t('req.colActions') }}</span></th>
             <td mat-cell *matCellDef="let row">
-              <a mat-button [routerLink]="[row.id]">Open</a>
+              <a mat-button [routerLink]="[row.id]">{{ lang.t('req.open') }}</a>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -175,7 +175,7 @@
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"
         (page)="onPage($event)"
-        aria-label="Budget pages"
+        [attr.aria-label]="lang.t('bud.budgetPages')"
       />
     }
   </div>

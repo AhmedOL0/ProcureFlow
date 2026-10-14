@@ -6,12 +6,12 @@ export const SUPPLIER_ROUTES: Routes = [
     path: '',
     loadComponent: () =>
       import('./supplier-list/supplier-list.component').then((m) => m.SupplierListComponent),
-    data: { breadcrumb: 'Suppliers' },
+    data: { breadcrumbKey: 'nav.suppliers' },
   },
   {
     path: ':id',
     loadComponent: () =>
       import('./supplier-detail/supplier-detail.component').then((m) => m.SupplierDetailComponent),
-    data: { breadcrumb: 'Supplier file' },
+    data: { breadcrumbKey: 'sup.fileCrumb' },
   },
 ];

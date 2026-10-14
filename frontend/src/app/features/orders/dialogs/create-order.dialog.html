@@ -1,28 +1,28 @@
-<h2 mat-dialog-title>New order</h2>
+<h2 mat-dialog-title>{{ lang.t('ord.newOrder') }}</h2>
 <mat-dialog-content>
   <div class="dialog-form">
     <mat-form-field appearance="outline">
-      <mat-label>Approved request</mat-label>
+      <mat-label>{{ lang.t('ord.reqLabel') }}</mat-label>
       <mat-select [formControl]="requestControl">
         @for (request of approved(); track request.id) {
           <mat-option [value]="request.id">{{ request.title }}</mat-option>
         }
       </mat-select>
       @if (requestControl.hasError('required') && requestControl.touched) {
-        <mat-error>Pick the approved request to order from.</mat-error>
+        <mat-error>{{ lang.t('ord.reqError') }}</mat-error>
       } @else {
-        <mat-hint>Only approved requests can become orders.</mat-hint>
+        <mat-hint>{{ lang.t('ord.reqHint') }}</mat-hint>
       }
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Supplier</mat-label>
+      <mat-label>{{ lang.t('sup.colSupplier') }}</mat-label>
       <mat-select [formControl]="supplierControl">
         @for (supplier of vendors(); track supplier.id) {
           <mat-option [value]="supplier.id">{{ supplier.name }}</mat-option>
         }
       </mat-select>
       @if (supplierControl.hasError('required') && supplierControl.touched) {
-        <mat-error>Pick the supplier to order from.</mat-error>
+        <mat-error>{{ lang.t('ord.supError') }}</mat-error>
       }
     </mat-form-field>
     @if (failure()) {
@@ -31,7 +31,7 @@
   </div>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
   <button
     mat-flat-button
     color="primary"
@@ -41,7 +41,7 @@
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      Create draft order
+      {{ lang.t('ord.createDraftBtn') }}
     }
   </button>
 </mat-dialog-actions>

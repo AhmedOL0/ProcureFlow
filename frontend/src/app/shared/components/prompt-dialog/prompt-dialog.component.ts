@@ -5,6 +5,8 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { LanguageService } from '../../../core/i18n/language.service';
+
 export interface PromptDialogData {
   title: string;
   message?: string;
@@ -42,17 +44,17 @@ export interface PromptDialogData {
           cdkFocusInitial
         />
         @if (value.hasError('required') && value.touched) {
-          <mat-error>A value is required.</mat-error>
+          <mat-error>{{ lang.t('dialog.valueRequired') }}</mat-error>
         }
         @if (value.hasError('minlength') && value.touched) {
-          <mat-error>At least {{ data.minLength }} characters.</mat-error>
+          <mat-error>{{ lang.tx('dialog.minLength', { n: data.minLength ?? 0 }) }}</mat-error>
         }
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancel</button>
+      <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
       <button mat-flat-button color="primary" (click)="confirm()" [disabled]="value.invalid">
-        {{ data.confirmLabel ?? 'Save' }}
+        {{ data.confirmLabel ?? lang.t('dialog.saveFallback') }}
       </button>
     </mat-dialog-actions>
   `,
@@ -73,6 +75,7 @@ export interface PromptDialogData {
 export class PromptDialogComponent {
   private readonly dialog = inject(MatDialogRef<PromptDialogComponent, string | null>);
   protected readonly data = inject<PromptDialogData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
   readonly value = new FormControl(this.data.initial ?? '', {
     nonNullable: true,
     validators: [

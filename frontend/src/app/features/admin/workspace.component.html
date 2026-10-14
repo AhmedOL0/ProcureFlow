@@ -1,43 +1,43 @@
 <div class="pf-page">
   <pf-page-header
-    title="Workspace settings"
-    description="Your tenant: identity and naming. Departments, users and approval lanes live on their own screens."
-    [breadcrumbs]="[{ label: 'Workspace' }]"
+    [title]="lang.t('admin.title')"
+    [description]="lang.t('admin.desc')"
+    [breadcrumbs]="crumbs()"
   />
 
-  @if (notice()) {
-    <p class="pf-notice" role="status">{{ notice() }}</p>
+  @if (notice(); as note) {
+    <p class="pf-notice" role="status">{{ lang.tx(note.key, note.vars) }}</p>
   }
 
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading workspace">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('workspace.loading')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     <pf-error-state
-      title="Workspace did not load"
+      [title]="lang.t('workspace.failed')"
       [message]="failureMessage()"
-      retryLabel="Retry"
+      [retryLabel]="lang.t('common.retry')"
       (retry)="reload()"
     />
   } @else if (tenant(); as workspace) {
-    <section class="pf-panel" aria-label="Workspace">
-      <h2>Workspace</h2>
+    <section class="pf-panel" [attr.aria-label]="lang.t('nav.adminWorkspace')">
+      <h2>{{ lang.t('nav.adminWorkspace') }}</h2>
       <p class="pf-muted">
-        Slug <strong class="pf-data-mono">{{ workspace.slug }}</strong>
+        {{ lang.t('admin.slugPrefix') }} <strong class="pf-data-mono">{{ workspace.slug }}</strong>
       </p>
       @if (canManageTenant) {
         <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Workspace name</mat-label>
+            <mat-label>{{ lang.t('admin.nameLabel') }}</mat-label>
             <input matInput [formControl]="tenantName" />
           </mat-form-field>
           <button mat-stroked-button (click)="renameTenant()" [disabled]="!tenantName.value.trim()">
-            Rename
+            {{ lang.t('admin.rename') }}
           </button>
         </div>
       } @else {
-        <p class="pf-muted">Renaming needs tenant management rights.</p>
+        <p class="pf-muted">{{ lang.t('admin.renameDenied') }}</p>
       }
     </section>
   }

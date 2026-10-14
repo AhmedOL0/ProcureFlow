@@ -1,35 +1,35 @@
-<h2 mat-dialog-title>{{ isCreate() ? 'Add item' : 'Edit item' }}</h2>
+<h2 mat-dialog-title>{{ isCreate() ? lang.t('req.addItem') : lang.t('req.editItemTitle') }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form" (ngSubmit)="save()">
     <mat-form-field appearance="outline">
-      <mat-label>Description</mat-label>
+      <mat-label>{{ lang.t('req.colDesc') }}</mat-label>
       <input matInput formControlName="description" maxlength="500" placeholder="ThinkPad T14" />
       @if (form.controls.description.hasError('required') && form.controls.description.touched) {
-        <mat-error>Description is required.</mat-error>
+        <mat-error>{{ lang.t('req.descRequired') }}</mat-error>
       }
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Category</mat-label>
+      <mat-label>{{ lang.t('dashboard.category') }}</mat-label>
       <input matInput formControlName="category" placeholder="Hardware" />
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Quantity</mat-label>
+      <mat-label>{{ lang.t('req.qtyLabel') }}</mat-label>
       <input matInput type="number" formControlName="quantity" min="1" step="1" />
       @if (form.controls.quantity.touched && form.controls.quantity.invalid) {
-        <mat-error>Quantity must be at least 1.</mat-error>
+        <mat-error>{{ lang.t('req.qtyError') }}</mat-error>
       }
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Unit price (minor units, e.g. cents)</mat-label>
+      <mat-label>{{ lang.t('req.priceLabel') }}</mat-label>
       <input matInput type="number" formControlName="unitPriceMinor" min="0" step="1" />
       @if (form.controls.unitPriceMinor.touched && form.controls.unitPriceMinor.invalid) {
-        <mat-error>Price cannot be negative.</mat-error>
+        <mat-error>{{ lang.t('req.priceError') }}</mat-error>
       }
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Preferred supplier (optional)</mat-label>
+      <mat-label>{{ lang.t('req.supplierLabel') }}</mat-label>
       <mat-select formControlName="supplierId">
-        <mat-option [value]="null">None</mat-option>
+        <mat-option [value]="null">{{ lang.t('req.noneOption') }}</mat-option>
         @for (supplier of options(); track supplier.id) {
           <mat-option [value]="supplier.id">{{ supplier.name }}</mat-option>
         }
@@ -41,12 +41,12 @@
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
   <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      {{ isCreate() ? 'Add item' : 'Save changes' }}
+      {{ isCreate() ? lang.t('req.addItem') : lang.t('req.saveChanges') }}
     }
   </button>
 </mat-dialog-actions>

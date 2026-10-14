@@ -6,6 +6,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { LanguageService } from '../../core/i18n/language.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
@@ -41,6 +42,7 @@ export class MyWorkspaceComponent {
   private readonly requests = inject(ProcurementService);
   private readonly auth = inject(AuthService);
   protected readonly inbox = inject(NotificationCenterService);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { plus: Plus, file: FileText, bell: Bell };
   protected readonly formatInstant = formatInstant;
@@ -54,6 +56,16 @@ export class MyWorkspaceComponent {
   protected readonly openTotal = signal(0);
 
   protected readonly recentMine = computed(() => this.mineRows());
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('workspace.title') }]);
+
+  protected pageTitle(email: string | null | undefined): string {
+    return email ? this.lang.tx('workspace.hello', { email }) : this.lang.t('workspace.title');
+  }
+
+  protected rolesLabel(roles: string[]): string {
+    return roles.length > 0 ? roles.join(', ') : this.lang.t('workspace.noRoles');
+  }
 
   protected readonly latestUnread = computed(() =>
     this.inbox

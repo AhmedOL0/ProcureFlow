@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { SupplierContact, SuppliersService } from '../suppliers.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-errors';
 
 export interface ContactDialogData {
@@ -28,6 +29,7 @@ export class ContactDialogComponent {
   private readonly suppliers = inject(SuppliersService);
   private readonly dialog = inject(MatDialogRef<ContactDialogComponent, boolean>);
   protected readonly data = inject<ContactDialogData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
 
   readonly form = new FormGroup({
     name: new FormControl(this.data.contact?.name ?? '', {

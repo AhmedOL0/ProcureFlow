@@ -5,6 +5,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { SupplierImportResult, SuppliersService } from '../suppliers.service';
 import { saveBlob } from '../../../shared/utils/download';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -27,6 +28,7 @@ const TEMPLATE =
 export class SupplierImportDialogComponent {
   private readonly suppliers = inject(SuppliersService);
   private readonly dialog = inject(MatDialogRef<SupplierImportDialogComponent, boolean>);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly fileName = signal<string | null>(null);
   protected readonly busy = signal(false);
@@ -46,13 +48,17 @@ export class SupplierImportDialogComponent {
     }
     const lower = file.name.toLowerCase();
     if (!lower.endsWith('.xlsx') && !lower.endsWith('.csv')) {
-      this.failure.set('Only .xlsx and .csv files can be imported.');
+      this.failure.set(
+        userMessageFor({ status: 400, code: 'UNSUPPORTED_FILE', message: '', details: {} }),
+      );
       this.pending = null;
       this.fileName.set(null);
       return;
     }
     if (file.size > MAX_BYTES) {
-      this.failure.set('The file exceeds the 5 MB import limit.');
+      this.failure.set(
+        userMessageFor({ status: 400, code: 'FILE_TOO_LARGE', message: '', details: {} }),
+      );
       this.pending = null;
       this.fileName.set(null);
       return;

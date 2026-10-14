@@ -1,80 +1,80 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading budget">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('bud.loadingFile')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     <pf-error-state
-      title="Budget did not load"
+      [title]="lang.t('bud.fileFailed')"
       [message]="problem.message"
-      retryLabel="Back to budgets"
+      [retryLabel]="lang.t('bud.backBtn')"
       (retry)="backToList()"
     />
   } @else if (pot(); as row) {
     <pf-page-header
-      [title]="row.name ?? 'Budget pot'"
-      [description]="'Period ' + (row.period ?? 'N/A') + ' · allocations, holds and remainder.'"
-      [breadcrumbs]="[{ label: 'Budgets', url: '/budgets' }, { label: row.name ?? 'Pot' }]"
+      [title]="row.name ?? lang.t('bud.fallbackTitle')"
+      [description]="lang.tx('bud.fileDesc', { p: row.period ?? 'N/A' })"
+      [breadcrumbs]="crumbs()"
     >
       <div slot="actions">
         @if (canManage) {
           <button mat-stroked-button color="warn" (click)="confirmDelete()" [disabled]="deleting()">
-            <lucide-angular [img]="icons.trash" [size]="16" /> Delete
+            <lucide-angular [img]="icons.trash" [size]="16" /> {{ lang.t('common.delete') }}
           </button>
         }
       </div>
     </pf-page-header>
 
-    <div class="pf-kpis" role="region" aria-label="Pot figures">
+    <div class="pf-kpis" role="region" [attr.aria-label]="lang.t('bud.potFigures')">
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Allocated</span>
+        <span class="pf-kpi__label">{{ lang.t('bud.allocated') }}</span>
         <div class="pf-kpi__value">{{ formatMinor(row.amountMinor, row.currency) }}</div>
-        <div class="pf-kpi__sub">pot ceiling for {{ row.period }}</div>
+        <div class="pf-kpi__sub">{{ lang.tx('bud.ceilingSub', { p: row.period ?? '' }) }}</div>
       </div>
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Reserved</span>
+        <span class="pf-kpi__label">{{ lang.t('bud.reserved') }}</span>
         <div class="pf-kpi__value">{{ formatMinor(row.reservedMinor, row.currency) }}</div>
-        <div class="pf-kpi__sub">held by approved requests</div>
+        <div class="pf-kpi__sub">{{ lang.t('bud.heldSub') }}</div>
         <div class="pf-kpi__bar" aria-hidden="true">
           <div class="pf-kpi__fill" [style.width.%]="utilization()"></div>
         </div>
       </div>
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Remaining</span>
+        <span class="pf-kpi__label">{{ lang.t('bud.colRemaining') }}</span>
         <div class="pf-kpi__value">{{ formatMinor(row.remainingMinor, row.currency) }}</div>
-        <div class="pf-kpi__sub">left to spend</div>
+        <div class="pf-kpi__sub">{{ lang.t('bud.leftSub') }}</div>
       </div>
     </div>
 
-    <section class="pf-table-card" aria-label="Reservations">
+    <section class="pf-table-card" [attr.aria-label]="lang.t('bud.holds')">
       <div class="pf-card-head">
         <div class="pf-section-head">
-          <h2>Holds on this pot ({{ holds().length }})</h2>
+          <h2>{{ lang.tx('bud.holdsHead', { n: holds().length }) }}</h2>
         </div>
       </div>
       @if (holds().length === 0) {
         <pf-empty-state
           [icon]="icons.wallet"
-          title="No holds"
-          message="Approved requests reserve here automatically; nothing holds on this pot yet."
+          [title]="lang.t('bud.noHolds')"
+          [message]="lang.t('bud.noHoldsMsg')"
         />
       } @else {
         <div class="pf-table-scroll">
-          <table mat-table [dataSource]="holds()" class="pf-table" aria-label="Reservations">
+          <table mat-table [dataSource]="holds()" class="pf-table" [attr.aria-label]="lang.t('bud.holds')">
             <ng-container matColumnDef="request">
-              <th mat-header-cell *matHeaderCellDef>Request</th>
+              <th mat-header-cell *matHeaderCellDef>{{ lang.t('req.colRequest') }}</th>
               <td mat-cell *matCellDef="let hold">
-                <a class="pf-row-link" [routerLink]="['/requests', hold.requestId]">Open request</a>
+                <a class="pf-row-link" [routerLink]="['/requests', hold.requestId]">{{ lang.t('bud.openReq') }}</a>
               </td>
             </ng-container>
             <ng-container matColumnDef="amount">
-              <th mat-header-cell *matHeaderCellDef class="pf-num">Amount</th>
+              <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('bud.colAmount') }}</th>
               <td mat-cell *matCellDef="let hold" class="pf-num pf-data-mono">
                 {{ formatMinor(hold.amountMinor, row.currency) }}
               </td>
             </ng-container>
             <ng-container matColumnDef="held">
-              <th mat-header-cell *matHeaderCellDef>Held since</th>
+              <th mat-header-cell *matHeaderCellDef>{{ lang.t('bud.colHeld') }}</th>
               <td mat-cell *matCellDef="let hold">{{ formatInstant(hold.createdAt) }}</td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="holdColumns"></tr>

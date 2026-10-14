@@ -20,6 +20,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { type I18nKey, LanguageService } from '../../core/i18n/language.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import {
@@ -29,6 +30,7 @@ import {
   ClipboardList,
   ChevronsUpDown,
   FileClock,
+  Globe,
   LayoutDashboard,
   ListChecks,
   LogOut,
@@ -50,7 +52,7 @@ import { Breadcrumb } from '../../shared/components/page-header/page-header.comp
 import { humanizeRole, initialsFor } from '../../shared/utils/names';
 
 interface NavItem {
-  label: string;
+  labelKey: I18nKey;
   url: string;
   icon: typeof Truck;
   /** Any-of authorities required to see the entry; absent means visible. */
@@ -60,7 +62,7 @@ interface NavItem {
 }
 
 interface NavSection {
-  label: string;
+  labelKey: I18nKey;
   items: NavItem[];
 }
 
@@ -96,11 +98,13 @@ export class ShellComponent {
   private readonly breakpoints = inject(BreakpointObserver);
   protected readonly auth = inject(AuthService);
   protected readonly inbox = inject(NotificationCenterService);
+  protected readonly lang = inject(LanguageService);
   private readonly themes = inject(ThemeService);
 
   protected readonly icons = {
     bell: Bell,
     menu: Menu,
+    globe: Globe,
     moon: Moon,
     sun: Sun,
     dashboard: LayoutDashboard,
@@ -113,11 +117,15 @@ export class ShellComponent {
   protected readonly canSeeCopilot = this.auth.hasAuthority('ai:use');
   protected readonly isDark = computed(() => this.themes.theme() === 'dark');
   protected readonly themeLabel = computed(() =>
-    this.isDark() ? 'Switch to light mode' : 'Switch to dark mode',
+    this.isDark() ? this.lang.t('nav.themeLight') : this.lang.t('nav.themeDark'),
   );
 
   protected toggleTheme(): void {
     this.themes.toggle();
+  }
+
+  protected useLanguage(lang: 'en' | 'fr'): void {
+    this.lang.use(lang);
   }
 
   /** Display name: profile names when set, else the email handle. */
@@ -134,66 +142,66 @@ export class ShellComponent {
 
   protected readonly primaryRole = computed(() => {
     const user = this.auth.currentUser();
-    return humanizeRole(user?.roles?.[0]);
+    return humanizeRole(user?.roles?.[0], this.lang.lang());
   });
 
   readonly nav: NavSection[] = [
     {
-      label: 'Workspace',
+      labelKey: 'nav.sectionWorkspace',
       items: [
-        { label: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-        { label: 'My Workspace', url: '/workspace', icon: User },
+        { labelKey: 'nav.dashboard', url: '/dashboard', icon: LayoutDashboard },
+        { labelKey: 'nav.workspace', url: '/workspace', icon: User },
       ],
     },
     {
-      label: 'Procurement',
+      labelKey: 'nav.sectionProcurement',
       items: [
-        { label: 'My Requests', url: '/requests/mine', icon: FileClock },
-        { label: 'Purchase Requests', url: '/requests', icon: ClipboardList, exact: true },
-        { label: 'Approvals', url: '/approvals', icon: Stamp },
-        { label: 'Suppliers', url: '/suppliers', icon: Building2 },
-        { label: 'Orders', url: '/orders', icon: Truck },
-        { label: 'Invoices', url: '/invoices', icon: Receipt },
-        { label: 'Budgets & Spend', url: '/budgets', icon: Wallet, authorities: ['budget:read'] },
+        { labelKey: 'nav.requests', url: '/requests/mine', icon: FileClock },
+        { labelKey: 'nav.purchaseRequests', url: '/requests', icon: ClipboardList, exact: true },
+        { labelKey: 'nav.approvals', url: '/approvals', icon: Stamp },
+        { labelKey: 'nav.suppliers', url: '/suppliers', icon: Building2 },
+        { labelKey: 'nav.orders', url: '/orders', icon: Truck },
+        { labelKey: 'nav.invoices', url: '/invoices', icon: Receipt },
+        { labelKey: 'nav.budgets', url: '/budgets', icon: Wallet, authorities: ['budget:read'] },
       ],
     },
     {
-      label: 'Intelligence',
+      labelKey: 'nav.sectionIntelligence',
       items: [
         {
-          label: 'Analytics',
+          labelKey: 'nav.analytics',
           url: '/analytics',
           icon: ChartColumn,
           authorities: ['analytics:read'],
         },
-        { label: 'ProcureAI Copilot', url: '/copilot', icon: Sparkles, authorities: ['ai:use'] },
+        { labelKey: 'nav.copilotFull', url: '/copilot', icon: Sparkles, authorities: ['ai:use'] },
       ],
     },
     {
-      label: 'Administration',
+      labelKey: 'nav.sectionAdmin',
       items: [
         {
-          label: 'Workspace',
+          labelKey: 'nav.adminWorkspace',
           url: '/admin',
           icon: Settings,
           exact: true,
           authorities: ['tenant:manage', 'department:manage', 'user:manage'],
         },
-        { label: 'Users & Roles', url: '/admin/users', icon: Users, authorities: ['user:manage'] },
+        { labelKey: 'nav.usersRoles', url: '/admin/users', icon: Users, authorities: ['user:manage'] },
         {
-          label: 'Departments',
+          labelKey: 'nav.departments',
           url: '/admin/departments',
           icon: Network,
           authorities: ['department:manage'],
         },
         {
-          label: 'Approval Policies',
+          labelKey: 'nav.workflows',
           url: '/admin/workflows',
           icon: ListChecks,
           authorities: ['procurement:approve'],
         },
         {
-          label: 'Audit Logs',
+          labelKey: 'nav.audit',
           url: '/admin/audit',
           icon: ShieldCheck,
           authorities: ['audit:read'],
@@ -238,9 +246,9 @@ export class ShellComponent {
     const trail: Breadcrumb[] = [];
     let current: ActivatedRoute | null = this.route.firstChild;
     while (current) {
-      const label = current.snapshot.data['breadcrumb'] as string | undefined;
-      if (label) {
-        trail.push({ label });
+      const key = current.snapshot.data['breadcrumbKey'] as I18nKey | undefined;
+      if (key) {
+        trail.push({ label: this.lang.t(key) });
       }
       current = current.firstChild;
     }

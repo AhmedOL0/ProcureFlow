@@ -18,7 +18,9 @@ import { TooltipComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 
 import { formatMinor } from '../../utils/money';
+import { formatDecimal } from '../../utils/format';
 import { buildDonutOption, segmentAt } from '../../utils/charts';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/theme/theme.service';
 
 use([PieChart, TooltipComponent, CanvasRenderer]);
@@ -60,16 +62,19 @@ export class DonutChartComponent implements AfterViewInit, OnDestroy {
 
   protected readonly legend = computed<LegendRow[]>(() => {
     const total = this.total();
+    // Subscribe to language flips: shares render with the active decimal.
+    this.lang.lang();
     return this.slices().map((slice, index) => ({
       ...slice,
       css: `donut-segment--${index % 6}`,
-      share: total > 0 && slice.value > 0 ? `${((slice.value / total) * 100).toFixed(1)}%` : 'N/A',
+      share: total > 0 && slice.value > 0 ? `${formatDecimal((slice.value / total) * 100)}%` : 'N/A',
     }));
   });
 
   private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly themes = inject(ThemeService);
+  protected readonly lang = inject(LanguageService);
   private chart: ECharts | null = null;
   private observer: ResizeObserver | null = null;
 
@@ -79,6 +84,8 @@ export class DonutChartComponent implements AfterViewInit, OnDestroy {
       this.currency();
       // Theme flip re-reads the token palette from CSS in render().
       this.themes.theme();
+      // Language flip re-renders money tooltips with the new locale.
+      this.lang.lang();
       this.render();
     });
   }

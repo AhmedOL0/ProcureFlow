@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +13,8 @@ import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import type { I18nKey } from '../../core/i18n/en';
+import { LanguageService } from '../../core/i18n/language.service';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { PromptDialogComponent } from '../../shared/components/prompt-dialog/prompt-dialog.component';
@@ -47,9 +49,11 @@ export class UsersComponent {
   private readonly org = inject(OrganizationService);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(MatDialog);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { users: Users };
   protected readonly canManageUsers = this.auth.hasAuthority('user:manage');
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.users') }]);
 
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
@@ -57,7 +61,13 @@ export class UsersComponent {
   protected readonly invites = signal<WorkspaceInvite[]>([]);
   protected readonly memberships = signal<Membership[]>([]);
   protected readonly departments = signal<Department[]>([]);
-  protected readonly notice = signal<string | null>(null);
+  protected readonly notice = signal<{ key: I18nKey; vars: Record<string, string | number> } | null>(
+    null,
+  );
+
+  protected notify(key: I18nKey, vars: Record<string, string | number> = {}): void {
+    this.notice.set({ key, vars });
+  }
   protected readonly page = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
 
   readonly newEmail = new FormControl('', {
@@ -163,7 +173,7 @@ export class UsersComponent {
       next: () => {
         this.inviteEmail.reset('');
         this.inviteRoles.reset(['MEMBER']);
-        this.notice.set('Invite sent. The link travels by mail and works once.');
+        this.notify('admin.inviteSent');
         this.loadInvites();
       },
       error: (error: unknown) => this.failure.set(parseApiFailure(error)),
@@ -176,7 +186,7 @@ export class UsersComponent {
     }
     this.org.revokeInvite(invite.id).subscribe({
       next: () => {
-        this.notice.set('Invite revoked.');
+        this.notify('admin.inviteRevoked');
         this.loadInvites();
       },
       error: (error: unknown) => this.failure.set(parseApiFailure(error)),
@@ -200,7 +210,7 @@ export class UsersComponent {
           this.newEmail.reset('');
           this.newPassword.reset('');
           this.newRoles.reset([]);
-          this.notice.set('User created with the selected roles.');
+          this.notify('admin.userCreated');
           this.reload();
         },
         error: (error: unknown) => this.failure.set(parseApiFailure(error)),
@@ -219,10 +229,10 @@ export class UsersComponent {
     const dialog = this.dialogs.open(PromptDialogComponent, {
       width: '400px',
       data: {
-        title: `Reset password for ${user.email ?? 'user'}?`,
-        message: 'The new password applies immediately and ends all of their sessions.',
-        label: 'New password (12+ characters)',
-        confirmLabel: 'Reset password',
+        title: this.lang.tx('admin.resetTitle', { email: user.email ?? 'user' }),
+        message: this.lang.t('admin.resetMsg'),
+        label: this.lang.t('admin.resetLabel'),
+        confirmLabel: this.lang.t('admin.resetConfirm'),
         secret: true,
         minLength: 12,
       },
@@ -230,7 +240,7 @@ export class UsersComponent {
     dialog.afterClosed().subscribe((password) => {
       if (typeof password === 'string' && password && user.id) {
         this.org.resetPassword(user.id, password).subscribe({
-          next: () => this.notice.set(`Password reset for ${user.email ?? 'user'}.`),
+          next: () => this.notify('admin.passwordReset', { email: user.email ?? 'user' }),
           error: (error: unknown) => this.failure.set(parseApiFailure(error)),
         });
       }

@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { OrderLine } from '../orders.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 
 export interface ReceiveDialogData {
   lines: OrderLine[];
@@ -28,6 +29,7 @@ export interface ReceiveDialogData {
 export class ReceiveDialogComponent {
   private readonly dialog = inject(MatDialogRef<ReceiveDialogComponent, ReceiveDialogResult>);
   protected readonly data = inject<ReceiveDialogData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
 
   readonly form = new FormGroup({
     quantities: new FormArray(
@@ -82,7 +84,7 @@ export class ReceiveDialogComponent {
         quantity: Math.min(row.control.value, row.outstanding),
       }));
     if (lines.length === 0) {
-      this.failure.set('Enter a received quantity for at least one outstanding line.');
+      this.failure.set(this.lang.t('ord.qtyNeeded'));
       return;
     }
     this.busy.set(true);

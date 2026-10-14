@@ -1,40 +1,40 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading supplier file">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('sup.loadingFile')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     @if (problem.status === 404) {
       <pf-error-state
-        title="Supplier not found"
-        message="It may have been deleted, or it belongs to another workspace."
+        [title]="lang.t('sup.notFound')"
+        [message]="lang.t('req.notFoundMsg')"
       />
     } @else if (problem.status === 403) {
       <pf-error-state
-        title="Not permitted"
-        message="Your workspace role cannot view suppliers. Ask an admin for access."
+        [title]="lang.t('admin.usersForbidden')"
+        [message]="lang.t('sup.forbiddenMsg')"
       />
     } @else {
       <pf-error-state
-        title="Supplier file did not load"
+        [title]="lang.t('sup.fileFailed')"
         [message]="failureMessage()"
-        retryLabel="Retry"
+        [retryLabel]="lang.t('common.retry')"
         (retry)="reload()"
       />
     }
   } @else if (supplier(); as current) {
     <pf-page-header
-      [title]="current.name ?? 'Supplier'"
-      [description]="current.taxId ? 'Tax ID ' + current.taxId : 'No tax ID on file'"
-      [breadcrumbs]="[{ label: 'Suppliers', url: '/suppliers' }, { label: current.name ?? 'File' }]"
+      [title]="current.name ?? lang.t('sup.fallbackTitle')"
+      [description]="headerDesc(current.taxId)"
+      [breadcrumbs]="crumbsFor(current.name)"
     >
       <div slot="actions">
         @if (canWrite) {
           <button mat-stroked-button (click)="openEdit()">
-            <lucide-angular [img]="icons.pencil" [size]="16" /> Edit
+            <lucide-angular [img]="icons.pencil" [size]="16" /> {{ lang.t('common.edit') }}
           </button>
           <button mat-stroked-button color="warn" (click)="confirmDelete()">
-            <lucide-angular [img]="icons.trash" [size]="16" /> Delete
+            <lucide-angular [img]="icons.trash" [size]="16" /> {{ lang.t('common.delete') }}
           </button>
         }
       </div>
@@ -44,8 +44,7 @@
       <pf-status-badge [status]="current.status" />
       @if (scoreSummary(); as summary) {
         <span class="pf-stat-pill pf-data-mono">
-          {{ summary.avg }}% on-time · {{ summary.periods }}
-          {{ summary.periods === 1 ? 'scorecard' : 'scorecards' }}
+          {{ scoreLabel(summary.avg, summary.periods) }}
         </span>
       }
       @if (current.email) {
@@ -56,19 +55,19 @@
       }
     </div>
 
-    <section class="pf-panel" aria-label="Contacts">
+    <section class="pf-panel" [attr.aria-label]="lang.t('sup.contacts')">
       <div class="pf-panel__head">
-        <h2>Contacts</h2>
+        <h2>{{ lang.t('sup.contacts') }}</h2>
         @if (canWrite) {
           <button mat-button (click)="openContact()">
-            <lucide-angular [img]="icons.plus" [size]="16" /> Add contact
+            <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('sup.addContact') }}
           </button>
         }
       </div>
       @if (contacts().length === 0) {
         <pf-empty-state
-          title="No contacts yet"
-          message="Add the people you order from. One of them can be the primary contact. Use Add contact above."
+          [title]="lang.t('sup.noContacts')"
+          [message]="lang.t('sup.noContactsMsg')"
         />
       } @else {
         <ul class="pf-list">
@@ -78,7 +77,7 @@
                 <span class="pf-list__name">
                   {{ contact.name }}
                   @if (contact.primary) {
-                    <span role="img" aria-label="Primary contact">
+                    <span role="img" [attr.aria-label]="lang.t('sup.colContact')">
                       <lucide-angular
                         [img]="icons.star"
                         [size]="14"
@@ -89,17 +88,17 @@
                   }
                 </span>
                 <span class="pf-list__sub">
-                  {{ contact.title || 'No title' }} · {{ contact.email || 'no email' }} ·
-                  {{ contact.phone || 'no phone' }}
+                  {{ contact.title || lang.t('sup.noTitle') }} · {{ contact.email || lang.t('sup.noEmail') }} ·
+                  {{ contact.phone || lang.t('sup.noPhone') }}
                 </span>
               </div>
               @if (canWrite) {
                 <div class="pf-list__actions">
                   @if (!contact.primary) {
-                    <button mat-button (click)="makePrimary(contact)">Set primary</button>
+                    <button mat-button (click)="makePrimary(contact)">{{ lang.t('sup.setPrimary') }}</button>
                   }
-                  <button mat-button (click)="openContact(contact)">Edit</button>
-                  <button mat-button color="warn" (click)="removeContact(contact)">Remove</button>
+                  <button mat-button (click)="openContact(contact)">{{ lang.t('common.edit') }}</button>
+                  <button mat-button color="warn" (click)="removeContact(contact)">{{ lang.t('admin.remove') }}</button>
                 </div>
               }
             </li>
@@ -108,19 +107,19 @@
       }
     </section>
 
-    <section class="pf-panel" aria-label="Categories">
+    <section class="pf-panel" [attr.aria-label]="lang.t('sup.colCategories')">
       <div class="pf-panel__head">
-        <h2>Categories</h2>
+        <h2>{{ lang.t('sup.colCategories') }}</h2>
         @if (canWrite) {
           <button mat-button (click)="manageCategories()">
-            <lucide-angular [img]="icons.tags" [size]="16" /> Manage
+            <lucide-angular [img]="icons.tags" [size]="16" /> {{ lang.t('sup.manage') }}
           </button>
         }
       </div>
       @if (categories().length === 0) {
-        <p class="pf-muted">No categories assigned.</p>
+        <p class="pf-muted">{{ lang.t('sup.noCats') }}</p>
       } @else {
-        <mat-chip-set aria-label="Assigned categories">
+        <mat-chip-set [attr.aria-label]="lang.t('sup.assignedCats')">
           @for (category of categories(); track category.id) {
             <mat-chip>{{ category.name }}</mat-chip>
           }
@@ -128,26 +127,26 @@
       }
     </section>
 
-    <section class="pf-panel" aria-label="Scorecards">
+    <section class="pf-panel" [attr.aria-label]="lang.t('sup.scorecards')">
       <div class="pf-panel__head">
-        <h2>Scorecards</h2>
+        <h2>{{ lang.t('sup.scorecards') }}</h2>
         @if (canWrite) {
           <button mat-button (click)="recordPerformance()">
-            <lucide-angular [img]="icons.plus" [size]="16" /> Record
+            <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('sup.record') }}
           </button>
         }
       </div>
       @if (performances().length === 0) {
-        <p class="pf-muted">No scorecards recorded yet.</p>
+        <p class="pf-muted">{{ lang.t('sup.noScores') }}</p>
       } @else {
         <div class="pf-table-scroll">
-          <table class="pf-table" aria-label="Scorecards">
+          <table class="pf-table" [attr.aria-label]="lang.t('sup.scorecards')">
             <thead>
               <tr>
-                <th scope="col">Period</th>
-                <th scope="col" class="pf-num">On-time %</th>
-                <th scope="col" class="pf-num">Quality</th>
-                <th scope="col">Notes</th>
+                <th scope="col">{{ lang.t('sup.colPeriod') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('sup.colOnTimePct') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('sup.colQuality') }}</th>
+                <th scope="col">{{ lang.t('sup.colNotes') }}</th>
               </tr>
             </thead>
             <tbody>

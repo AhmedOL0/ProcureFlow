@@ -15,4 +15,8 @@ describe('money', () => {
     expect(formatMinor(NaN)).toBe('N/A');
     expect(formatMinor(100, 'XX')).toContain('1.00');
   });
+
+  it('formats with an explicit French locale', () => {
+    expect(formatMinor(179800, 'MAD', 'fr-MA')).toContain('798,00');
+  });
 });

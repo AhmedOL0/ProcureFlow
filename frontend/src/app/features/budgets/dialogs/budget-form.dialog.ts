@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { BudgetsService } from '../budgets.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
 
 /**
@@ -28,6 +29,7 @@ import { parseApiFailure, userMessageFor } from '../../../shared/utils/api-error
 export class BudgetFormDialogComponent {
   private readonly budgets = inject(BudgetsService);
   private readonly dialog = inject(MatDialogRef<BudgetFormDialogComponent, boolean>);
+  protected readonly lang = inject(LanguageService);
 
   readonly form = new FormGroup({
     name: new FormControl('', {

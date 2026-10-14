@@ -7,6 +7,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { catchError, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { LanguageService } from '../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
@@ -28,6 +29,7 @@ import {
   Wallet,
 } from '../../shared/icons';
 import { ApiFailure, parseApiFailure } from '../../shared/utils/api-errors';
+import { formatDecimal } from '../../shared/utils/format';
 import { formatMinor } from '../../shared/utils/money';
 import { initialsFor } from '../../shared/utils/names';
 import { timeAgo } from '../../shared/utils/time';
@@ -87,6 +89,7 @@ export class DashboardComponent {
   private readonly budgets = inject(BudgetsService);
   private readonly analytics = inject(AnalyticsService);
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = {
     plus: Plus,
@@ -119,29 +122,30 @@ export class DashboardComponent {
 
   protected readonly kpis = computed<Kpi[]>(() => {
     const open = this.openTotal();
+    const lang = this.lang;
     return [
       {
-        label: 'Open requests',
+        label: lang.t('dashboard.openRequests'),
         value: `${open}`,
-        sub: `${this.submittedTotal()} awaiting approval`,
+        sub: lang.tx('dashboard.awaitingSub', { n: this.submittedTotal() }),
         icon: FileClock,
       },
       {
-        label: 'Pending approvals',
+        label: lang.t('dashboard.pendingApprovals'),
         value: `${this.submittedTotal()}`,
-        sub: open === 0 ? 'queue is clear' : 'in the approval queue',
+        sub: open === 0 ? lang.t('dashboard.queueClear') : lang.t('dashboard.inQueue'),
         icon: Stamp,
       },
       {
-        label: 'Active suppliers',
+        label: lang.t('dashboard.activeSuppliers'),
         value: this.activeSuppliers() === null ? 'N/A' : `${this.activeSuppliers()}`,
-        sub: 'vendors you can buy from',
+        sub: lang.t('dashboard.vendorsSub'),
         icon: Building2,
       },
       {
-        label: 'Open orders',
+        label: lang.t('dashboard.openOrders'),
         value: this.openOrders() === null ? 'N/A' : `${this.openOrders()}`,
-        sub: 'sent or partially received',
+        sub: lang.t('dashboard.sentSub'),
         icon: Truck,
       },
     ];
@@ -153,29 +157,30 @@ export class DashboardComponent {
 
   protected readonly financeKpis = computed<Kpi[]>(() => {
     const flow = this.spend();
+    const lang = this.lang;
     const orderedDelta = this.monthDelta((month) => month.orderedMinor ?? 0);
     const paidDelta = this.monthDelta((month) => month.paidMinor ?? 0);
     return [
       {
-        label: 'Ordered spend (all time)',
-        value: this.mixedSpend() ? `${this.spendCodes().length} currencies` : flow ? formatMinor(flow.orderedMinor, this.spendCode()) : 'N/A',
-        sub: this.mixedSpend() ? 'split per currency on Analytics' : (orderedDelta ?? 'committed to suppliers'),
+        label: lang.t('dashboard.orderedSpend'),
+        value: this.mixedSpend() ? this.spendCountLabel() : flow ? formatMinor(flow.orderedMinor, this.spendCode()) : 'N/A',
+        sub: this.mixedSpend() ? lang.t('dashboard.splitAnalytics') : (orderedDelta ?? lang.t('dashboard.committedSub')),
         icon: ChartColumn,
       },
       {
-        label: 'Paid out (all time)',
-        value: this.mixedSpend() ? `${this.spendCodes().length} currencies` : flow ? formatMinor(flow.paidMinor, this.spendCode()) : 'N/A',
-        sub: this.mixedSpend() ? 'split per currency on Analytics' : (paidDelta ?? 'settled with suppliers'),
+        label: lang.t('dashboard.paidOut'),
+        value: this.mixedSpend() ? this.spendCountLabel() : flow ? formatMinor(flow.paidMinor, this.spendCode()) : 'N/A',
+        sub: this.mixedSpend() ? lang.t('dashboard.splitAnalytics') : (paidDelta ?? lang.t('dashboard.settledSub')),
         icon: CircleCheck,
       },
       {
-        label: 'Outstanding invoices',
+        label: lang.t('dashboard.outstanding'),
         value: this.outstandingLabel().value,
         sub: this.outstandingLabel().sub,
         icon: Receipt,
       },
       {
-        label: 'Budget left (month)',
+        label: lang.t('dashboard.budgetLeft'),
         value: this.budgetLabel().value,
         sub: this.budgetLabel().sub,
         icon: Wallet,
@@ -190,9 +195,15 @@ export class DashboardComponent {
   protected readonly spendCodes = computed<string[]>(() => this.spend()?.currencies ?? []);
 
   /** Display code for single-currency aggregates; legacy responses default MAD. */
+  /** Display code for single-currency aggregates; legacy responses default MAD. */
   protected spendCode(): string {
     const codes = this.spendCodes();
     return codes.length === 1 ? (codes[0] ?? 'MAD') : 'MAD';
+  }
+
+  protected spendCountLabel(): string {
+    const n = this.spendCodes().length;
+    return n <= 1 ? this.lang.t('dashboard.oneCurrency') : this.lang.tx('dashboard.currencyCount', { n });
   }
 
   /**
@@ -218,7 +229,8 @@ export class DashboardComponent {
     }
     const pct = ((current - previous) / previous) * 100;
     const sign = pct > 0 ? '+' : '';
-    return `${sign}${pct.toFixed(1)}% vs ${months[months.length - 2]?.period ?? 'prior'}`;
+    const period = months[months.length - 2]?.period ?? 'prior';
+    return this.lang.tx('dashboard.deltaVs', { pct: `${sign}${formatDecimal(pct)}`, period });
   }
 
   private outstandingLabel(): { value: string; sub: string } {
@@ -226,41 +238,44 @@ export class DashboardComponent {
     // invoice-list scan, bounded at any scale. Meaningless across codes, so
     // mixed tenants get a pointer instead of a merged figure.
     if (!this.canSeeInvoices) {
-      return { value: 'N/A', sub: 'no invoice access' };
+      return { value: 'N/A', sub: this.lang.t('dashboard.noInvoiceAccess') };
     }
     const flow = this.spend();
     if (!flow) {
-      return { value: 'N/A', sub: 'figures unavailable' };
+      return { value: 'N/A', sub: this.lang.t('dashboard.figuresUnavailable') };
     }
     if (this.mixedSpend()) {
-      return { value: 'Mixed', sub: 'split per currency on Analytics' };
+      return { value: this.lang.t('dashboard.mixedSpend'), sub: this.lang.t('dashboard.splitAnalytics') };
     }
     const due = (flow.invoicedMinor ?? 0) - (flow.paidMinor ?? 0);
     if (due <= 0) {
-      return { value: formatMinor(0, this.spendCode()), sub: 'nothing outstanding' };
+      return { value: formatMinor(0, this.spendCode()), sub: this.lang.t('dashboard.nothingOutstanding') };
     }
-    return { value: formatMinor(due, this.spendCode()), sub: 'awaiting payment' };
+    return { value: formatMinor(due, this.spendCode()), sub: this.lang.t('dashboard.awaitingPayment') };
   }
 
   private budgetLabel(): { value: string; sub: string } {
     if (!this.canSeeBudgets) {
-      return { value: 'N/A', sub: 'no budget access' };
+      return { value: 'N/A', sub: this.lang.t('dashboard.noBudgetAccess') };
     }
     const pots = this.monthPots();
     if (pots.length === 0) {
-      return { value: 'No pot', sub: this.monthPotMissing() ? 'no pot this month' : 'loading' };
+      return {
+        value: this.lang.t('dashboard.noPot'),
+        sub: this.monthPotMissing() ? this.lang.t('dashboard.noPotMonth') : this.lang.t('dashboard.loadingData'),
+      };
     }
     const currencies = new Set(pots.map((pot) => pot.currency ?? 'MAD'));
     if (currencies.size !== 1) {
-      return { value: `${pots.length} pots`, sub: 'mixed currencies' };
+      return { value: `${pots.length} pots`, sub: this.lang.t('dashboard.mixedCurrencies') };
     }
     const currency = [...currencies][0];
     const remaining = pots.reduce((acc, pot) => acc + (pot.remainingMinor ?? 0), 0);
     const allocated = pots.reduce((acc, pot) => acc + (pot.amountMinor ?? 0), 0);
-    const count = pots.length === 1 ? '1 pot' : `${pots.length} pots`;
+    const count = pots.length === 1 ? this.lang.t('dashboard.onePot') : this.lang.tx('dashboard.potsSub', { n: pots.length });
     return {
       value: formatMinor(remaining, currency),
-      sub: `${count} · cap ${formatMinor(allocated, currency)}`,
+      sub: this.lang.tx('dashboard.capSub', { n: count, amount: formatMinor(allocated, currency) }),
     };
   }
 
@@ -293,7 +308,7 @@ export class DashboardComponent {
     if (total <= 0) {
       return null;
     }
-    return `${Math.round(((flow.decided ?? 0) / total) * 100)}% decided`;
+    return this.lang.tx('dashboard.decisionRatePct', { pct: Math.round(((flow.decided ?? 0) / total) * 100) });
   });
 
   constructor() {
@@ -377,6 +392,6 @@ export class DashboardComponent {
     if (value === null || value === undefined || !Number.isFinite(value)) {
       return 'N/A';
     }
-    return `${value.toFixed(1)}h`;
+    return this.lang.tx('dashboard.leadHours', { n: formatDecimal(value) });
   }
 }

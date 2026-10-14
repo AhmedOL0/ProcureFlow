@@ -1,19 +1,19 @@
-<h2 mat-dialog-title>{{ isCreate() ? 'New request' : 'Edit request' }}</h2>
+<h2 mat-dialog-title>{{ isCreate() ? lang.t('req.newTitle') : lang.t('req.editTitle') }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form" (ngSubmit)="save()">
     <mat-form-field appearance="outline">
-      <mat-label>Title</mat-label>
+      <mat-label>{{ lang.t('req.titleLabel') }}</mat-label>
       <input matInput formControlName="title" maxlength="200" placeholder="20 laptops for onboarding" />
       @if (form.controls.title.hasError('required') && form.controls.title.touched) {
-        <mat-error>Title is required.</mat-error>
+        <mat-error>{{ lang.t('req.titleRequired') }}</mat-error>
       }
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Description</mat-label>
+      <mat-label>{{ lang.t('req.descLabel') }}</mat-label>
       <textarea matInput formControlName="description" rows="2"></textarea>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Priority</mat-label>
+      <mat-label>{{ lang.t('req.colPriority') }}</mat-label>
       <mat-select formControlName="priority">
         @for (priority of priorities; track priority) {
           <mat-option [value]="priority">{{ priority }}</mat-option>
@@ -26,12 +26,12 @@
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
   <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      {{ isCreate() ? 'Create draft' : 'Save changes' }}
+      {{ isCreate() ? lang.t('req.createDraft') : lang.t('req.saveChanges') }}
     }
   </button>
 </mat-dialog-actions>

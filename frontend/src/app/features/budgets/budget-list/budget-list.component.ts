@@ -15,6 +15,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -58,6 +59,9 @@ export class BudgetListComponent {
   private readonly budgets = inject(BudgetsService);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(MatDialog);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('bud.crumb') }]);
 
   protected readonly icons = { plus: Plus, search: Search, wallet: Wallet };
   protected readonly formatMinor = formatMinor;

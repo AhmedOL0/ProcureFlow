@@ -1,21 +1,21 @@
 <div class="pf-page">
   <pf-page-header
-    title="Audit trail"
-    description="Who did what to which record, newest first. Append-only. Nothing here can change or delete rows."
-    [breadcrumbs]="[{ label: 'Audit' }]"
+    [title]="lang.t('admin.trailTitle')"
+    [description]="lang.t('admin.trailDesc')"
+    [breadcrumbs]="crumbs()"
   />
 
   <div class="pf-table-card">
     <div class="pf-filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Search actions and types</mat-label>
+        <mat-label>{{ lang.t('admin.searchActions') }}</mat-label>
         <input matInput [formControl]="entityFilter" placeholder="ORDER_SENT" />
       </mat-form-field>
       <button mat-stroked-button (click)="exportXlsx()" [disabled]="busyExport()">
         @if (busyExport()) {
           <mat-spinner diameter="16" />
         } @else {
-          Export Excel
+          {{ lang.t('admin.exportExcel') }}
         }
       </button>
     </div>
@@ -23,7 +23,7 @@
       <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
     }
     <div class="pf-chips">
-      <mat-chip-listbox aria-label="Filter by action">
+      <mat-chip-listbox [attr.aria-label]="lang.t('admin.filterAction')">
         @for (action of auditActions; track action) {
           <mat-chip-option [selected]="entityFilter.value === action" (click)="pickQuery(action)">
             {{ action }}
@@ -32,7 +32,7 @@
       </mat-chip-listbox>
     </div>
     <div class="pf-chips">
-      <mat-chip-listbox aria-label="Filter by record type">
+      <mat-chip-listbox [attr.aria-label]="lang.t('admin.filterType')">
         @for (type of auditTypes; track type) {
           <mat-chip-option [selected]="entityFilter.value === type" (click)="pickQuery(type)">
             {{ type }}
@@ -42,42 +42,42 @@
     </div>
 
     @if (loading()) {
-      <div class="pf-loading" role="status" aria-label="Loading audit trail">
+      <div class="pf-loading" role="status" [attr.aria-label]="lang.t('admin.trailLoading')">
         <mat-spinner diameter="32" />
       </div>
     } @else if (failure(); as problem) {
       @if (problem.status === 403) {
         <pf-error-state
-          title="Not permitted"
-          message="Only workspace admins can read the audit trail."
+          [title]="lang.t('admin.usersForbidden')"
+          [message]="lang.t('admin.trailForbiddenMsg')"
         />
       } @else {
         <pf-error-state
-          title="Audit trail did not load"
+          [title]="lang.t('admin.trailFailed')"
           [message]="problem.message"
-          retryLabel="Retry"
+          [retryLabel]="lang.t('common.retry')"
           (retry)="reload()"
         />
       }
     } @else if (rows().length === 0) {
       <pf-empty-state
         [icon]="icons.scroll"
-        title="No audit rows match"
-        message="Sensitive actions record here as they happen."
+        [title]="lang.t('admin.noAuditRows')"
+        [message]="lang.t('admin.noAuditRowsMsg')"
       />
     } @else {
       <div class="pf-table-scroll">
-        <table mat-table [dataSource]="rows()" class="pf-table" aria-label="Audit trail">
+        <table mat-table [dataSource]="rows()" class="pf-table" [attr.aria-label]="lang.t('admin.trailTitle')">
           <ng-container matColumnDef="time">
-            <th mat-header-cell *matHeaderCellDef>Time</th>
+            <th mat-header-cell *matHeaderCellDef>{{ lang.t('admin.colTime') }}</th>
             <td mat-cell *matCellDef="let row">{{ readableTime(row.createdAt) }}</td>
           </ng-container>
           <ng-container matColumnDef="actor">
-            <th mat-header-cell *matHeaderCellDef>Actor</th>
+            <th mat-header-cell *matHeaderCellDef>{{ lang.t('admin.colActor') }}</th>
             <td mat-cell *matCellDef="let row" class="pf-data-mono">{{ shortId(row.actorId) }}</td>
           </ng-container>
           <ng-container matColumnDef="action">
-            <th mat-header-cell *matHeaderCellDef>Action</th>
+            <th mat-header-cell *matHeaderCellDef>{{ lang.t('admin.colAction') }}</th>
             <td mat-cell *matCellDef="let row">
               <button
                 class="audit-action"
@@ -90,7 +90,7 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="target">
-            <th mat-header-cell *matHeaderCellDef>Target</th>
+            <th mat-header-cell *matHeaderCellDef>{{ lang.t('admin.colTarget') }}</th>
             <td mat-cell *matCellDef="let row">
               {{ row.entityType }} · {{ shortId(row.entityId) }}
             </td>
@@ -100,11 +100,11 @@
               @if (isExpanded(row)) {
                 <div class="audit-payloads" [attr.id]="'payloads-' + row.id">
                   <div>
-                    <p class="audit-payload__label">Before</p>
+                    <p class="audit-payload__label">{{ lang.t('admin.before') }}</p>
                     <pre class="audit-payload">{{ row.beforeJson || 'N/A' }}</pre>
                   </div>
                   <div>
-                    <p class="audit-payload__label">After</p>
+                    <p class="audit-payload__label">{{ lang.t('admin.after') }}</p>
                     <pre class="audit-payload">{{ row.afterJson || 'N/A' }}</pre>
                   </div>
                 </div>
@@ -122,7 +122,7 @@
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"
         (page)="onPage($event)"
-        aria-label="Audit pages"
+        [attr.aria-label]="lang.t('admin.auditPages')"
       />
     }
   </div>

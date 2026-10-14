@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -8,6 +8,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -46,6 +47,12 @@ export class BudgetDetailComponent {
   private readonly router = inject(Router);
   private readonly dialogs = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [
+    { label: this.lang.t('bud.crumb'), url: '/budgets' },
+    { label: this.pot()?.name ?? this.lang.t('bud.fallbackCrumb') },
+  ]);
 
   protected readonly icons = { trash: Trash2, wallet: Wallet };
   protected readonly formatMinor = formatMinor;
@@ -95,9 +102,9 @@ export class BudgetDetailComponent {
     const dialog = this.dialogs.open(ConfirmDialogComponent, {
       width: '420px',
       data: {
-        title: 'Delete this pot?',
-        message: `“${pot.name}” (${pot.period}) disappears. Pots holding reservations cannot be deleted.`,
-        confirmLabel: 'Delete pot',
+        title: this.lang.t('bud.deleteTitle'),
+        message: this.lang.tx('bud.deleteMsg', { name: pot.name ?? '', period: pot.period ?? '' }),
+        confirmLabel: this.lang.t('bud.deleteConfirm'),
       },
     });
     dialog.afterClosed().subscribe((confirmed) => {
@@ -113,7 +120,7 @@ export class BudgetDetailComponent {
       next: () => void this.router.navigate(['/budgets']),
       error: (error: unknown) => {
         this.deleting.set(false);
-        this.snack.open(userMessageFor(parseApiFailure(error)), 'Dismiss', { duration: 6000 });
+        this.snack.open(userMessageFor(parseApiFailure(error)), this.lang.t('common.dismiss'), { duration: 6000 });
       },
     });
   }

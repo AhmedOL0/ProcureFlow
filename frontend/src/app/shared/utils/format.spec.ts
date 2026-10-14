@@ -28,6 +28,10 @@ describe('formatDate', () => {
     expect(formatDate('2026-10-12T10:00:00Z')).toBe('12 Oct 2026');
   });
 
+  it('formats with an explicit French locale', () => {
+    expect(formatDate('2026-10-12T10:00:00Z', 'fr-FR')).toBe('12 oct. 2026');
+  });
+
   it('returns an N/A marker for missing or invalid input', () => {
     expect(formatDate(null)).toBe('N/A');
     expect(formatDate(undefined)).toBe('N/A');

@@ -16,6 +16,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { SuppliersService } from '../../suppliers/suppliers.service';
 import { forkJoin } from 'rxjs';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -52,6 +53,9 @@ export class OrderListComponent {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(MatDialog);
   private readonly router = inject(Router);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.orders') }]);
 
   protected readonly icons = { plus: Plus, search: Search, truck: Truck };
   protected readonly formatMinor = formatMinor;

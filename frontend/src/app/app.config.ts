@@ -5,6 +5,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { LanguageService } from './core/i18n/language.service';
 import { ThemeService } from './core/theme/theme.service';
 
 export const appConfig: ApplicationConfig = {
@@ -20,6 +21,14 @@ export const appConfig: ApplicationConfig = {
       multi: true,
       useFactory: (themes: ThemeService) => () => themes.apply(),
       deps: [ThemeService],
+    },
+    // Set <html lang> before first render so assistive tech announces
+    // the stored (or browser-seeded) language from the first paint.
+    {
+      provide: APP_INITIALIZER,
+      multi: true,
+      useFactory: (lang: LanguageService) => () => lang.apply(),
+      deps: [LanguageService],
     },
   ],
 };

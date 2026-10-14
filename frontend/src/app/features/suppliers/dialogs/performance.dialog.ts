@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { SuppliersService } from '../suppliers.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-errors';
 
 export interface PerformanceDialogData {
@@ -23,6 +24,7 @@ export class PerformanceDialogComponent {
   private readonly suppliers = inject(SuppliersService);
   private readonly dialog = inject(MatDialogRef<PerformanceDialogComponent, boolean>);
   protected readonly data = inject<PerformanceDialogData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
 
   readonly form = new FormGroup({
     period: new FormControl('', {

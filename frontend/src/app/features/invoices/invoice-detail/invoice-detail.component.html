@@ -1,32 +1,32 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading invoice file">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('inv.loadingFile')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     @if (problem.status === 404) {
       <pf-error-state
-        title="Invoice not found"
-        message="It may have been deleted, or it belongs to another workspace."
+        [title]="lang.t('inv.notFound')"
+        [message]="lang.t('req.notFoundMsg')"
       />
     } @else if (problem.status === 403) {
       <pf-error-state
-        title="Not permitted"
-        message="Your workspace role cannot view invoices. Ask an admin for access."
+        [title]="lang.t('admin.usersForbidden')"
+        [message]="lang.t('inv.forbiddenMsg')"
       />
     } @else {
       <pf-error-state
-        title="Invoice file did not load"
+        [title]="lang.t('inv.fileFailed')"
         [message]="failureMessage()"
-        retryLabel="Retry"
+        [retryLabel]="lang.t('common.retry')"
         (retry)="reload()"
       />
     }
   } @else if (invoice(); as current) {
     <pf-page-header
-      [title]="'Invoice ' + (current.number ?? '')"
-      [description]="'Tracking payment status only. Recording a payment never transfers money.'"
-      [breadcrumbs]="[{ label: 'Invoices', url: '/invoices' }, { label: current.number ?? 'File' }]"
+      [title]="titleFor(current.number)"
+      [description]="lang.t('inv.fileDesc')"
+      [breadcrumbs]="crumbs()"
     >
       <div slot="actions">
         <button mat-stroked-button (click)="downloadPdf()" [disabled]="busyExport()">
@@ -38,7 +38,7 @@
         </button>
         @if (canWrite && remaining() > 0) {
           <button mat-flat-button color="primary" (click)="openPay()" [disabled]="acting()">
-            Record payment
+            {{ lang.t('inv.payTitle') }}
           </button>
         }
       </div>
@@ -54,29 +54,29 @@
         formatMinor(current.totalMinor, current.currency)
       }}</span>
       <span class="pf-muted pf-data-mono"
-        >{{ formatMinor(current.paidMinor, current.currency) }} paid</span
+        >{{ paidLine(formatMinor(current.paidMinor, current.currency)) }}</span
       >
       @if (current.orderId) {
-        <a class="pf-row-link" [routerLink]="['/orders', current.orderId]">Source order</a>
+        <a class="pf-row-link" [routerLink]="['/orders', current.orderId]">{{ lang.t('inv.sourceOrder') }}</a>
       }
     </div>
 
-    <section class="pf-panel" aria-label="Three-way match">
-      <h2>3-way match</h2>
+    <section class="pf-panel" [attr.aria-label]="lang.t('inv.match')">
+      <h2>{{ lang.t('inv.match') }}</h2>
       @if ((current.match ?? []).length === 0) {
         <pf-empty-state
           [icon]="icons.file"
-          title="No match lines"
-          message="This invoice carries no order lines."
+          [title]="lang.t('inv.noMatchLines')"
+          [message]="lang.t('inv.noLinesMsg')"
         />
       } @else {
-        <table class="pf-table" aria-label="Ordered versus received versus invoiced">
+        <table class="pf-table" [attr.aria-label]="lang.t('inv.matchTable')">
           <thead>
             <tr>
-              <th scope="col">Order line</th>
-              <th scope="col" class="pf-num">Ordered</th>
-              <th scope="col" class="pf-num">Received</th>
-              <th scope="col" class="pf-num">Invoiced</th>
+              <th scope="col">{{ lang.t('inv.colOrderLine') }}</th>
+              <th scope="col" class="pf-num">{{ lang.t('ord.colOrdered') }}</th>
+              <th scope="col" class="pf-num">{{ lang.t('ord.received') }}</th>
+              <th scope="col" class="pf-num">{{ lang.t('inv.colInvoiced') }}</th>
             </tr>
           </thead>
           <tbody>

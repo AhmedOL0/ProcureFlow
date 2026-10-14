@@ -9,13 +9,16 @@ import { catchError, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { Budget, BudgetContextService } from '../budget.service';
+import type { I18nKey } from '../../../core/i18n/en';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { FileText, Pencil, Plus, Trash2 } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { ApiFailure, fallbackMessage, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { getDefaultLanguage } from '../../../core/i18n/language.service';
 import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { slaStatus } from '../../../shared/utils/time';
@@ -56,6 +59,7 @@ export class RequestDetailComponent {
   private readonly snacks = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { file: FileText, pencil: Pencil, plus: Plus, trash: Trash2 };
   protected readonly formatMinor = formatMinor;
@@ -136,6 +140,13 @@ export class RequestDetailComponent {
     return this.route.snapshot.paramMap.get('id') ?? '';
   }
 
+  protected crumbsFor(title: string | null | undefined): { label: string; url?: string }[] {
+    return [
+      { label: this.lang.t('req.crumbAll'), url: '/requests' },
+      { label: title ?? this.lang.t('req.fallbackCrumb') },
+    ];
+  }
+
   constructor() {
     this.reload();
   }
@@ -143,7 +154,7 @@ export class RequestDetailComponent {
   reload(): void {
     const id = this.requestId();
     if (!id) {
-      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.', details: {} });
+      this.failure.set({ status: 404, code: null, message: fallbackMessage(404, getDefaultLanguage()), details: {} });
       this.loading.set(false);
       return;
     }
@@ -202,9 +213,9 @@ export class RequestDetailComponent {
     const request = this.request();
     const verdict = this.decision();
     return [
-      { label: 'Created', at: request?.createdAt },
-      { label: 'Submitted', at: request?.submittedAt },
-      { label: 'Decided', at: verdict?.createdAt },
+      { label: this.lang.t('req.histCreated'), at: request?.createdAt },
+      { label: this.lang.t('req.histSubmitted'), at: request?.submittedAt },
+      { label: this.lang.t('req.histDecided'), at: verdict?.createdAt },
     ];
   }
 
@@ -213,11 +224,11 @@ export class RequestDetailComponent {
       return 'N/A';
     }
     const date = new Date(at);
-    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString(this.lang.dateLocale());
   }
 
-  private announce(message: string): void {
-    this.snacks.open(message, 'Dismiss', { duration: 4000 });
+  private announceKey(key: I18nKey): void {
+    this.snacks.open(this.lang.t(key), this.lang.t('common.dismiss'), { duration: 4000 });
   }
 
   private resolveSupplierNames(items: RequestItem[]): void {
@@ -264,9 +275,9 @@ export class RequestDetailComponent {
     const dialog = this.dialogs.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
       width: '400px',
       data: {
-        title: `Delete “${current.title}”?`,
-        message: 'Draft requests delete with their lines. This cannot be undone.',
-        confirmLabel: 'Delete request',
+        title: this.lang.tx('req.deleteTitle', { title: current.title ?? '' }),
+        message: this.lang.t('req.deleteMsg'),
+        confirmLabel: this.lang.t('req.deleteConfirm'),
       },
     });
     dialog.afterClosed().subscribe((confirmed) => {
@@ -301,7 +312,7 @@ export class RequestDetailComponent {
     this.requests.submit(current.id).subscribe({
       next: () => {
         this.acting.set(false);
-        this.announce('Request submitted for approval.');
+        this.announceKey('req.submittedSnack');
         this.reload();
       },
       error: (error: unknown) => {
@@ -320,7 +331,7 @@ export class RequestDetailComponent {
     this.requests.cancel(current.id).subscribe({
       next: () => {
         this.acting.set(false);
-        this.announce('Request cancelled.');
+        this.announceKey('req.cancelledSnack');
         this.reload();
       },
       error: (error: unknown) => {
@@ -347,7 +358,7 @@ export class RequestDetailComponent {
       this.requests.decide(current.id, approved, result.comment).subscribe({
         next: () => {
           this.acting.set(false);
-          this.announce(approved ? 'Approved. Budget reserved.' : 'Rejected.');
+          this.announceKey(approved ? 'req.approvedSnack' : 'req.rejectedSnack');
           this.reload();
         },
         error: (error: unknown) => {

@@ -1,9 +1,9 @@
-<h2 mat-dialog-title>Record receipt</h2>
+<h2 mat-dialog-title>{{ lang.t('ord.receive') }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form">
     @for (row of rows(); track row.itemId) {
       <mat-form-field appearance="outline">
-        <mat-label>{{ row.description }} ({{ row.outstanding }} outstanding)</mat-label>
+        <mat-label>{{ lang.tx('ord.rowLabel', { desc: row.description, n: row.outstanding }) }}</mat-label>
         <input
           matInput
           type="number"
@@ -13,7 +13,7 @@
           step="1"
         />
         @if (row.control.touched && row.control.invalid) {
-          <mat-error>Enter 0 to {{ row.outstanding }}.</mat-error>
+          <mat-error>{{ lang.tx('ord.rowError', { max: row.outstanding }) }}</mat-error>
         }
       </mat-form-field>
     }
@@ -23,12 +23,12 @@
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
   <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      Record receipt
+      {{ lang.t('ord.receive') }}
     }
   </button>
 </mat-dialog-actions>

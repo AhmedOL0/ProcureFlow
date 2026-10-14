@@ -1,18 +1,18 @@
 <div class="spend-chart">
   <div #canvas class="spend-chart__stage" aria-hidden="true"></div>
-  <ul class="spend-chart__legend" aria-label="Series">
-    <li><span class="spend-chart__swatch spend-bar--ordered" aria-hidden="true"></span>Ordered</li>
-    <li><span class="spend-chart__swatch spend-bar--invoiced" aria-hidden="true"></span>Invoiced</li>
-    <li><span class="spend-chart__swatch spend-bar--paid" aria-hidden="true"></span>Paid</li>
+  <ul class="spend-chart__legend" [attr.aria-label]="lang.t('chart.series')">
+    <li><span class="spend-chart__swatch spend-bar--ordered" aria-hidden="true"></span>{{ lang.t('ana.ordered') }}</li>
+    <li><span class="spend-chart__swatch spend-bar--invoiced" aria-hidden="true"></span>{{ lang.t('ana.invoiced') }}</li>
+    <li><span class="spend-chart__swatch spend-bar--paid" aria-hidden="true"></span>{{ lang.t('ana.paid') }}</li>
   </ul>
   <table class="pf-sr-only spend-chart__table">
-    <caption>Monthly spend figures</caption>
+    <caption>{{ lang.t('chart.monthTable') }}</caption>
     <thead>
       <tr>
-        <th scope="col">Month</th>
-        <th scope="col">Ordered</th>
-        <th scope="col">Invoiced</th>
-        <th scope="col">Paid</th>
+        <th scope="col">{{ lang.t('chart.colMonth') }}</th>
+        <th scope="col">{{ lang.t('ana.ordered') }}</th>
+        <th scope="col">{{ lang.t('ana.invoiced') }}</th>
+        <th scope="col">{{ lang.t('ana.paid') }}</th>
       </tr>
     </thead>
     <tbody>

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,6 +10,8 @@ import { LucideAngularModule } from 'lucide-angular';
 import { forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import type { I18nKey } from '../../core/i18n/en';
+import { LanguageService } from '../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
@@ -53,6 +55,9 @@ export class WorkflowsComponent {
   private readonly policies = inject(ApprovalPolicyService);
   private readonly org = inject(OrganizationService);
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('admin.policiesCrumb') }]);
 
   protected readonly icons = { lanes: ScrollText };
   protected readonly formatMinor = formatMinor;
@@ -67,7 +72,13 @@ export class WorkflowsComponent {
   protected readonly selectedLane = signal<Workflow | null>(null);
   protected readonly delegations = signal<Delegation[]>([]);
   protected readonly users = signal<WorkspaceUser[]>([]);
-  protected readonly notice = signal<string | null>(null);
+  protected readonly notice = signal<{ key: I18nKey; vars: Record<string, string | number> } | null>(
+    null,
+  );
+
+  protected notify(key: I18nKey, vars: Record<string, string | number> = {}): void {
+    this.notice.set({ key, vars });
+  }
   protected readonly busy = signal(false);
 
   readonly laneForm = new FormGroup({
@@ -170,7 +181,7 @@ export class WorkflowsComponent {
         next: () => {
           this.busy.set(false);
           this.laneForm.reset({ escalateAfterDays: '3' });
-          this.notice.set('Lane created.');
+          this.notify('admin.laneCreated');
           this.reload();
         },
         error: (error: unknown) => {
@@ -200,7 +211,7 @@ export class WorkflowsComponent {
     this.policies.addStep(lane.id, order, approverId).subscribe({
       next: () => {
         this.stepApprover.reset('');
-        this.notice.set(`Step ${order} added.`);
+        this.notify('admin.stepAdded', { n: order });
         this.loadSteps(lane.id as string);
       },
       error: (error: unknown) => this.failure.set(parseApiFailure(error)),
@@ -234,7 +245,7 @@ export class WorkflowsComponent {
       next: () => {
         this.delegateId.reset('');
         this.delegateUntil.reset('');
-        this.notice.set('Delegation granted.');
+        this.notify('admin.delegationGranted');
         this.reload();
       },
       error: (error: unknown) => this.failure.set(parseApiFailure(error)),
@@ -261,8 +272,20 @@ export class WorkflowsComponent {
   protected laneRange(lane: Workflow): string {
     const min = formatMinor(lane.minAmountMinor);
     return lane.maxAmountMinor === null || lane.maxAmountMinor === undefined
-      ? `${min} and up`
-      : `${min} - ${formatMinor(lane.maxAmountMinor)}`;
+      ? this.lang.tx('admin.rangeOpen', { min })
+      : this.lang.tx('admin.rangeClosed', { min, max: formatMinor(lane.maxAmountMinor) });
+  }
+
+  protected escalatesLabel(days: number | null | undefined): string {
+    return this.lang.tx('admin.escalatesAfter', { n: days ?? 3 });
+  }
+
+  protected activeLabel(name: string | null | undefined): string {
+    return this.lang.tx('admin.activeLane', { name: name ?? '' });
+  }
+
+  protected delegationLabel(from: string, to: string, date: string): string {
+    return this.lang.tx('admin.delegationLine', { from, to, date });
   }
 
   protected failureMessage(): string {

@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { LanguageService } from '../../core/i18n/language.service';
 
 /**
  * Forgot password: email plus optional workspace slug (mirrors the login
@@ -31,6 +32,7 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class ForgotPasswordComponent {
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(LanguageService);
 
   readonly form = new FormGroup({
     email: new FormControl('', {
@@ -55,13 +57,11 @@ export class ForgotPasswordComponent {
     this.auth.forgotPassword(value.email.trim(), value.tenantSlug).subscribe({
       next: (response) => {
         this.busy.set(false);
-        this.sentMessage.set(
-          response.message ?? 'If an account exists for that address, a reset link is on its way.',
-        );
+        this.sentMessage.set(response.message ?? this.lang.t('auth.sentDefault'));
       },
       error: () => {
         this.busy.set(false);
-        this.failure.set('The request could not be sent. Check your connection and try again.');
+        this.failure.set(this.lang.t('auth.sendFailed'));
       },
     });
   }

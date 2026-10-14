@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +14,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { ScrollText } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
 import { runDownload } from '../../../shared/utils/download';
@@ -62,6 +63,9 @@ const AUDIT_TYPES = ['budget', 'invoice', 'purchase_order', 'purchase_request', 
 })
 export class AuditTrailComponent {
   private readonly trail = inject(AuditService);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('admin.trailCrumb') }]);
 
   protected readonly icons = { scroll: ScrollText };
   readonly entityFilter = new FormControl('', { nonNullable: true });
@@ -146,7 +150,7 @@ export class AuditTrailComponent {
       return 'N/A';
     }
     const date = new Date(at);
-    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString(this.lang.dateLocale());
   }
 
   protected shortId(id: string | null | undefined): string {

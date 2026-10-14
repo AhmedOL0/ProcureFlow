@@ -1,64 +1,64 @@
 <div class="pf-page">
   <pf-page-header
-    title="ProcureAI copilot"
-    description="KPI-cited answers over your workspace data. Every answer shows its sources and model. Nothing is generated from thin air."
-    [breadcrumbs]="[{ label: 'Copilot' }]"
+    [title]="lang.t('ai.title')"
+    [description]="lang.t('ai.desc')"
+    [breadcrumbs]="crumbs()"
   />
 
   <div class="copilot-modes">
-    <mat-chip-listbox aria-label="Copilot workflows">
+    <mat-chip-listbox [attr.aria-label]="lang.t('ai.workflows')">
       @for (entry of modes; track entry.id) {
         <mat-chip-option [selected]="mode() === entry.id" (click)="setMode(entry.id)">
-          {{ entry.label }}
+          {{ modeLabel(entry.id) }}
         </mat-chip-option>
       }
     </mat-chip-listbox>
   </div>
 
   @if (mode() === 'chat') {
-    <section class="pf-table-card" aria-label="Ask the copilot">
-      <h2 class="pf-sr-only">Ask the copilot</h2>
+    <section class="pf-table-card" [attr.aria-label]="lang.t('ai.askTitle')">
+      <h2 class="pf-sr-only">{{ lang.t('ai.askTitle') }}</h2>
       <div class="copilot-ask">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Ask about your procurement data</mat-label>
+          <mat-label>{{ lang.t('ai.askLabel') }}</mat-label>
           <input
             matInput
             [formControl]="questionBox"
-            placeholder="Where is spend accelerating this month?"
+            [placeholder]="lang.t('ai.sug1')"
             (keyup.enter)="ask()"
           />
           @if (questionBox.hasError('required') && questionBox.touched) {
-            <mat-error>Type a question first.</mat-error>
+            <mat-error>{{ lang.t('validation.typeFirst') }}</mat-error>
           }
         </mat-form-field>
-        <button mat-flat-button color="primary" (click)="ask()" [disabled]="busy()">Ask</button>
+        <button mat-flat-button color="primary" (click)="ask()" [disabled]="busy()">{{ lang.t('ai.ask') }}</button>
       </div>
       @if (!answer() && !busy() && !failure()) {
         <div class="copilot-suggestions">
-          <span class="pf-muted">Try:</span>
-          @for (prompt of suggestions; track prompt) {
-            <button mat-stroked-button (click)="useSuggestion(prompt)">{{ prompt }}</button>
+          <span class="pf-muted">{{ lang.t('ai.tryLabel') }}</span>
+          @for (key of suggestionKeys; track key) {
+            <button mat-stroked-button (click)="useSuggestion(lang.t(key))">{{ lang.t(key) }}</button>
           }
         </div>
       }
       <div class="copilot-result">
         @if (busy()) {
-          <div class="copilot-loading" role="status" aria-label="Thinking">
+          <div class="copilot-loading" role="status" [attr.aria-label]="lang.t('ai.thinking')">
             <mat-spinner diameter="28" />
-            <span class="copilot-thinking">Reading your KPIs...</span>
-            <button mat-button (click)="cancel()">Cancel</button>
+            <span class="copilot-thinking">{{ lang.t('ai.thinkingKpi') }}</span>
+            <button mat-button (click)="cancel()">{{ lang.t('dialog.cancel') }}</button>
           </div>
         } @else if (failure(); as problem) {
           <pf-error-state
-            title="The copilot could not answer"
+            [title]="lang.t('ai.answerFailed')"
             [message]="failureMessage()"
-            retryLabel="Retry"
+            [retryLabel]="lang.t('common.retry')"
             (retry)="ask()"
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
             <p class="copilot-ai-tag">
-              AI-generated interpretation. Verify against the citations below
+              {{ lang.t('ai.tag') }}
             </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
@@ -77,7 +77,7 @@
             @if (result.model) {
               <p class="copilot-model pf-data-mono">
                 {{ result.model }}@if (latencyLabel(); as latency) {
-                  <span> · answered in {{ latency }}</span>
+                  <span> · {{ answeredLabel(latency) }}</span>
                 }
               </p>
             }
@@ -85,8 +85,8 @@
         } @else {
           <pf-empty-state
             [icon]="icons.sparkles"
-            title="Ask anything grounded"
-            message="Answers cite the analytics endpoints behind them. Try spend, approvals or suppliers."
+            [title]="lang.t('ai.askAnything')"
+            [message]="lang.t('ai.askAnythingMsg')"
           />
         }
       </div>
@@ -94,35 +94,35 @@
   }
 
   @if (mode() === 'explain') {
-    <section class="pf-table-card" aria-label="Explain spend">
-      <h2 class="pf-sr-only">Explain spend</h2>
+    <section class="pf-table-card" [attr.aria-label]="lang.t('ai.explainTitle')">
+      <h2 class="pf-sr-only">{{ lang.t('ai.explainTitle') }}</h2>
       <div class="copilot-ask">
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="copilot-period">
-          <mat-label>Period (blank = overall)</mat-label>
+          <mat-label>{{ lang.t('ai.periodLabel') }}</mat-label>
           <input matInput type="month" [formControl]="periodBox" />
         </mat-form-field>
         <button mat-flat-button color="primary" (click)="explain()" [disabled]="busy()">
-          Explain
+          {{ lang.t('ai.explainBtn') }}
         </button>
       </div>
       <div class="copilot-result">
         @if (busy()) {
-          <div class="copilot-loading" role="status" aria-label="Explaining">
+          <div class="copilot-loading" role="status" [attr.aria-label]="lang.t('ai.explaining')">
             <mat-spinner diameter="28" />
-            <span class="copilot-thinking">Aggregating spend...</span>
-            <button mat-button (click)="cancel()">Cancel</button>
+            <span class="copilot-thinking">{{ lang.t('ai.aggregating') }}</span>
+            <button mat-button (click)="cancel()">{{ lang.t('dialog.cancel') }}</button>
           </div>
         } @else if (failure(); as problem) {
           <pf-error-state
-            title="The explanation failed"
+            [title]="lang.t('ai.explainFailed')"
             [message]="failureMessage()"
-            retryLabel="Retry"
+            [retryLabel]="lang.t('common.retry')"
             (retry)="explain()"
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
             <p class="copilot-ai-tag">
-              AI-generated interpretation. Verify against the citations below
+              {{ lang.t('ai.tag') }}
             </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
@@ -141,7 +141,7 @@
             @if (result.model) {
               <p class="copilot-model pf-data-mono">
                 {{ result.model }}@if (latencyLabel(); as latency) {
-                  <span> · answered in {{ latency }}</span>
+                  <span> · {{ answeredLabel(latency) }}</span>
                 }
               </p>
             }
@@ -149,8 +149,8 @@
         } @else {
           <pf-empty-state
             [icon]="icons.sparkles"
-            title="Spend, narrated"
-            message="The copilot reads the spend and approval aggregates and explains the movement."
+            [title]="lang.t('ai.narrated')"
+            [message]="lang.t('ai.narratedMsg')"
           />
         }
       </div>
@@ -158,11 +158,11 @@
   }
 
   @if (mode() === 'extract') {
-    <section class="pf-table-card" aria-label="Draft from words">
-      <h2 class="pf-sr-only">Draft a request from words</h2>
+    <section class="pf-table-card" [attr.aria-label]="lang.t('ai.modeExtract')">
+      <h2 class="pf-sr-only">{{ lang.t('ai.extractTitle') }}</h2>
       <div class="copilot-ask copilot-ask--column">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Describe what you need, in your own words</mat-label>
+          <mat-label>{{ lang.t('ai.narrativeLabel') }}</mat-label>
           <textarea
             matInput
             rows="3"
@@ -170,36 +170,36 @@
             placeholder="25 ergonomic chairs for the Berlin office, high priority, around €300 each"
           ></textarea>
           @if (narrativeBox.hasError('required') && narrativeBox.touched) {
-            <mat-error>Describe the need first.</mat-error>
+            <mat-error>{{ lang.t('validation.describeFirst') }}</mat-error>
           }
           @if (narrativeBox.hasError('minlength') && narrativeBox.touched) {
-            <mat-error>A sentence or two helps the model structure the draft.</mat-error>
+            <mat-error>{{ lang.t('validation.tooShort') }}</mat-error>
           }
         </mat-form-field>
         <div>
           <button mat-flat-button color="primary" (click)="extract()" [disabled]="busy()">
-            Structure it
+            {{ lang.t('ai.structureBtn') }}
           </button>
         </div>
       </div>
       <div class="copilot-result">
         @if (busy()) {
-          <div class="copilot-loading" role="status" aria-label="Structuring">
+          <div class="copilot-loading" role="status" [attr.aria-label]="lang.t('ai.structuring')">
             <mat-spinner diameter="28" />
-            <span class="copilot-thinking">Structuring the draft...</span>
-            <button mat-button (click)="cancel()">Cancel</button>
+            <span class="copilot-thinking">{{ lang.t('ai.structuringDraft') }}</span>
+            <button mat-button (click)="cancel()">{{ lang.t('dialog.cancel') }}</button>
           </div>
         } @else if (failure(); as problem) {
           <pf-error-state
-            title="The draft failed"
+            [title]="lang.t('ai.draftFailed')"
             [message]="failureMessage()"
-            retryLabel="Retry"
+            [retryLabel]="lang.t('common.retry')"
             (retry)="extract()"
           />
         } @else if (draft(); as result) {
           <article class="copilot-draft">
-            <h3>{{ result.title || 'Untitled draft' }}</h3>
-            <p class="copilot-muted">Priority: {{ result.priority || 'default' }}</p>
+            <h3>{{ result.title || lang.t('ai.untitledDraft') }}</h3>
+            <p class="copilot-muted">{{ lang.tx('ai.priorityLine', { p: result.priority || 'default' }) }}</p>
             @if ((result.items ?? []).length > 0) {
               <ul class="copilot-items">
                 @for (item of result.items ?? []; track item.description) {
@@ -210,80 +210,79 @@
                 }
               </ul>
               <p class="copilot-muted">
-                Items stay listed for transcription. Supplier links need workspace validation the
-                model cannot provide.
+                {{ lang.t('ai.transcriptionNote') }}
               </p>
             }
             @if (canRequest && !draftSaved()) {
               <button mat-flat-button color="primary" (click)="saveDraft()" [disabled]="busy()">
-                Create draft request
+                {{ lang.t('ai.saveDraftBtn') }}
               </button>
             }
           </article>
         } @else {
           <pf-empty-state
             [icon]="icons.sparkles"
-            title="Words in, structure out"
-            message="The copilot turns prose into a titled, prioritized draft with line items."
+            [title]="lang.t('ai.wordsIn')"
+            [message]="lang.t('ai.wordsInMsg')"
           />
         }
       </div>
       <div class="copilot-history">
-        <h3 class="copilot-history__title">Recent drafts</h3>
-        <p class="copilot-muted">Validated extractions from this workspace, newest first.</p>
+        <h3 class="copilot-history__title">{{ lang.t('ai.recentDrafts') }}</h3>
+        <p class="copilot-muted">{{ lang.t('ai.historySub') }}</p>
         @if (history().length > 0) {
           <ul class="copilot-history__list">
             @for (row of history(); track row.id) {
               <li class="copilot-history__row">
                 <div class="copilot-history__text">
-                  <strong>{{ row.title || 'Untitled draft' }}</strong>
+                  <strong>{{ row.title || lang.t('ai.untitledDraft') }}</strong>
                   <span class="copilot-muted"
-                    >{{ row.items?.length ?? 0 }} line{{ (row.items?.length ?? 0) === 1 ? '' : 's' }} ·
+                    >{{ linesLabel(row.items?.length ?? 0) }} ·
                     {{ row.modelIdentifier }}</span
                   >
                 </div>
                 @if (row.createdRequestId) {
-                  <a class="pf-row-link" [routerLink]="['/requests', row.createdRequestId]">Opened</a>
+                  <a class="pf-row-link" [routerLink]="['/requests', row.createdRequestId]">{{ lang.t('ai.opened') }}</a>
                 } @else if (canRequest) {
                   <button mat-stroked-button (click)="createFromHistory(row)" [disabled]="busy()">
-                    Create request
+                    {{ lang.t('ai.createReq') }}
                   </button>
                 }
               </li>
             }
           </ul>
         } @else {
-          <p class="copilot-muted">No saved extractions yet. Structure a draft above.</p>
+          <p class="copilot-muted">{{ lang.t('ai.noHistory') }}</p>
         }
       </div>
     </section>
   }
 
   @if (mode() === 'compare') {
-    <section class="pf-table-card" aria-label="Compare quotations">
-      <h2 class="pf-sr-only">Compare quotations</h2>
+    <section class="pf-table-card" [attr.aria-label]="lang.t('ai.modeCompare')">
+      <h2 class="pf-sr-only">{{ lang.t('ai.modeCompare') }}</h2>
       <div class="copilot-quotes">
         @for (row of quoteRows.controls; track row; let i = $index) {
           <div class="copilot-quote-row" [formGroup]="row">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Supplier {{ i + 1 }}</mat-label>
+              <mat-label>{{ lang.tx('ai.supplierN', { n: i + 1 }) }}</mat-label>
               <input matInput formControlName="supplier" placeholder="Bechtle" />
               @if (row.get('supplier')?.hasError('required') && row.get('supplier')?.touched) {
-                <mat-error>Supplier {{ i + 1 }} needs a name.</mat-error>
+                <mat-error>{{ lang.tx('ai.supplierNeeded', { n: i + 1 }) }}</mat-error>
               }
             </mat-form-field>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="copilot-amount">
-              <mat-label>Amount</mat-label>
+              <mat-label>{{ lang.t('bud.amountLabel') }}</mat-label>
               <input matInput formControlName="amount" inputmode="decimal" placeholder="12500.00" />
               @if (row.get('amount')?.touched && row.get('amount')?.invalid) {
-                <mat-error>Enter a number with up to 2 decimals.</mat-error>
+                <mat-error>{{ lang.t('admin.amountError') }}</mat-error>
               }
             </mat-form-field>
             <button
               mat-icon-button
               (click)="removeQuote(i)"
               [disabled]="quoteRows.length <= 2"
-              [attr.aria-label]="'Remove quote ' + (i + 1)"
+              [attr.aria-label]="lang.tx('ai.removeQuote', { n: i + 1 })"
             >
               <lucide-angular [img]="icons.trash" [size]="18" />
             </button>
@@ -291,31 +290,31 @@
         }
         <div class="copilot-quote-actions">
           <button mat-button (click)="addQuote()" [disabled]="quoteRows.length >= 10">
-            <lucide-angular [img]="icons.plus" [size]="16" /> Add quote (up to 10)
+            <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('ai.addQuote') }}
           </button>
           <button mat-flat-button color="primary" (click)="compare()" [disabled]="busy()">
-            Compare
+            {{ lang.t('ai.compareBtn') }}
           </button>
         </div>
       </div>
       <div class="copilot-result">
         @if (busy()) {
-          <div class="copilot-loading" role="status" aria-label="Comparing">
+          <div class="copilot-loading" role="status" [attr.aria-label]="lang.t('ai.comparing')">
             <mat-spinner diameter="28" />
-            <span class="copilot-thinking">Weighing the quotes...</span>
-            <button mat-button (click)="cancel()">Cancel</button>
+            <span class="copilot-thinking">{{ lang.t('ai.weighing') }}</span>
+            <button mat-button (click)="cancel()">{{ lang.t('dialog.cancel') }}</button>
           </div>
         } @else if (failure(); as problem) {
           <pf-error-state
-            title="The comparison failed"
+            [title]="lang.t('ai.compareFailed')"
             [message]="failureMessage()"
-            retryLabel="Retry"
+            [retryLabel]="lang.t('common.retry')"
             (retry)="compare()"
           />
         } @else if (answer(); as result) {
           <article class="copilot-answer">
             <p class="copilot-ai-tag">
-              AI-generated interpretation. Verify against the citations below
+              {{ lang.t('ai.tag') }}
             </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
@@ -334,7 +333,7 @@
             @if (result.model) {
               <p class="copilot-model pf-data-mono">
                 {{ result.model }}@if (latencyLabel(); as latency) {
-                  <span> · answered in {{ latency }}</span>
+                  <span> · {{ answeredLabel(latency) }}</span>
                 }
               </p>
             }
@@ -342,8 +341,8 @@
         } @else {
           <pf-empty-state
             [icon]="icons.sparkles"
-            title="Two quotes minimum"
-            message="Add supplier quotes above. The copilot explains the trade-offs, you decide."
+            [title]="lang.t('ai.twoQuotes')"
+            [message]="lang.t('ai.twoQuotesMsg')"
           />
         }
       </div>

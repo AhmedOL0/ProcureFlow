@@ -1,7 +1,8 @@
 import '@angular/compiler';
 import { HttpErrorResponse } from '@angular/common/http';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import { LanguageService } from '../../core/i18n/language.service';
 import { parseApiFailure, userMessageFor } from './api-errors';
 
 function httpFailure(status: number, body: unknown): HttpErrorResponse {
@@ -39,5 +40,29 @@ describe('api-errors', () => {
     const failure = parseApiFailure(new Error('boom'));
     expect(failure.status).toBe(0);
     expect(failure.code).toBeNull();
+  });
+
+  it('renders catalogued messages in French without touching English', () => {
+    // Status fallbacks bake the default language at parse time (parse has
+    // no lang argument), so drive the module default through the service —
+    // exactly how the app does it — instead of pretending otherwise.
+    vi.stubGlobal('localStorage', {
+      getItem: () => 'fr',
+      setItem: () => undefined,
+    });
+    vi.stubGlobal('navigator', { language: 'fr-FR' });
+    new LanguageService();
+    const failure = parseApiFailure(
+      httpFailure(409, { code: 'SUPPLIER_EXISTS', message: 'dup' }),
+    );
+    expect(userMessageFor(failure, 'fr')).toBe('Un fournisseur portant ce nom existe déjà.');
+    expect(userMessageFor(failure, 'en')).toBe('A supplier with this name already exists.');
+    expect(userMessageFor(parseApiFailure(httpFailure(403, null)))).toContain('permission');
+    expect(userMessageFor(parseApiFailure(httpFailure(0, null)))).toContain('injoignable');
+  });
+
+  it('keeps unknown server text over generic fallbacks', () => {
+    const failure = parseApiFailure(httpFailure(400, { code: 'SOME_FUTURE_CODE', message: 'Specific detail' }));
+    expect(userMessageFor(failure, 'fr')).toBe('Specific detail');
   });
 });

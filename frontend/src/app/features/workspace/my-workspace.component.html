@@ -1,63 +1,63 @@
 <div class="pf-page">
   @let me = user();
   <pf-page-header
-    [title]="me?.email ? 'Hello, ' + me?.email : 'My workspace'"
-    description="Your requests, your unread notifications, your next action."
-    [breadcrumbs]="[{ label: 'My workspace' }]"
+    [title]="pageTitle(me?.email)"
+    [description]="lang.t('workspace.desc')"
+    [breadcrumbs]="crumbs()"
   >
     <div slot="actions">
       @if (canRequest) {
         <a mat-flat-button color="primary" routerLink="/requests/new">
-          <lucide-angular [img]="icons.plus" [size]="16" /> New request
+          <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('dashboard.newRequest') }}
         </a>
       }
-      <a mat-stroked-button routerLink="/approvals">Approval inbox</a>
+      <a mat-stroked-button routerLink="/approvals">{{ lang.t('workspace.approvalInbox') }}</a>
     </div>
   </pf-page-header>
 
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading workspace">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('workspace.loading')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     <pf-error-state
-      title="Workspace did not load"
+      [title]="lang.t('workspace.failed')"
       [message]="problem.message"
-      retryLabel="Retry"
+      [retryLabel]="lang.t('common.retry')"
       (retry)="reload()"
     />
   } @else {
-    <div class="pf-kpis" role="region" aria-label="My summary">
+    <div class="pf-kpis" role="region" [attr.aria-label]="lang.t('workspace.summary')">
       <div class="pf-kpi">
-        <span class="pf-kpi__label">My open requests</span>
+        <span class="pf-kpi__label">{{ lang.t('workspace.myOpen') }}</span>
         <div class="pf-kpi__value">{{ openTotal() }}</div>
-        <div class="pf-kpi__sub">{{ mineTotal() }} raised in total</div>
+        <div class="pf-kpi__sub">{{ lang.tx('workspace.raisedTotal', { n: mineTotal() }) }}</div>
       </div>
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Unread notifications</span>
+        <span class="pf-kpi__label">{{ lang.t('workspace.unread') }}</span>
         <div class="pf-kpi__value">{{ inbox.unreadTotal() }}</div>
-        <div class="pf-kpi__sub">events addressed to me</div>
+        <div class="pf-kpi__sub">{{ lang.t('workspace.addressedToMe') }}</div>
       </div>
       <div class="pf-kpi">
-        <span class="pf-kpi__label">My roles</span>
+        <span class="pf-kpi__label">{{ lang.t('workspace.myRoles') }}</span>
         <div class="pf-kpi__value">{{ (me?.roles ?? []).length }}</div>
-        <div class="pf-kpi__sub">{{ (me?.roles ?? []).join(', ') || 'no roles assigned' }}</div>
+        <div class="pf-kpi__sub">{{ rolesLabel(me?.roles ?? []) }}</div>
       </div>
     </div>
 
     <div class="pf-columns">
-      <section class="pf-table-card" aria-label="My latest requests">
+      <section class="pf-table-card" [attr.aria-label]="lang.t('workspace.latest')">
         <div class="pf-card-head">
           <div class="pf-section-head">
-            <h2>My latest requests</h2>
-            <a routerLink="/requests/mine">View all mine</a>
+            <h2>{{ lang.t('workspace.latest') }}</h2>
+            <a routerLink="/requests/mine">{{ lang.t('workspace.viewAllMine') }}</a>
           </div>
         </div>
         @if (recentMine().length === 0) {
           <pf-empty-state
             [icon]="icons.file"
-            title="Nothing raised yet"
-            message="Requests you create appear here with their live status."
+            [title]="lang.t('workspace.nothingYet')"
+            [message]="lang.t('workspace.nothingYetMsg')"
           />
         } @else {
           <ul class="pf-rows">
@@ -65,7 +65,7 @@
               <li class="pf-row">
                 <div class="pf-row__main">
                   <a class="pf-row__title" [routerLink]="['/requests', row.id]">
-                    {{ row.title || 'Untitled request' }}
+                    {{ row.title || lang.t('dashboard.untitled') }}
                   </a>
                   <span class="pf-row__meta">
                     <pf-status-badge [status]="row.status ?? ''" />
@@ -77,18 +77,18 @@
         }
       </section>
 
-      <section class="pf-table-card" aria-label="Unread notifications">
+      <section class="pf-table-card" [attr.aria-label]="lang.t('workspace.unread')">
         <div class="pf-card-head">
           <div class="pf-section-head">
-            <h2>Unread</h2>
-            <a routerLink="/notifications">View all</a>
+            <h2>{{ lang.t('workspace.unreadTitle') }}</h2>
+            <a routerLink="/notifications">{{ lang.t('common.viewAll') }}</a>
           </div>
         </div>
         @if (latestUnread().length === 0) {
           <pf-empty-state
             [icon]="icons.bell"
-            title="All caught up"
-            message="New submissions and decisions land here."
+            [title]="lang.t('workspace.caughtUp')"
+            [message]="lang.t('workspace.caughtUpMsg')"
           />
         } @else {
           <ul class="pf-rows">
@@ -99,7 +99,7 @@
                   <span class="pf-row__meta">{{ formatInstant(item.createdAt) }}</span>
                 </div>
                 @if (item.id) {
-                  <button mat-button (click)="inbox.markRead(item.id ?? '')">Mark read</button>
+                  <button mat-button (click)="inbox.markRead(item.id ?? '')">{{ lang.t('workspace.markRead') }}</button>
                 }
               </li>
             }

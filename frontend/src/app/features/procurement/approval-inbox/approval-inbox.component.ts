@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
@@ -7,6 +7,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -43,6 +44,9 @@ interface DecidedRow {
 export class ApprovalInboxComponent {
   private readonly requests = inject(ProcurementService);
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.approvals') }]);
 
   protected readonly icons = { inbox: Inbox };
   protected readonly formatMinor = formatMinor;
@@ -122,7 +126,7 @@ export class ApprovalInboxComponent {
       return 'N/A';
     }
     const date = new Date(at);
-    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString(this.lang.dateLocale());
   }
 
   protected submittedAt(request: PurchaseRequest): string {
@@ -130,7 +134,14 @@ export class ApprovalInboxComponent {
       return 'N/A';
     }
     const date = new Date(request.submittedAt);
-    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString(this.lang.dateLocale());
+  }
+
+  protected expandLabel(row: PurchaseRequest): string {
+    const title = row.title ?? '';
+    return this.isExpanded(row)
+      ? this.lang.tx('inbox.collapseTitle', { title })
+      : this.lang.tx('inbox.expandTitle', { title });
   }
 
   toggle(row: PurchaseRequest): void {

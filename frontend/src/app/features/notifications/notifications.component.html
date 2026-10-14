@@ -1,13 +1,13 @@
 <div class="pf-page">
   <pf-page-header
-    title="Notifications"
-    description="Workspace events addressed to you. Submissions, decisions and mentions."
-    [breadcrumbs]="[{ label: 'Notifications' }]"
+    [title]="lang.t('nav.notifications')"
+    [description]="lang.t('notif.desc')"
+    [breadcrumbs]="crumbs()"
   >
     <div slot="actions">
       @if (inbox.unreadOnPage() > 0) {
         <button mat-stroked-button (click)="inbox.markAllRead()" [disabled]="inbox.loading()">
-          Mark all read ({{ inbox.unreadOnPage() }})
+          {{ lang.tx('notif.markAll', { n: inbox.unreadOnPage() }) }}
         </button>
       }
     </div>
@@ -15,32 +15,32 @@
 
   <div class="pf-table-card">
     <div class="pf-chips">
-      <mat-chip-listbox aria-label="Read filter">
+      <mat-chip-listbox [attr.aria-label]="lang.t('notif.readFilter')">
         <mat-chip-option [selected]="!unreadOnly()" (click)="showAll()">
-          All ({{ inbox.page().length }})
+          {{ lang.tx('notif.allOpt', { n: inbox.page().length }) }}
         </mat-chip-option>
         <mat-chip-option [selected]="unreadOnly()" (click)="showUnread()">
-          Unread ({{ inbox.unreadTotal() }})
+          {{ lang.tx('notif.unreadOpt', { n: inbox.unreadTotal() }) }}
         </mat-chip-option>
       </mat-chip-listbox>
     </div>
 
     @if (inbox.loading() && inbox.items().length === 0) {
-      <div class="pf-loading" role="status" aria-label="Loading notifications">
+      <div class="pf-loading" role="status" [attr.aria-label]="lang.t('notif.loading')">
         <mat-spinner diameter="32" />
       </div>
     } @else if (inbox.failed() && inbox.items().length === 0) {
       <pf-error-state
-        title="Notifications did not load"
-        message="The inbox could not be reached. Check your connection and try again."
-        retryLabel="Retry"
+        [title]="lang.t('notif.failed')"
+        [message]="lang.t('notif.failedMsg')"
+        [retryLabel]="lang.t('common.retry')"
         (retry)="inbox.refresh(unreadOnly())"
       />
     } @else if (visible().length === 0) {
       <pf-empty-state
         [icon]="icons.bell"
-        title="Nothing here"
-        message="Events raised for you land here. Approvals, decisions and mentions."
+        [title]="lang.t('notif.empty')"
+        [message]="lang.t('notif.emptyMsg')"
       />
     } @else {
       <ul class="pf-rows">
@@ -54,7 +54,7 @@
               >
             </div>
             @if (!item.read && item.id) {
-              <button mat-button (click)="inbox.markRead(item.id ?? '')">Mark read</button>
+              <button mat-button (click)="inbox.markRead(item.id ?? '')">{{ lang.t('workspace.markRead') }}</button>
             }
           </li>
         }
@@ -65,7 +65,7 @@
         [pageSize]="inbox.page().pageSize"
         [pageSizeOptions]="[10, 20, 50]"
         (page)="onPage($event)"
-        aria-label="Notification pages"
+        [attr.aria-label]="lang.t('notif.pages')"
       />
     }
   </div>

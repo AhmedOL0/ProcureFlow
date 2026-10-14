@@ -6,6 +6,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { LanguageService } from '../../core/i18n/language.service';
 
 /**
  * Mailbox verification landing: reads ?token= from the emailed link and
@@ -20,6 +21,7 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class VerifyEmailComponent {
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(LanguageService);
   private readonly route = inject(ActivatedRoute);
 
   protected readonly state = signal<'working' | 'done' | 'invalid' | 'spent' | 'missing'>('working');

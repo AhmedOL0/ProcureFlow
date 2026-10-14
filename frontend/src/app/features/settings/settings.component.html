@@ -1,52 +1,52 @@
 <div class="pf-page">
   <pf-page-header
-    title="Account settings"
-    description="Your profile names and password. Email, roles and status change through their own workflows, not here."
-    [breadcrumbs]="[{ label: 'Settings' }]"
+    [title]="lang.t('nav.settings')"
+    [description]="lang.t('settings.desc')"
+    [breadcrumbs]="crumbs()"
   />
 
-  @if (notice()) {
-    <p class="pf-notice" role="status">{{ notice() }}</p>
+  @if (notice(); as note) {
+    <p class="pf-notice" role="status">{{ lang.tx(note.key, note.vars) }}</p>
   }
 
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading settings">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('settings.loading')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     <pf-error-state
-      title="Settings did not load"
+      [title]="lang.t('settings.failed')"
       [message]="failureMessage()"
-      retryLabel="Retry"
+      [retryLabel]="lang.t('common.retry')"
       (retry)="reload()"
     />
   } @else {
     @let me = user();
     @if (me && me.verified === false) {
       <div class="pf-notice" role="status">
-        Mailbox unverified. Password resets stay locked until you confirm it.
+        {{ lang.t('settings.unverified') }}
         @if (!resent()) {
-          <button mat-button (click)="resendVerification()">Resend verification email</button>
+          <button mat-button (click)="resendVerification()">{{ lang.t('settings.resend') }}</button>
         } @else {
-          <span> If an account exists for that address, a verification link is on its way. </span>
+          <span> {{ lang.t('settings.resentMsg') }} </span>
         }
       </div>
     }
-    <section class="pf-table-card" aria-label="Profile">
+    <section class="pf-table-card" [attr.aria-label]="lang.t('settings.profile')">
       <div class="pf-card-head">
-        <div class="pf-section-head"><h2>Profile</h2></div>
+        <div class="pf-section-head"><h2>{{ lang.t('settings.profile') }}</h2></div>
       </div>
       <div class="settings-body" [formGroup]="profileForm">
         <p class="pf-muted">
-          Signed in as <strong>{{ me?.email }}</strong> in {{ me?.tenantSlug }}
+          {{ lang.t('settings.signedInPrefix') }} <strong>{{ me?.email }}</strong> {{ lang.tx('settings.signedInSuffix', { slug: me?.tenantSlug ?? '' }) }}
         </p>
         <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>First name</mat-label>
+            <mat-label>{{ lang.t('settings.firstName') }}</mat-label>
             <input matInput formControlName="firstName" autocomplete="given-name" maxlength="100" />
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Last name</mat-label>
+            <mat-label>{{ lang.t('settings.lastName') }}</mat-label>
             <input matInput formControlName="lastName" autocomplete="family-name" maxlength="100" />
           </mat-form-field>
           <button
@@ -55,23 +55,23 @@
             (click)="saveProfile()"
             [disabled]="savingProfile()"
           >
-            Save profile
+            {{ lang.t('settings.saveProfile') }}
           </button>
         </div>
       </div>
     </section>
 
-    <section class="pf-table-card" aria-label="Password">
+    <section class="pf-table-card" [attr.aria-label]="lang.t('settings.password')">
       <div class="pf-card-head">
-        <div class="pf-section-head"><h2>Password</h2></div>
+        <div class="pf-section-head"><h2>{{ lang.t('settings.password') }}</h2></div>
       </div>
       <div class="settings-body" [formGroup]="passwordForm">
         <p class="pf-muted">
-          Changing your password signs you out everywhere. You sign in again with the new one.
+          {{ lang.t('settings.passwordNote') }}
         </p>
         <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Current password</mat-label>
+            <mat-label>{{ lang.t('settings.currentPassword') }}</mat-label>
             <input
               matInput
               formControlName="currentPassword"
@@ -83,7 +83,7 @@
               matSuffix
               type="button"
               (click)="showCurrent.set(!showCurrent())"
-              [attr.aria-label]="showCurrent() ? 'Hide current password' : 'Show current password'"
+              [attr.aria-label]="showCurrent() ? lang.t('settings.hideCurrent') : lang.t('settings.showCurrent')"
             >
               <lucide-angular [img]="showCurrent() ? icons.hide : icons.show" [size]="18" />
             </button>
@@ -91,11 +91,11 @@
               passwordForm.controls.currentPassword.hasError('required') &&
               passwordForm.controls.currentPassword.touched
             ) {
-              <mat-error>Enter your current password.</mat-error>
+              <mat-error>{{ lang.t('settings.enterCurrent') }}</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>New password</mat-label>
+            <mat-label>{{ lang.t('settings.newPassword') }}</mat-label>
             <input
               matInput
               formControlName="newPassword"
@@ -107,7 +107,7 @@
               matSuffix
               type="button"
               (click)="showNew.set(!showNew())"
-              [attr.aria-label]="showNew() ? 'Hide new password' : 'Show new password'"
+              [attr.aria-label]="showNew() ? lang.t('settings.hideNew') : lang.t('settings.showNew')"
             >
               <lucide-angular [img]="showNew() ? icons.hide : icons.show" [size]="18" />
             </button>
@@ -115,17 +115,17 @@
               passwordForm.controls.newPassword.hasError('required') &&
               passwordForm.controls.newPassword.touched
             ) {
-              <mat-error>Enter a new password.</mat-error>
+              <mat-error>{{ lang.t('auth.enterNew') }}</mat-error>
             }
             @if (
               passwordForm.controls.newPassword.hasError('minlength') &&
               passwordForm.controls.newPassword.touched
             ) {
-              <mat-error>At least 12 characters.</mat-error>
+              <mat-error>{{ lang.t('auth.minLength12') }}</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Confirm new password</mat-label>
+            <mat-label>{{ lang.t('auth.confirmLabel') }}</mat-label>
             <input
               matInput
               formControlName="confirmPassword"
@@ -133,7 +133,7 @@
               type="password"
             />
             @if (passwordForm.controls.confirmPassword.hasError('mismatch')) {
-              <mat-error>The two passwords do not match.</mat-error>
+              <mat-error>{{ lang.t('auth.mismatch') }}</mat-error>
             }
           </mat-form-field>
           <button
@@ -142,41 +142,40 @@
             (click)="changePassword()"
             [disabled]="changingPassword()"
           >
-            Change password
+            {{ lang.t('settings.changePassword') }}
           </button>
         </div>
       </div>
     </section>
 
-    <section class="pf-panel" aria-label="Workspace administration">
-      <h2>Workspace administration</h2>
+    <section class="pf-panel" [attr.aria-label]="lang.t('settings.adminTitle')">
+      <h2>{{ lang.t('settings.adminTitle') }}</h2>
       <p class="pf-muted">
-        Tenant-wide controls live on their own screens. Account settings
-        stay personal.
+        {{ lang.t('settings.adminNote') }}
       </p>
       <ul class="pf-list">
         <li class="pf-list__row">
           <span class="pf-list__main">
-            <a class="pf-row-link" routerLink="/admin/users">Users & roles</a>
-            <span class="pf-list__sub">Accounts, roles, invites</span>
+            <a class="pf-row-link" routerLink="/admin/users">{{ lang.t('settings.usersRoles') }}</a>
+            <span class="pf-list__sub">{{ lang.t('settings.usersSub') }}</span>
           </span>
         </li>
         <li class="pf-list__row">
           <span class="pf-list__main">
-            <a class="pf-row-link" routerLink="/admin/departments">Departments</a>
-            <span class="pf-list__sub">Cost centers and assignments</span>
+            <a class="pf-row-link" routerLink="/admin/departments">{{ lang.t('nav.departments') }}</a>
+            <span class="pf-list__sub">{{ lang.t('settings.departmentsSub') }}</span>
           </span>
         </li>
         <li class="pf-list__row">
           <span class="pf-list__main">
-            <a class="pf-row-link" routerLink="/admin/workflows">Approval policies</a>
-            <span class="pf-list__sub">Lanes, steps and delegations</span>
+            <a class="pf-row-link" routerLink="/admin/workflows">{{ lang.t('settings.policies') }}</a>
+            <span class="pf-list__sub">{{ lang.t('settings.policiesSub') }}</span>
           </span>
         </li>
         <li class="pf-list__row">
           <span class="pf-list__main">
-            <a class="pf-row-link" routerLink="/admin/audit">Audit logs</a>
-            <span class="pf-list__sub">Append-only trail</span>
+            <a class="pf-row-link" routerLink="/admin/audit">{{ lang.t('settings.audit') }}</a>
+            <span class="pf-list__sub">{{ lang.t('settings.auditSub') }}</span>
           </span>
         </li>
       </ul>

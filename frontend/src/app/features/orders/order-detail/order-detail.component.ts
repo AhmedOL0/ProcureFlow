@@ -7,12 +7,14 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import type { I18nKey } from '../../../core/i18n/en';
+import { LanguageService, getDefaultLanguage } from '../../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { Truck } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { ApiFailure, fallbackMessage, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
 import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { SuppliersService } from '../../suppliers/suppliers.service';
@@ -41,6 +43,16 @@ export class OrderDetailComponent {
   private readonly dialogs = inject(MatDialog);
   private readonly snacks = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [
+    { label: this.lang.t('nav.orders'), url: '/orders' },
+    { label: this.lang.t('ord.crumbFile') },
+  ]);
+
+  protected linesLabel(count: number): string {
+    return count === 1 ? this.lang.t('ord.lineOne') : this.lang.tx('ord.lineMany', { n: count });
+  }
 
   protected readonly icons = { truck: Truck };
   protected readonly formatMinor = formatMinor;
@@ -106,7 +118,7 @@ export class OrderDetailComponent {
   reload(): void {
     const id = this.orderId();
     if (!id) {
-      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.', details: {} });
+      this.failure.set({ status: 404, code: null, message: fallbackMessage(404, getDefaultLanguage()), details: {} });
       this.loading.set(false);
       return;
     }
@@ -142,7 +154,7 @@ export class OrderDetailComponent {
   }
 
   send(): void {
-    this.transition('sent', (id) => this.orders.send(id));
+    this.transition('ord.sentSnack', (id) => this.orders.send(id));
   }
 
   /** Printable order as PDF; failures show inline below the header. */
@@ -160,14 +172,14 @@ export class OrderDetailComponent {
   }
 
   close(): void {
-    this.transition('closed', (id) => this.orders.close(id));
+    this.transition('ord.closedSnack', (id) => this.orders.close(id));
   }
 
   cancel(): void {
-    this.transition('cancelled', (id) => this.orders.cancel(id));
+    this.transition('ord.cancelledSnack', (id) => this.orders.cancel(id));
   }
 
-  private transition(verb: string, call: (id: string) => ReturnType<OrderService['send']>): void {
+  private transition(snack: I18nKey, call: (id: string) => ReturnType<OrderService['send']>): void {
     const current = this.order();
     if (!current?.id || this.acting()) {
       return;
@@ -176,7 +188,7 @@ export class OrderDetailComponent {
     call(current.id).subscribe({
       next: () => {
         this.acting.set(false);
-        this.snacks.open(`Order ${verb}.`, 'Dismiss', { duration: 4000 });
+        this.snacks.open(this.lang.t(snack), this.lang.t('common.dismiss'), { duration: 4000 });
         this.reload();
       },
       error: (error: unknown) => {
@@ -203,7 +215,7 @@ export class OrderDetailComponent {
       this.orders.receive(current.id, result.lines).subscribe({
         next: () => {
           this.acting.set(false);
-          this.snacks.open('Receipt recorded.', 'Dismiss', { duration: 4000 });
+          this.snacks.open(this.lang.t('ord.receiptSnack'), this.lang.t('common.dismiss'), { duration: 4000 });
           this.reload();
         },
         error: (error: unknown) => {

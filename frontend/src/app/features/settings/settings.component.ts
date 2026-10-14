@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,8 @@ import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
+import type { I18nKey } from '../../core/i18n/en';
+import { LanguageService } from '../../core/i18n/language.service';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { Eye, EyeOff } from '../../shared/icons';
@@ -42,13 +44,21 @@ import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/
 export class SettingsComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { show: Eye, hide: EyeOff };
   protected readonly user = this.auth.currentUser;
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('settings.crumb') }]);
 
   protected readonly loading = signal(true);
   protected readonly failure = signal<ApiFailure | null>(null);
-  protected readonly notice = signal<string | null>(null);
+  protected readonly notice = signal<{ key: I18nKey; vars: Record<string, string | number> } | null>(
+    null,
+  );
+
+  protected notify(key: I18nKey, vars: Record<string, string | number> = {}): void {
+    this.notice.set({ key, vars });
+  }
   protected readonly resent = signal(false);
   protected readonly showCurrent = signal(false);
   protected readonly showNew = signal(false);
@@ -113,7 +123,7 @@ export class SettingsComponent {
       .subscribe({
         next: () => {
           this.savingProfile.set(false);
-          this.notice.set('Profile saved.');
+          this.notify('settings.profileSaved');
         },
         error: (error: unknown) => {
           this.savingProfile.set(false);

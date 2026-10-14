@@ -16,6 +16,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -23,6 +24,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { Plus, Search, Truck } from '../../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
 import { runDownload } from '../../../shared/utils/download';
+import { formatDecimal } from '../../../shared/utils/format';
 import { enrichSuppliers, initialsFor, SupplierRow } from '../supplier-rows';
 import { Supplier, SupplierCategory, SuppliersService } from '../suppliers.service';
 import {
@@ -80,6 +82,7 @@ export class SupplierListComponent {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(MatDialog);
   private readonly router = inject(Router);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { plus: Plus, search: Search, truck: Truck, initials: initialsFor };
   protected readonly canWrite = this.auth.hasAuthority('supplier:write');
@@ -111,34 +114,40 @@ export class SupplierListComponent {
    */
   protected readonly totals = signal({ all: 0, active: 0, inactive: 0, suspended: 0 });
 
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.suppliers') }]);
+
   protected readonly kpis = computed<Kpi[]>(() => {
     const rows = this.rows();
     const scored = rows.map((r) => r.averageOnTime).filter((v): v is number => v !== null);
     const avg = scored.length > 0 ? scored.reduce((a, b) => a + b, 0) / scored.length : null;
     const totals = this.totals();
+    const lang = this.lang;
     return [
       {
-        label: 'Total suppliers',
+        label: lang.t('sup.total'),
         value: `${totals.all}`,
-        sub: `${totals.active} active`,
+        sub:
+          totals.active === 1
+            ? lang.t('sup.activeOne')
+            : lang.tx('sup.activeMany', { n: totals.active }),
         bar: totals.all > 0 ? (totals.active / totals.all) * 100 : null,
       },
       {
-        label: 'Avg on-time delivery',
-        value: avg === null ? 'N/A' : `${avg.toFixed(1)}%`,
-        sub: 'across this page',
+        label: lang.t('sup.avgOnTime'),
+        value: avg === null ? 'N/A' : `${formatDecimal(avg)}%`,
+        sub: lang.t('sup.acrossPage'),
         bar: avg,
       },
       {
-        label: 'Suspended',
+        label: lang.t('sup.suspended'),
         value: `${totals.suspended}`,
-        sub: totals.suspended === 1 ? 'needs review' : 'need review',
+        sub: totals.suspended === 1 ? lang.t('sup.reviewOne') : lang.t('sup.reviewMany'),
         bar: null,
       },
       {
-        label: 'Categories in use',
+        label: lang.t('sup.catsInUse'),
         value: `${this.catalog().length}`,
-        sub: 'workspace catalog',
+        sub: lang.t('sup.catalogSub'),
         bar: null,
       },
     ];

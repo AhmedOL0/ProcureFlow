@@ -16,6 +16,7 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { Router } from '@angular/router';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
@@ -50,6 +51,9 @@ export class InvoiceListComponent {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(MatDialog);
   private readonly router = inject(Router);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.invoices') }]);
 
   protected readonly icons = { file: FileText, plus: Plus, search: Search };
   protected readonly formatMinor = formatMinor;

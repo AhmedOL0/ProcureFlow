@@ -2,38 +2,38 @@
 <main class="auth-main">
   <mat-card class="auth-card">
     <mat-card-header>
-      <mat-card-title><h1 class="auth-title">Verify your mailbox</h1></mat-card-title>
+      <mat-card-title><h1 class="auth-title">{{ lang.t('auth.verifyTitle') }}</h1></mat-card-title>
       @if (state() === 'working' || state() === 'missing') {
-        <mat-card-subtitle>Confirming your address...</mat-card-subtitle>
+        <mat-card-subtitle>{{ lang.t('auth.verifying') }}</mat-card-subtitle>
       }
     </mat-card-header>
 
     <mat-card-content>
       @if (state() === 'working') {
-        <div class="auth-loading" role="status" aria-label="Verifying mailbox">
+        <div class="auth-loading" role="status" [attr.aria-label]="lang.t('auth.verifyingAria')">
           <mat-spinner diameter="28" />
         </div>
       } @else if (state() === 'done') {
         <p class="auth-sent" role="status">
-          Mailbox verified. Password resets are unlocked. <a routerLink="/login">Sign in</a>
+          {{ lang.t('auth.verifiedOk') }} <a routerLink="/login">{{ lang.t('auth.signInButton') }}</a>
         </p>
       } @else if (state() === 'spent') {
         <p class="auth-error" role="alert">
-          This link expired or was already used. Ask for a fresh one from the sign-in screen.
+          {{ lang.t('auth.linkSpent') }}
         </p>
       } @else if (state() === 'invalid') {
         <p class="auth-error" role="alert">
-          This link is not valid. Check the full URL from your email and try again.
+          {{ lang.t('auth.linkInvalid') }}
         </p>
       } @else {
         <p class="auth-error" role="alert">
-          No verification token found. Open the link from your email. It carries the token.
+          {{ lang.t('auth.linkMissing') }}
         </p>
       }
     </mat-card-content>
 
     <mat-card-actions>
-      <span class="auth-switch"><a routerLink="/login">Back to sign in</a></span>
+      <span class="auth-switch"><a routerLink="/login">{{ lang.t('common.back') }}</a></span>
     </mat-card-actions>
   </mat-card>
 </main>
