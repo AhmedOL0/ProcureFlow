@@ -8,4 +8,6 @@ providers:
     updateIntervalSeconds: 30
     allowUiUpdates: true
     options:
-      path: /etc/grafana/provisioning/dashboards
+      # Served from /var/lib: mounting the JSON dir under /etc/grafana
+      # would shadow this provider file itself (same parent mount).
+      path: /var/lib/grafana/dashboards

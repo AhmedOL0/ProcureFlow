@@ -1,0 +1,48 @@
+# Loki 2.9, local only: filesystem storage on the lokidata volume.
+# No auth, no replication — this is the local leg of the observability
+# pipeline (see monitoring/README.md). Anything shared needs a real
+# backend, not this file.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+ingester:
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+  chunk_idle_period: 5m
+  chunk_retain_period: 30s
+  # The image runs unprivileged: every writable path must sit on the
+  # lokidata volume, including the WAL (default /wal is not writable).
+  wal:
+    enabled: true
+    dir: /loki/wal
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v12
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/index_cache
+  filesystem:
+    directory: /loki/chunks
+
+compactor:
+  working_directory: /loki/compactor
+  shared_store: filesystem
+
+limits_config:
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h

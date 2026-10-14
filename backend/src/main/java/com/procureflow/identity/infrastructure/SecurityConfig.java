@@ -80,7 +80,13 @@ public class SecurityConfig {
                                 // Liveness/readiness probes for container orchestration:
                                 // statuses only (details stay authorized), no secrets.
                                 "/actuator/health/liveness",
-                                "/actuator/health/readiness")
+                                "/actuator/health/readiness",
+                                // Prometheus scrape target: aggregate counters and
+                                // histograms only (no identities, secrets or
+                                // prompts). Reachable in-cluster; the prod
+                                // overlay restricts /actuator to the monitor
+                                // network (see infrastructure/prod/README.md).
+                                "/actuator/prometheus")
                         .permitAll()
                         .anyRequest()
                         .authenticated())

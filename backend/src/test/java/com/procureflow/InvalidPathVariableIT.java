@@ -91,6 +91,12 @@ class InvalidPathVariableIT extends AbstractIntegrationTest {
         assertTrue(liveness.getBody().contains("\"status\":\"UP\""));
     }
 
+    // NOTE: no IT asserts /actuator/prometheus is public. Spring Boot
+    // excludes metrics-export auto-configurations from test contexts by
+    // design (see MetricsIT javadoc), so the scrape endpoint is never
+    // mapped under @SpringBootTest — the allowlist entry in SecurityConfig
+    // is verified live instead (Prometheus targets UP + anonymous curl).
+
     private String provision(String slug) {
         ResponseEntity<AuthResponse> response = rest.postForEntity(
                 "/api/v1/auth/register",
