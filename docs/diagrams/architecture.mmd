@@ -11,12 +11,10 @@ flowchart TB
   subgraph Backend["Spring Boot modular monolith"]
     API[REST /api/v1]
     MODS[identity / organization / supplier<br/>procurement / approval / budget<br/>purchaseorder / invoice<br/>notification / audit / analytics / ai]
-    EV[Domain events<br/>in-process now, RabbitMQ later]
+    EV[Domain events<br/>in-process Spring events]
   end
   subgraph Data
     PG[(PostgreSQL 16<br/>Flyway, tenant rows)]
-    REDIS[(Redis 7<br/>cache, rate limit)]
-    RMQ[RabbitMQ 3<br/>async transport]
   end
   EXT[Groq API<br/>via ai module only]
   OBS[Prometheus + Grafana]

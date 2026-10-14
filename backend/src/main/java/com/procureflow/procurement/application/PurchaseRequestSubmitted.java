@@ -6,8 +6,8 @@ import java.util.UUID;
 
 /**
  * A draft became SUBMITTED. The notification module consumes this to tell
- * the workspace; publishers never change when the transport does (in-process
- * Spring events today, RabbitMQ later).
+ * the workspace; publishers never change when the transport does (a broker
+ * arrives only with a second deployable consumer, ADR-010).
  */
 public record PurchaseRequestSubmitted(
         UUID eventId,

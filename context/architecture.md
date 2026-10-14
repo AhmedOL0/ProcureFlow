@@ -37,9 +37,10 @@ Dependency policy (ArchUnit-enforced in CI):
 - PostgreSQL 16 is the only source of truth. UUID PKs, `timestamptz`,
   Flyway `V<n>` migrations (append-only), `ddl-auto=validate` everywhere.
   Flyway 11+ needs the separate `flyway-database-postgresql` artifact.
-- Redis: cache and rate limiting only, never authoritative.
-- RabbitMQ: async transport for domain events (in-process Spring events
-  until listeners land; publishers never change when transport does).
+- No broker, no cache tier: domain events stay in-process Spring events
+  (ADR-010), throttles are DB-backed. Redis/RabbitMQ were removed
+  2026-10-14 — zero code ever touched either; reintroduce only with a
+  measured hot path (cache) or a second deployable consumer (broker).
 - Money-moving code locks rows (`SELECT ... FOR UPDATE`) inside one
   transaction and carries a concurrency test. No distributed transactions.
 

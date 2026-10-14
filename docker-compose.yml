@@ -1,8 +1,10 @@
 # ============================================================
 # ProcureFlow — local infrastructure
-# Backend + frontend are built from source. Phase 1 focus:
-# postgres, redis, rabbitmq. Backend/frontend join the same
-# network so the stack can be exercised end to end later.
+# Backend + frontend are built from source. Phase 1 focus: postgres.
+# Backend/frontend join the same network so the stack can be exercised
+# end to end later. Redis/RabbitMQ were removed 2026-10-14: zero code
+# ever touched either (in-process Spring events per ADR-010, DB-backed
+# throttles), so the topology matches reality.
 # Usage: `docker compose up -d --build` (see README.md)
 # ============================================================
 
@@ -27,39 +29,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: procureflow-redis
-    restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: procureflow-rabbitmq
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-procureflow}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set (see .env.example)}
-    ports:
-      - "5672:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-    volumes:
-      - rabbitdata:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-
   # ---- Application services (wired in Phase 2; build context ready) ----
   backend:
     build:
@@ -70,20 +39,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-procureflow}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-procureflow}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (see .env.example)}
-      REDIS_HOST: redis
-      REDIS_ENABLED: "true"
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USER: ${RABBITMQ_USER:-procureflow}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
       AI_ENABLED: ${AI_ENABLED:-false}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
@@ -234,8 +194,6 @@ services:
 
 volumes:
   pgdata:
-  redisdata:
-  rabbitdata:
   pgbackups:
   promdata:
   lokidata:

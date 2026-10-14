@@ -7,7 +7,8 @@ import java.util.UUID;
 /**
  * A submitted request received its immutable verdict. The notification
  * module consumes this to tell the requester; publishers never change when
- * the transport does (in-process Spring events today, RabbitMQ later).
+ * the transport does (a broker arrives only with a second deployable
+ * consumer, ADR-010).
  */
 public record PurchaseRequestDecided(
         UUID eventId,
