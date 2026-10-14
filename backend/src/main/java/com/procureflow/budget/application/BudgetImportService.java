@@ -2,6 +2,7 @@ package com.procureflow.budget.application;
 
 import com.procureflow.audit.application.AuditTrailLogged;
 import com.procureflow.identity.application.AuthAttemptThrottle;
+import com.procureflow.shared.antivirus.ClamAvScanner;
 import com.procureflow.shared.document.Csv;
 import com.procureflow.shared.document.Table;
 import com.procureflow.shared.document.Upload;
@@ -39,12 +40,17 @@ public class BudgetImportService {
 
     private final BudgetService budgets;
     private final AuthAttemptThrottle throttles;
+    private final ClamAvScanner antivirus;
     private final ApplicationEventPublisher events;
 
     public BudgetImportService(
-            BudgetService budgets, AuthAttemptThrottle throttles, ApplicationEventPublisher events) {
+            BudgetService budgets,
+            AuthAttemptThrottle throttles,
+            ClamAvScanner antivirus,
+            ApplicationEventPublisher events) {
         this.budgets = budgets;
         this.throttles = throttles;
+        this.antivirus = antivirus;
         this.events = events;
     }
 
@@ -52,6 +58,7 @@ public class BudgetImportService {
     public ImportResult importFile(String tenantSlug, UUID actorId, String filename, byte[] content) {
         throttles.checkImport(actorId);
         Upload.FileKind kind = Upload.inspect(filename, content);
+        antivirus.scan(content);
         Table table = kind == Upload.FileKind.XLSX ? Xlsx.read(content) : Csv.parse(content);
         if (!table.has("name") || !table.has("period") || !table.has("amount")) {
             throw ApiException.badRequest(

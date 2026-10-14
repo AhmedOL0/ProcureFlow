@@ -96,6 +96,11 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-no-reply@example.com}
+      # Antivirus: blank host disables scanning (dev default, warned once
+      # per boot). Enforce with: CLAMAV_HOST=clamav + --profile scan.
+      CLAMAV_HOST: ${CLAMAV_HOST:-}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+      CLAMAV_TIMEOUT_MS: ${CLAMAV_TIMEOUT_MS:-10000}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     # Liveness (not aggregate health): a Brevo outage must never restart
@@ -214,6 +219,19 @@ services:
       - obspositions:/positions
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
+  # ---- Malware scanning (opt-in: not part of the default stack) ----
+  # Up: CLAMAV_HOST=clamav docker compose --profile scan up -d clamav
+  # (first boot downloads signature DBs, a few minutes). Imports are
+  # scanned after the size/sniff guards and before any parse; infected
+  # files answer 422 VIRUS_DETECTED. Without the profile the backend
+  # logs one warning per boot and skips scanning (documented).
+  clamav:
+    image: clamav/clamav:1.4
+    container_name: procureflow-clamav
+    profiles: [scan]
+    volumes:
+      - clamdb:/var/lib/clamav
+
 volumes:
   pgdata:
   redisdata:
@@ -223,3 +241,4 @@ volumes:
   lokidata:
   grafanadata:
   obspositions:
+  clamdb:

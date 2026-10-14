@@ -63,6 +63,11 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.CONFLICT, code, message);
     }
 
+    /** The request was well-formed but carries unacceptable content (e.g. malware). */
+    public static ApiException unprocessable(String code, String message) {
+        return new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, code, message);
+    }
+
     public static ApiException gone(String code, String message) {
         return new ApiException(HttpStatus.GONE, code, message);
     }
