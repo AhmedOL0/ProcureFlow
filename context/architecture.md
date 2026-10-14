@@ -41,6 +41,8 @@ Dependency policy (ArchUnit-enforced in CI):
   (ADR-010), throttles are DB-backed. Redis/RabbitMQ were removed
   2026-10-14 — zero code ever touched either; reintroduce only with a
   measured hot path (cache) or a second deployable consumer (broker).
+- MongoDB 8 holds AI extraction history only (derived, versioned, 90-day
+  TTL); PG stays authoritative for tenants, money, approvals and audit.
 - Money-moving code locks rows (`SELECT ... FOR UPDATE`) inside one
   transaction and carries a concurrency test. No distributed transactions.
 

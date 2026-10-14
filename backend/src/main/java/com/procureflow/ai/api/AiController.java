@@ -3,12 +3,18 @@ package com.procureflow.ai.api;
 import com.procureflow.ai.application.AiValidator;
 import com.procureflow.ai.application.CopilotService;
 import com.procureflow.identity.application.AuthenticatedUser;
+import com.procureflow.shared.web.Paged;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -97,6 +103,42 @@ public class AiController {
                         .toList()));
     }
 
+    @GetMapping("/extractions")
+    @PreAuthorize("hasAuthority('ai:use')")
+    @Operation(summary = "Validated extraction history, newest first (derived store; 90-day retention)")
+    public ResponseEntity<Paged<ExtractionResponse>> extractions(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(copilot
+                .history(principal.tenantId(), Paged.pageOrThrow(page), Paged.sizeOrThrow(size))
+                .map(AiController::extraction));
+    }
+
+    @GetMapping("/extractions/{id}")
+    @PreAuthorize("hasAuthority('ai:use')")
+    @Operation(summary = "One extraction; unknown ids and foreign tenants answer 404")
+    public ResponseEntity<ExtractionResponse> extraction(
+            @AuthenticationPrincipal AuthenticatedUser principal, @PathVariable String id) {
+        return ResponseEntity.ok(extraction(copilot.historyOne(principal.tenantId(), id)));
+    }
+
+    private static ExtractionResponse extraction(CopilotService.ExtractionView view) {
+        return new ExtractionResponse(
+                view.id(),
+                view.schemaVersion(),
+                view.modelIdentifier(),
+                view.promptVersion(),
+                view.input(),
+                view.title(),
+                view.priority(),
+                view.items().stream()
+                        .map(i -> new DraftItemResponse(i.description(), i.quantity(), i.unitPriceMinor()))
+                        .toList(),
+                view.createdRequestId(),
+                view.createdAt());
+    }
+
     public record ChatRequest(@NotNull String question) {
     }
 
@@ -120,6 +162,11 @@ public class AiController {
 
     public record UsageResponse(long calls, long promptTokens, long completionTokens,
             List<FeatureUsageResponse> byFeature) {
+    }
+
+    public record ExtractionResponse(String id, int schemaVersion, String modelIdentifier, String promptVersion,
+            String input, String title, String priority, List<DraftItemResponse> items, String createdRequestId,
+            String createdAt) {
     }
 
     public record FeatureUsageResponse(String feature, long calls, long promptTokens, long completionTokens) {

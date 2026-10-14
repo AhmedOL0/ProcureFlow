@@ -11,6 +11,7 @@ database is a single PostgreSQL cluster with tenant-scoped rows.
 flowchart LR
   Browser[Angular SPA] --> API[Spring Boot API]
   API --> PG[(PostgreSQL)]
+  API --> Mongo[(MongoDB<br/>AI extraction history)]
   API --> Groq[Groq API]
   API --> Prom[Prometheus]
   Prom --> Grafana[Grafana]

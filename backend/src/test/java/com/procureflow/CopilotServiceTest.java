@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,12 +15,15 @@ import com.procureflow.ai.application.AiProvider;
 import com.procureflow.ai.application.AiValidator;
 import com.procureflow.ai.application.CopilotService;
 import com.procureflow.ai.infrastructure.AiUsageRecordRepository;
+import com.procureflow.ai.infrastructure.ExtractionRecord;
+import com.procureflow.ai.infrastructure.ExtractionRecordRepository;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 
@@ -32,7 +36,8 @@ class CopilotServiceTest {
 
     @Test
     void chatWithoutProviderBeanIsUnavailable() {
-        CopilotService copilot = new CopilotService(emptyProviders(), null, null, null, null, null, 1_000_000L);
+        CopilotService copilot = new CopilotService(
+                emptyProviders(), null, null, mock(ExtractionRecordRepository.class), null, null, null, 1_000_000L);
         assertUnavailable(() -> copilot.chat("acme", "How much?"));
     }
 
@@ -46,6 +51,7 @@ class CopilotServiceTest {
                 singletonProviders(failingProvider()),
                 null,
                 usage,
+                mock(ExtractionRecordRepository.class),
                 tenants,
                 new ObjectMapper(),
                 mock(MeterRegistry.class),
@@ -67,6 +73,7 @@ class CopilotServiceTest {
         when(tenants.requireTenantId("acme")).thenReturn(UUID.randomUUID());
         MeterRegistry meters = mock(MeterRegistry.class);
         when(meters.counter(eq("procureflow.ai.calls"), any(String[].class))).thenReturn(mock(Counter.class));
+        ExtractionRecordRepository extractions = mock(ExtractionRecordRepository.class);
         CopilotService copilot = new CopilotService(
                 singletonProviders(new AiProvider() {
                     @Override
@@ -87,6 +94,7 @@ class CopilotServiceTest {
                 }),
                 null,
                 usage,
+                extractions,
                 tenants,
                 new ObjectMapper(),
                 meters,
@@ -94,6 +102,11 @@ class CopilotServiceTest {
         AiValidator.DraftRequest draft = copilot.extract("acme", "25 ergonomic chairs for the Berlin office");
         assertEquals("Laptops", draft.title());
         assertEquals(1, draft.items().size());
+        ArgumentCaptor<ExtractionRecord> saved = ArgumentCaptor.forClass(ExtractionRecord.class);
+        verify(extractions).save(saved.capture());
+        assertEquals("acme", saved.getValue().getTenantSlug());
+        assertEquals("Laptops", saved.getValue().getTitle());
+        assertEquals(1, saved.getValue().getSchemaVersion());
     }
 
     private static AiProvider failingProvider() {
@@ -125,7 +138,7 @@ class CopilotServiceTest {
                         return false;
                     }
                 }),
-                null, null, null, null, null, 1_000_000L);
+                null, null, mock(ExtractionRecordRepository.class), null, null, null, 1_000_000L);
         assertUnavailable(() -> copilot.extract("acme", "20 laptops"));
     }
 

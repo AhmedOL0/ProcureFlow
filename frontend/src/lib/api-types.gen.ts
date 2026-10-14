@@ -1377,6 +1377,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/extractions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Validated extraction history, newest first (derived store; 90-day retention) */
+        get: operations["extractions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/extractions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One extraction; unknown ids and foreign tenants answer 404 */
+        get: operations["extraction"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/memberships/{id}": {
         parameters: {
             query?: never;
@@ -2202,6 +2236,30 @@ export interface components {
             /** Format: int64 */
             completionTokens?: number;
             byFeature?: components["schemas"]["FeatureUsageResponse"][];
+        };
+        ExtractionResponse: {
+            id?: string;
+            /** Format: int32 */
+            schemaVersion?: number;
+            modelIdentifier?: string;
+            promptVersion?: string;
+            input?: string;
+            title?: string;
+            priority?: string;
+            items?: components["schemas"]["DraftItemResponse"][];
+            createdRequestId?: string;
+            createdAt?: string;
+        };
+        PagedExtractionResponse: {
+            content?: components["schemas"]["ExtractionResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
     };
     responses: never;
@@ -4742,6 +4800,51 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UsageResponse"];
+                };
+            };
+        };
+    };
+    extractions: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PagedExtractionResponse"];
+                };
+            };
+        };
+    };
+    extraction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ExtractionResponse"];
                 };
             };
         };

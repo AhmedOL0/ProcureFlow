@@ -1,8 +1,8 @@
-# Local Docker usage: `docker compose up -d postgres` for
+# Local Docker usage: `docker compose up -d postgres mongo` for
 # development dependencies, or `docker compose up -d --build` for the full
 # stack once backend/frontend images are built. Required secrets come from
 # `.env` (see root `.env.example`); compose fails fast if they are missing.
-# Service catalog: postgres:5432,
+# Service catalog: postgres:5432, mongo:27017 (AI extraction history),
 # backend:8080, frontend:4200 (nginx as the unprivileged nginx user on
 # in-container :8080).
 

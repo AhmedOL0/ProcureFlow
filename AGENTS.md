@@ -167,7 +167,7 @@ ProcureFlow/
 
 ## Infrastructure & CI
 
-- Compose: postgres:16 (+ backend/frontend
+- Compose: postgres:16, mongo:8 (+ backend/frontend
   builds). Required vars fail fast (`${VAR:?}`); backend/frontend join
   the same network.
 - **Port 8080 is taken by a local Apache `httpd.exe`** — boot manual

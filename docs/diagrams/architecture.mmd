@@ -15,6 +15,7 @@ flowchart TB
   end
   subgraph Data
     PG[(PostgreSQL 16<br/>Flyway, tenant rows)]
+    MONGO[(MongoDB 8<br/>AI extraction history<br/>derived, TTL)]
   end
   EXT[Groq API<br/>via ai module only]
   OBS[Prometheus + Grafana]
