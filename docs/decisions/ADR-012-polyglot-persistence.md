@@ -22,13 +22,18 @@
 
 Collection `ai_extractions`: `{tenantSlug, schemaVersion: 1,
 modelIdentifier, promptVersion, input, title, priority,
-items[] (description/quantity/unitPriceMinor), createdRequestId (null;
-linking is a follow-up), createdAt}`, TTL 90 d, compound index
-`(tenantSlug, createdAt desc)`. Persisted best-effort after
+items[] (description/quantity/unitPriceMinor), createdRequestId, createdAt}`,
+TTL 90 d, compound index `(tenantSlug, createdAt desc)`. Persisted best-effort after
 `AiValidator` passes (Mongo down → warn-once + meter
 `procureflow.ai.history_dropped` + draft still answered); reads fail
 loud (503 `HISTORY_UNAVAILABLE`). `GET /api/v1/ai/extractions` paged +
 `GET …/{id}`, both tenant-scoped with indistinguishable 404s.
+`POST …/{id}/request` (+ `Idempotency-Key`, `ai:use` +
+`procurement:request`) creates a real draft through the `RequestDrafting`
+port — same guarded, idempotent path as POST /purchase-requests with
+X-Replay mirrored — then links `createdRequestId` (best-effort, heals on
+replay). The copilot "Recent drafts" shelf lists history with per-row
+create-or-opened states.
 `modelProvider` was dropped from the draft spec: the model identifier
 already carries provenance without touching the provider interface.
 Draft prices stay proposals until the guarded create path re-validates.

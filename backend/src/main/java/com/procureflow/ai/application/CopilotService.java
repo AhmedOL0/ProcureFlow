@@ -5,6 +5,7 @@ import com.procureflow.ai.domain.AiUsageRecord;
 import com.procureflow.ai.infrastructure.AiUsageRecordRepository;
 import com.procureflow.ai.infrastructure.ExtractionRecord;
 import com.procureflow.ai.infrastructure.ExtractionRecordRepository;
+import com.procureflow.procurement.application.RequestDrafting;
 import com.procureflow.analytics.application.AnalyticsService;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
@@ -43,6 +44,7 @@ public class CopilotService {
     private final AnalyticsService analytics;
     private final AiUsageRecordRepository usage;
     private final ExtractionRecordRepository extractions;
+    private final RequestDrafting drafting;
     private final TenantProvisioning tenants;
     private final ObjectMapper json;
     private final MeterRegistry meters;
@@ -53,6 +55,7 @@ public class CopilotService {
             AnalyticsService analytics,
             AiUsageRecordRepository usage,
             ExtractionRecordRepository extractions,
+            RequestDrafting drafting,
             TenantProvisioning tenants,
             ObjectMapper json,
             MeterRegistry meters,
@@ -63,6 +66,7 @@ public class CopilotService {
         this.analytics = analytics;
         this.usage = usage;
         this.extractions = extractions;
+        this.drafting = drafting;
         this.tenants = tenants;
         this.json = json;
         this.meters = meters;
@@ -129,6 +133,39 @@ public class CopilotService {
         meter(tenantSlug, "extract", result);
         recordExtraction(tenantSlug, sentence, draft, result.model());
         return draft;
+    }
+
+    /**
+     * Turns a stored extraction into a real draft through the same guarded,
+     * idempotent creation a direct POST uses (single-currency, validation,
+     * replay on key reuse), then links the extraction to the draft. The
+     * link update is best-effort like the history write: the request
+     * exists either way, and a replay heals a missed link.
+     */
+    @Transactional
+    public RequestDrafting.Creation createFromExtraction(
+            String tenantSlug, UUID requesterId, String extractionId, String key) {
+        ExtractionView view = historyOne(tenantSlug, extractionId);
+        RequestDrafting.Creation created = drafting.createFromDraft(
+                tenantSlug,
+                requesterId,
+                key,
+                view.title(),
+                view.priority(),
+                view.items().stream()
+                        .map(i -> new RequestDrafting.ItemInput(i.description(), i.quantity(), i.unitPriceMinor()))
+                        .toList());
+        try {
+            extractions
+                    .findByIdAndTenantSlug(extractionId, tenantSlug)
+                    .ifPresent(doc -> {
+                        doc.setCreatedRequestId(created.requestId().toString());
+                        extractions.save(doc);
+                    });
+        } catch (Exception e) {
+            meters.counter("procureflow.ai.history_dropped").increment();
+        }
+        return created;
     }
 
     /**

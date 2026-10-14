@@ -19,7 +19,7 @@ import { Plus, Sparkles, Trash2 } from '../../shared/icons';
 import { ApiFailure, parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
 import { formatMinor } from '../../shared/utils/money';
 import { ProcurementService } from '../procurement/procurement.service';
-import { ChatAnswer, CopilotService, RequestDraft } from './copilot.service';
+import { ChatAnswer, CopilotService, Extraction, RequestDraft } from './copilot.service';
 
 type CopilotMode = 'chat' | 'explain' | 'extract' | 'compare';
 
@@ -84,6 +84,7 @@ export class CopilotComponent {
   protected readonly latencyMs = signal<number | null>(null);
   protected readonly draft = signal<RequestDraft | null>(null);
   protected readonly draftSaved = signal(false);
+  protected readonly history = signal<Extraction[]>([]);
   private running: Subscription | null = null;
 
   readonly questionBox = new FormControl('', {
@@ -116,6 +117,21 @@ export class CopilotComponent {
     }
     this.mode.set(mode);
     this.failure.set(null);
+    if (mode === 'extract' && !this.historyLoaded) {
+      this.historyLoaded = true;
+      this.loadHistory();
+    }
+  }
+
+  /** Past validated extractions, newest first; failures stay silent here
+   * (the shelf is derived — a down store must not break the form). */
+  private historyLoaded = false;
+
+  private loadHistory(): void {
+    this.copilot.history().subscribe({
+      next: (page) => this.history.set(page.rows),
+      error: () => this.history.set([]),
+    });
   }
 
   /** Cancels the in-flight provider call (HttpClient aborts on unsubscribe). */
@@ -171,6 +187,7 @@ export class CopilotComponent {
     this.run(this.copilot.extractRequest(this.narrativeBox.value.trim()), (draft) =>
       this.draft.set(draft as RequestDraft),
     );
+    this.loadHistory();
   }
 
   compare(): void {
@@ -219,6 +236,36 @@ export class CopilotComponent {
           this.failure.set(parseApiFailure(error));
         },
       });
+  }
+
+  /**
+   * Creates a real draft from a stored extraction through the guarded
+   * server path (the server links the row to the draft). Same idempotency
+   * discipline as manual creation: one key per click.
+   */
+  createFromHistory(row: Extraction): void {
+    if (!row.id || this.busy()) {
+      return;
+    }
+    this.busy.set(true);
+    this.failure.set(null);
+    const idempotencyKey =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    this.copilot.createFromExtraction(row.id, idempotencyKey).subscribe({
+      next: (created) => {
+        this.busy.set(false);
+        this.loadHistory();
+        if (created.requestId) {
+          void this.router.navigate(['/requests', created.requestId]);
+        }
+      },
+      error: (error: unknown) => {
+        this.busy.set(false);
+        this.failure.set(parseApiFailure(error));
+      },
+    });
   }
 
   private run<T>(call: Observable<T>, apply: (result: T) => void): void {

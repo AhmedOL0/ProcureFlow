@@ -17,6 +17,7 @@ import com.procureflow.ai.application.CopilotService;
 import com.procureflow.ai.infrastructure.AiUsageRecordRepository;
 import com.procureflow.ai.infrastructure.ExtractionRecord;
 import com.procureflow.ai.infrastructure.ExtractionRecordRepository;
+import com.procureflow.procurement.application.RequestDrafting;
 import com.procureflow.organization.application.TenantProvisioning;
 import com.procureflow.shared.web.ApiException;
 import io.micrometer.core.instrument.Counter;
@@ -37,7 +38,8 @@ class CopilotServiceTest {
     @Test
     void chatWithoutProviderBeanIsUnavailable() {
         CopilotService copilot = new CopilotService(
-                emptyProviders(), null, null, mock(ExtractionRecordRepository.class), null, null, null, 1_000_000L);
+                emptyProviders(), null, null, mock(ExtractionRecordRepository.class), mock(RequestDrafting.class),
+                null, null, null, 1_000_000L);
         assertUnavailable(() -> copilot.chat("acme", "How much?"));
     }
 
@@ -52,6 +54,7 @@ class CopilotServiceTest {
                 null,
                 usage,
                 mock(ExtractionRecordRepository.class),
+                mock(RequestDrafting.class),
                 tenants,
                 new ObjectMapper(),
                 mock(MeterRegistry.class),
@@ -95,6 +98,7 @@ class CopilotServiceTest {
                 null,
                 usage,
                 extractions,
+                mock(RequestDrafting.class),
                 tenants,
                 new ObjectMapper(),
                 meters,
@@ -138,7 +142,8 @@ class CopilotServiceTest {
                         return false;
                     }
                 }),
-                null, null, mock(ExtractionRecordRepository.class), null, null, null, 1_000_000L);
+                null, null, mock(ExtractionRecordRepository.class), mock(RequestDrafting.class), null, null, null,
+                1_000_000L);
         assertUnavailable(() -> copilot.extract("acme", "20 laptops"));
     }
 

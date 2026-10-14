@@ -8,12 +8,14 @@ import com.procureflow.identity.api.AuthResponse;
 import com.procureflow.identity.application.MailPort;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -110,6 +112,97 @@ class ExtractionHistoryIT extends AbstractIntegrationTest {
         assertEquals(
                 HttpStatus.FORBIDDEN,
                 get("/api/v1/ai/extractions?page=0&size=20", member.accessToken(), Map.class).getStatusCode());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void createFromExtractionCreatesDraftAndLinksIt() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        post("/api/v1/ai/extract-request", admin.token(), Map.of("question", "20 laptops please"), Map.class);
+        ResponseEntity<Map> history = get("/api/v1/ai/extractions?page=0&size=20", admin.token(), Map.class);
+        String id = ((List<Map<String, Object>>) history.getBody().get("content")).get(0).get("id").toString();
+
+        HttpHeaders headers = bearer(admin.token());
+        headers.set("Idempotency-Key", "key-" + UUID.randomUUID());
+        ResponseEntity<Map> created = rest.exchange(
+                "/api/v1/ai/extractions/" + id + "/request", HttpMethod.POST, new HttpEntity<>(null, headers),
+                Map.class);
+        assertEquals(HttpStatus.CREATED, created.getStatusCode());
+        assertNotNull(created.getBody());
+        String requestId = created.getBody().get("requestId").toString();
+
+        // A real draft exists behind the id, built from the validated draft.
+        ResponseEntity<Map> draft = get("/api/v1/purchase-requests/" + requestId, admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, draft.getStatusCode());
+        assertEquals("Laptops", draft.getBody().get("title"));
+
+        // The extraction now points at its draft.
+        ResponseEntity<Map> one = get("/api/v1/ai/extractions/" + id, admin.token(), Map.class);
+        assertEquals(HttpStatus.OK, one.getStatusCode());
+        assertEquals(requestId, one.getBody().get("createdRequestId"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void createReplayReturnsOriginalWithHeader() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        post("/api/v1/ai/extract-request", admin.token(), Map.of("question", "20 laptops please"), Map.class);
+        ResponseEntity<Map> history = get("/api/v1/ai/extractions?page=0&size=20", admin.token(), Map.class);
+        String id = ((List<Map<String, Object>>) history.getBody().get("content")).get(0).get("id").toString();
+
+        String key = "key-" + UUID.randomUUID();
+        ResponseEntity<Map> first = createFromExtraction(admin.token(), id, key);
+        assertEquals(HttpStatus.CREATED, first.getStatusCode());
+        ResponseEntity<Map> replay = createFromExtraction(admin.token(), id, key);
+        assertEquals(HttpStatus.OK, replay.getStatusCode());
+        assertEquals("true", replay.getHeaders().getFirst("X-Replay"));
+        assertEquals(first.getBody().get("requestId"), replay.getBody().get("requestId"));
+    }
+
+    @Test
+    void createFromForeignExtractionAnswersNotFound() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        post("/api/v1/ai/extract-request", admin.token(), Map.of("question", "20 laptops please"), Map.class);
+        ResponseEntity<Map> history = get("/api/v1/ai/extractions?page=0&size=20", admin.token(), Map.class);
+        String id = ((List<Map<String, Object>>) history.getBody().get("content")).get(0).get("id").toString();
+
+        Fixture other = provision(uniqueSlug("globex"));
+        HttpHeaders headers = bearer(other.token());
+        headers.set("Idempotency-Key", "key-" + UUID.randomUUID());
+        ResponseEntity<Map> foreign = rest.exchange(
+                "/api/v1/ai/extractions/" + id + "/request", HttpMethod.POST, new HttpEntity<>(null, headers),
+                Map.class);
+        assertEquals(HttpStatus.NOT_FOUND, foreign.getStatusCode());
+    }
+
+    @Test
+    void memberWithoutAiUseIsDeniedOnCreate() {
+        Fixture admin = provision(uniqueSlug("acme"));
+        post("/api/v1/ai/extract-request", admin.token(), Map.of("question", "20 laptops please"), Map.class);
+        ResponseEntity<Map> history = get("/api/v1/ai/extractions?page=0&size=20", admin.token(), Map.class);
+        String id = ((List<Map<String, Object>>) history.getBody().get("content")).get(0).get("id").toString();
+
+        // MEMBER carries procurement:request but not ai:use; the endpoint
+        // requires both, so the missing one answers 403.
+        AuthResponse member = joinAsMember(admin, "member@member.test");
+        HttpHeaders headers = bearer(member.accessToken());
+        headers.set("Idempotency-Key", "key-" + UUID.randomUUID());
+        assertEquals(
+                HttpStatus.FORBIDDEN,
+                rest.exchange(
+                                "/api/v1/ai/extractions/" + id + "/request",
+                                HttpMethod.POST,
+                                new HttpEntity<>(null, headers),
+                                Map.class)
+                        .getStatusCode());
+    }
+
+    private ResponseEntity<Map> createFromExtraction(String token, String id, String key) {
+        HttpHeaders headers = bearer(token);
+        headers.set("Idempotency-Key", key);
+        return rest.exchange(
+                "/api/v1/ai/extractions/" + id + "/request", HttpMethod.POST, new HttpEntity<>(null, headers),
+                Map.class);
     }
 
     @Test

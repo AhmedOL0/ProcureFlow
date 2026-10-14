@@ -667,6 +667,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/extractions/{id}/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a draft from an extraction (idempotent per Idempotency-Key) */
+        post: operations["createFromExtraction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ai/extract-request": {
         parameters: {
             query?: never;
@@ -1909,6 +1926,9 @@ export interface components {
         AttachRequest: {
             /** Format: uuid */
             requestId: string;
+        };
+        ExtractionRequestResponse: {
+            requestId?: string;
         };
         ChatRequest: {
             question: string;
@@ -3569,6 +3589,30 @@ export interface operations {
                     "*/*": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    createFromExtraction: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ExtractionRequestResponse"];
                 };
             };
         };

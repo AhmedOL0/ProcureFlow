@@ -4,18 +4,20 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 18 — AI extraction history on MongoDB
-(feature/ai-extraction-history, this change).** Validated
-extract-request drafts persist as versioned tenant-scoped docs
-(model, prompt version, input, 90-day TTL, compound index); PG stays
-authoritative. Best-effort writes (warn + meter, still answers), loud
-503 reads, indistinguishable 404s. `GET /api/v1/ai/extractions` paged +
-`GET …/{id}` behind `ai:use`; api-types regenerated. Compose mongo
-default-on with healthcheck. Gates: backend 192 IT green, 54 Vitest,
-e2e 33+33 green (firefox import-dialog race hardened: all-labels theme
-wait + enter-animation settle).
+**Phase 19 — extraction follow-ups (feature/extraction-followups, this
+change).** Create-from-extraction through the `RequestDrafting` port
+(same guarded idempotent path, X-Replay mirrored, row linked) +
+"Recent drafts" shelf in the copilot view (per-row create-or-opened).
+Probe-tenant debris dropped (PG + Mongo).
 
 ## Completed
+
+### Phase 18 — AI extraction history on MongoDB (merged PR #37)
+- Validated extract-request drafts as versioned tenant-scoped Mongo docs
+  (model, prompt version, input, 90-day TTL, compound index); PG
+  authoritative. Best-effort writes, loud 503 reads, indistinguishable
+  404s. `GET /extractions` paged + `GET /{id}` behind `ai:use`.
+  Gates: 192 IT, 54 Vitest, 33+33 e2e.
 
 ### Phase 17 — ops readiness (merged PR #34)
 - k6 read-mix ruler, live Prometheus+Grafana+Loki pipeline, grouped

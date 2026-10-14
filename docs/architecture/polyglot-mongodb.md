@@ -17,7 +17,16 @@ POST /api/v1/ai/extract-request
   -> AiValidator.question -> quota -> Groq -> AiValidator.draft (gate)
   -> PG meter (same tx) -> Mongo save (best-effort) -> draft to caller
 GET /api/v1/ai/extractions[ /{id}] -> Mongo, tenant-scoped, paged
+POST /api/v1/ai/extractions/{id}/request (+ Idempotency-Key)
+  -> ownership-checked load -> RequestDrafting port (same guarded,
+     idempotent creation as POST /purchase-requests, X-Replay mirrored)
+  -> extraction.createdRequestId linked (best-effort, heals on replay)
 ```
+
+The copilot "Recent drafts" shelf lists history with per-row status:
+unlinked rows offer creation (ai:use + procurement:request), linked rows
+deep-link to their request. Draft prices stay proposals until the
+guarded create path re-validates them — the UI never totals money.
 
 Writes degrade (warn-once + `procureflow.ai.history_dropped`, answer
 still returned); reads fail loud (503 `HISTORY_UNAVAILABLE`). Mongo down
