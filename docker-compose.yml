@@ -76,7 +76,10 @@ services:
   # One-shot: docker compose --profile backup run --rm db-backup sh /backup.sh once
   # Scheduled sidecar: docker compose --profile backup up -d db-backup
   db-backup:
-    image: postgres:16-alpine
+    # Built (not stock): pg_dump at the server version plus openssl for the
+    # optional encrypted-dump branch. Same script, same defaults.
+    build:
+      context: ./infrastructure/docker/backup
     container_name: procureflow-backup
     profiles: [backup]
     depends_on:
