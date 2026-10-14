@@ -2,7 +2,7 @@
 // global pf-* primitives; the order total keeps its own anchor type.
 .order-total {
   font: var(--pf-headline-sm);
-  color: var(--pf-navy);
+  color: var(--pf-heading);
   margin-left: auto;
 }
 
@@ -38,7 +38,7 @@
 }
 
 .order-steps__step[data-state='current'] {
-  color: var(--pf-navy);
+  color: var(--pf-heading);
   font-weight: 600;
 }
 

@@ -45,6 +45,7 @@ html {
 // --- Brand & surface -------------------------------------------------
 :root {
   --pf-navy: #064e3b; // deep spruce: nav rails, structural anchors
+  --pf-heading: #064e3b; // heading ink: navy on light, near-white on dark (own token, never a raw swap)
   --pf-blue: #047857; // viridian interactive: CTAs, links, active states
   --pf-blue-hover: #065f46;
   --pf-blue-active: #064e3b;
@@ -138,6 +139,102 @@ html {
   --mat-sys-on-surface: #191c1e;
   --mat-sys-surface-container-lowest: #ffffff;
   --mat-sys-error: var(--pf-danger-text);
+}
+
+// --- Dark theme -------------------------------------------------------
+// Every color token above gets a dark twin beside it: components consume
+// tokens, never raw hex (verified: no hex outside this file), so the flip
+// is one selector. Ratios re-checked per pair, same 4.5:1 bar as light.
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: mat.$azure-palette,
+      ),
+    )
+  );
+
+  // Interactive emerald steps UP in the dark (emerald-700 text would
+  // drown): emerald-400 links hold 7:1+ on the dark card.
+  --pf-blue: #34d399;
+  --pf-blue-hover: #6ee7b7;
+  --pf-blue-active: #a7f3d0;
+  --pf-focus-ring: #34d399;
+  --pf-teal: #2dd4bf;
+  --pf-teal-hover: #5eead4;
+  --pf-copper: #f59e0b;
+  --pf-copper-text: #fcd34d; // 9:1 on the dark copper tint
+  --pf-copper-bg: #2a2008;
+  --pf-copper-border: #92600e;
+  --pf-canvas: #0a1122;
+  --pf-card: #131c33;
+  --pf-text: #e8eef7; // 13:1 on the dark card
+  --pf-slate: #9db0c7; // secondary text, 7:1 on the dark card
+  --pf-muted-text: #9db0c7;
+  // Spruce anchors (avatars, pills) stay brand-navy in both themes.
+  --pf-heading: #e8eef7; // headings follow the surface: 13:1 on the dark card
+  --pf-rail-bg: #0d1526;
+  --pf-rail-text: #e8eef7;
+  --pf-rail-dim: #9db0c7;
+  --pf-rail-faint: #8ba3bd; // section labels, 5:1 on the dark rail
+  --pf-rail-hover: #1a2540;
+  --pf-rail-border: #22304d;
+  --pf-rail-active-bg: #34d399; // active pill flips: bright fill, ink text
+  --pf-rail-active-text: #052e22; // 10:1 on the bright pill
+  --pf-border: #22304d;
+  --pf-border-strong: #31405f;
+  --pf-header-bg: #101a2f;
+  --pf-row-hover: #16213a;
+  --pf-row-border: #1a2540;
+  --pf-selected-row: #0d3327;
+  --pf-success-bg: #0b2e23;
+  --pf-success-text: #6ee7b7;
+  --pf-success-border: #14532d;
+  --pf-warning-bg: #33230a;
+  --pf-warning-text: #fcd34d;
+  --pf-warning-border: #92600e;
+  --pf-danger-bg: #3a1215;
+  --pf-danger-text: #fca5a5;
+  --pf-danger-border: #7f1d1d;
+  --pf-info-bg: #0c2740;
+  --pf-info-text: #7dd3fc;
+  --pf-info-border: #0c4a6e;
+  --pf-neutral-bg: #1a2540;
+  --pf-neutral-text: #9db0c7;
+  --pf-neutral-border: #22304d;
+
+  --pf-shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --pf-shadow-2: 0 4px 12px -2px rgb(0 0 0 / 0.45), 0 2px 4px -1px rgb(0 0 0 / 0.3);
+  --pf-shadow-4: 0 16px 32px -4px rgb(0 0 0 / 0.5), 0 4px 8px -2px rgb(0 0 0 / 0.35);
+
+  // Hardcoded bridge values must flip explicitly; the var() ones
+  // (--mat-sys-surface, --mat-sys-error) follow
+  // their pf-* targets automatically. Primary is restated: the dark
+  // theme mixin above emits its own azure primary on this same selector.
+  --mat-sys-primary: var(--pf-blue);
+  --mat-sys-on-primary: #052e22;
+  --mat-sys-on-surface: #e8eef7;
+  --mat-sys-surface-container-lowest: #0d1526;
+  --mat-outlined-button-label-text-color: var(--pf-blue);
+}
+
+// The brand lockup is drawn for light surfaces (opaque white box), so on
+// dark panels it sits on an intentional white chip instead of floating
+// as a pale rectangle. Same treatment everywhere the lockup renders.
+html[data-theme='dark'] .shell__logo-img,
+html[data-theme='dark'] .auth-logo,
+html[data-theme='dark'] .auth-masthead {
+  background: #ffffff;
+  border-radius: var(--pf-radius-md);
+  padding: 4px 8px;
+}
+
+// Machine-intelligence banner: same copper tier, dark gradient.
+html[data-theme='dark'] .pf-ai-banner {
+  background: linear-gradient(180deg, #2a2008 0%, #3a2a0c 100%);
 }
 
 body {
@@ -297,7 +394,7 @@ table.pf-table th.pf-num {
 }
 .pf-section-head h2 {
   font: var(--pf-headline-sm);
-  color: var(--pf-navy);
+  color: var(--pf-heading);
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -357,7 +454,7 @@ table.pf-table th.pf-num {
   font-size: clamp(18px, 9cqw, 24px);
   line-height: 1.25;
   letter-spacing: -0.01em;
-  color: var(--pf-navy);
+  color: var(--pf-heading);
   margin-top: var(--pf-space-md);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -502,7 +599,7 @@ table.pf-table th.pf-num {
 }
 .pf-panel h2 {
   font: var(--pf-headline-sm);
-  color: var(--pf-navy);
+  color: var(--pf-heading);
   margin: 0 0 var(--pf-space-md);
 }
 .pf-panel__head {

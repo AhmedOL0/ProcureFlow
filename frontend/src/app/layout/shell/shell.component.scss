@@ -224,6 +224,7 @@
 .shell__main {
   display: flex;
   flex-direction: column;
+  background: var(--pf-canvas);
 }
 
 .shell__bar {
@@ -240,7 +241,7 @@
   color: var(--pf-slate);
 }
 .shell__crumbs [aria-current='page'] {
-  color: var(--pf-navy);
+  color: var(--pf-heading);
   font-weight: 600;
 }
 

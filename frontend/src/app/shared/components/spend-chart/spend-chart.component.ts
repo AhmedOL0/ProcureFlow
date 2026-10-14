@@ -18,6 +18,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 
 import { formatMinor } from '../../utils/money';
 import { buildSpendOption, type SpendSeriesPoint } from '../../utils/charts';
+import { ThemeService } from '../../../core/theme/theme.service';
 
 use([BarChart, GridComponent, TooltipComponent, CanvasRenderer]);
 
@@ -52,6 +53,7 @@ export class SpendChartComponent implements AfterViewInit, OnDestroy {
 
   private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly themes = inject(ThemeService);
   private chart: ECharts | null = null;
   private observer: ResizeObserver | null = null;
 
@@ -59,6 +61,8 @@ export class SpendChartComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       this.months();
       this.currency();
+      // Theme flip re-reads the token palette from CSS in render().
+      this.themes.theme();
       this.render();
     });
   }
