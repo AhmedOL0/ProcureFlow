@@ -4,16 +4,26 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 20 — dark mode (feature/dark-mode, this change).** Stored
-preference (OS-seeded first visit) applied pre-paint via APP_INITIALIZER;
-shell toolbar toggle with persistence; full dark token twins (ratios
-re-checked) + Material dark theme; charts re-render from CSS on flip;
-white-chip brand lockup; `pf-heading` split (navy text failed on dark);
-axe-clean dark login + dashboard both browsers. Evidence 40/41. Purge:
-em dashes gone from all user strings (periods/colons, N/A markers),
-specs updated, truncate length invariant kept.
+**Phase 21 — French i18n (feature/french, this change).** Hand-rolled
+`LanguageService` (`pf-lang`, browser-seeded fr, `en.ts`/`fr.ts` typed
+parity 884 keys + placeholder-parity spec, `<html lang>` via
+APP_INITIALIZER); shell globe menu + persisted toggle; all 21 feature
+templates keyed (dashboard through copilot, incl. dialogs, charts with
+locale labels, route `breadcrumbKey`s, guard prompt); notices carry
+`{key, vars}`; error pipeline already locale-dynamic via module
+defaults; status/role codes + server-composed text stay English by
+design. Evidence 42/43. Gates: tsc 0, build 0, 73 Vitest, 42+42 e2e
+(new `language.spec.ts`: pre-paint lang, menu flip + persistence,
+axe-clean FR login + dashboard).
 
 ## Completed
+
+### Phase 20 — dark mode (merged PR #40)
+- Stored preference (OS-seeded first visit) applied pre-paint via
+  APP_INITIALIZER; shell toolbar toggle with persistence; full dark
+  token twins + Material dark theme; charts re-render from CSS on flip;
+  white-chip brand lockup; `pf-heading` split. Evidence 40/41. Gates:
+  59 Vitest, 38+38 e2e. Dash purge across the app (N/A markers).
 
 ### Phase 19 — extraction follow-ups (merged PR #38)
 - Create-from-extraction through `RequestDrafting` (guarded idempotent

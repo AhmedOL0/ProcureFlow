@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
 import { Supplier, SuppliersService } from '../suppliers.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-errors';
 
 export interface SupplierFormData {
@@ -25,6 +26,7 @@ export class SupplierFormDialogComponent {
   private readonly suppliers = inject(SuppliersService);
   private readonly dialog = inject(MatDialogRef<SupplierFormDialogComponent, boolean>);
   protected readonly data = inject<SupplierFormData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
 
   readonly form = new FormGroup({
     name: new FormControl(this.data.supplier?.name ?? '', {

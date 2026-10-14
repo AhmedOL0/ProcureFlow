@@ -10,6 +10,7 @@ import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { LanguageService } from '../../core/i18n/language.service';
 import { Eye, EyeOff } from '../../shared/icons';
 
 export type RegisterMode = 'create' | 'join';
@@ -29,6 +30,7 @@ export type RegisterMode = 'create' | 'join';
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { show: Eye, hide: EyeOff };
   readonly mode = signal<RegisterMode>('create');
@@ -86,19 +88,19 @@ export class RegisterComponent {
           this.busy.set(false);
           const code = this.auth.apiErrorCode(error);
           if (code === 'EMAIL_IN_USE') {
-            this.failure.set('This email is already registered in this workspace. Try signing in instead.');
+            this.failure.set(this.lang.t('auth.emailInUse'));
           } else if (code === 'INVITE_REQUIRED') {
             this.setMode('join');
-            this.failure.set('That workspace exists. Paste the invite code from a workspace admin.');
+            this.failure.set(this.lang.t('auth.workspaceExists'));
           } else if (code === 'TENANT_NAME_REQUIRED') {
             this.setMode('create');
-            this.failure.set('A workspace name is required to create a new workspace.');
+            this.failure.set(this.lang.t('auth.nameRequiredCreate'));
           } else if (code === 'WEAK_PASSWORD') {
-            this.failure.set('Password must be at least 12 characters.');
+            this.failure.set(this.lang.t('auth.passwordMin'));
           } else if (code === 'PASSWORD_TOO_LONG') {
-            this.failure.set('That password is too long for secure hashing. Use at most 72 characters.');
+            this.failure.set(this.lang.t('auth.passwordLong'));
           } else {
-            this.failure.set('Registration failed. Check the workspace slug and try again.');
+            this.failure.set(this.lang.t('auth.registerFailed'));
           }
         },
       });

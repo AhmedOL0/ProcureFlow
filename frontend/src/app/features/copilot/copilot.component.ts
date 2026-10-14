@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -13,6 +13,8 @@ import { Observable, Subscription } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { citationRoute } from './citations';
+import type { I18nKey } from '../../core/i18n/en';
+import { LanguageService } from '../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { Plus, Sparkles, Trash2 } from '../../shared/icons';
@@ -23,11 +25,11 @@ import { ChatAnswer, CopilotService, Extraction, RequestDraft } from './copilot.
 
 type CopilotMode = 'chat' | 'explain' | 'extract' | 'compare';
 
-const MODES: { id: CopilotMode; label: string }[] = [
-  { id: 'chat', label: 'Ask' },
-  { id: 'explain', label: 'Explain spend' },
-  { id: 'extract', label: 'Draft from words' },
-  { id: 'compare', label: 'Compare quotes' },
+const MODES: { id: CopilotMode }[] = [
+  { id: 'chat' },
+  { id: 'explain' },
+  { id: 'extract' },
+  { id: 'compare' },
 ];
 
 /**
@@ -63,6 +65,9 @@ export class CopilotComponent {
   private readonly requests = inject(ProcurementService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.copilot') }]);
 
   protected readonly icons = { plus: Plus, trash: Trash2, sparkles: Sparkles };
   protected readonly formatMinor = formatMinor;
@@ -71,11 +76,28 @@ export class CopilotComponent {
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
 
   /** Static starter questions: they fill the box, never auto-submit. */
-  protected readonly suggestions = [
-    'Where is spend accelerating this month?',
-    'Which requests are waiting longest for approval?',
-    'Summarize overdue supplier payments.',
-  ];
+  protected readonly suggestionKeys: I18nKey[] = ['ai.sug1', 'ai.sug2', 'ai.sug3'];
+
+  protected modeLabel(id: CopilotMode): string {
+    switch (id) {
+      case 'chat':
+        return this.lang.t('ai.modeAsk');
+      case 'explain':
+        return this.lang.t('ai.modeExplain');
+      case 'extract':
+        return this.lang.t('ai.modeExtract');
+      case 'compare':
+        return this.lang.t('ai.modeCompare');
+    }
+  }
+
+  protected linesLabel(count: number): string {
+    return count === 1 ? this.lang.t('ai.lineOne') : this.lang.tx('ai.lineMany', { n: count });
+  }
+
+  protected answeredLabel(latency: string): string {
+    return this.lang.tx('ai.answeredIn', { t: latency });
+  }
 
   protected readonly mode = signal<CopilotMode>('chat');
   protected readonly busy = signal(false);
@@ -220,7 +242,7 @@ export class CopilotComponent {
     this.requests
       .create(
         {
-          title: (draft.title ?? 'Copilot draft').slice(0, 200),
+          title: (draft.title ?? this.lang.t('ai.draftFallback')).slice(0, 200),
           ...(priority ? { priority } : {}),
         },
         idempotencyKey,

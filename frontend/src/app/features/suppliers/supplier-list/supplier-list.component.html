@@ -1,21 +1,21 @@
 <div class="pf-page">
   <pf-page-header
-    title="Supplier directory"
-    description="Every vendor your workspace buys from. Search, filter, and open a file for contacts, categories and scorecards."
-    [breadcrumbs]="[{ label: 'Suppliers' }]"
+    [title]="lang.t('sup.title')"
+    [description]="lang.t('sup.desc')"
+    [breadcrumbs]="crumbs()"
   >
     <div slot="actions">
       <button mat-stroked-button (click)="exportXlsx()" [disabled]="busyExport()">
         @if (busyExport()) {
           <mat-spinner diameter="16" />
         } @else {
-          Export Excel
+          {{ lang.t('admin.exportExcel') }}
         }
       </button>
       @if (canWrite) {
-        <button mat-stroked-button (click)="openImport()">Import</button>
+        <button mat-stroked-button (click)="openImport()">{{ lang.t('sup.import') }}</button>
         <button mat-flat-button color="primary" (click)="openCreate()">
-          <lucide-angular [img]="icons.plus" [size]="16" /> Add supplier
+          <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('sup.add') }}
         </button>
       }
     </div>
@@ -26,7 +26,7 @@
   }
 
   @if (!loading() && !failure()) {
-    <div class="pf-kpis" role="region" aria-label="Supplier summary">
+    <div class="pf-kpis" role="region" [attr.aria-label]="lang.t('sup.summary')">
       @for (kpi of kpis(); track kpi.label) {
         <div class="pf-kpi">
           <span class="pf-kpi__label">{{ kpi.label }}</span>
@@ -43,23 +43,23 @@
   <div class="pf-table-card">
     <div class="pf-filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Search name, email or tax ID</mat-label>
+        <mat-label>{{ lang.t('sup.search') }}</mat-label>
         <input matInput [formControl]="searchBox" placeholder="Acme" />
         <lucide-angular matSuffix [img]="icons.search" [size]="18" />
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pf-filter-sm">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ lang.t('req.statusLabel') }}</mat-label>
         <mat-select [formControl]="statusFilter">
-          <mat-option [value]="null">All</mat-option>
-          <mat-option value="ACTIVE">Active</mat-option>
-          <mat-option value="INACTIVE">Inactive</mat-option>
-          <mat-option value="SUSPENDED">Suspended</mat-option>
+          <mat-option [value]="null">{{ lang.t('sup.allOption') }}</mat-option>
+          <mat-option value="ACTIVE">{{ lang.t('sup.optActive') }}</mat-option>
+          <mat-option value="INACTIVE">{{ lang.t('sup.optInactive') }}</mat-option>
+          <mat-option value="SUSPENDED">{{ lang.t('sup.optSuspended') }}</mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pf-filter-sm">
-        <mat-label>Category</mat-label>
+        <mat-label>{{ lang.t('dashboard.category') }}</mat-label>
         <mat-select [formControl]="categoryFilter">
-          <mat-option [value]="null">All</mat-option>
+          <mat-option [value]="null">{{ lang.t('sup.allOption') }}</mat-option>
           @for (category of catalog(); track category.id) {
             <mat-option [value]="category.id">{{ category.name }}</mat-option>
           }
@@ -68,58 +68,58 @@
     </div>
 
     <div class="pf-chips">
-      <mat-chip-listbox aria-label="Quick filters">
+      <mat-chip-listbox [attr.aria-label]="lang.t('sup.quickFilters')">
         <mat-chip-option [selected]="statusFilter.value === null" (click)="setStatusFilter(null)">
-          All ({{ totals().all }})
+          {{ lang.tx('sup.chipAll', { n: totals().all }) }}
         </mat-chip-option>
         <mat-chip-option
           [selected]="statusFilter.value === 'ACTIVE'"
           (click)="setStatusFilter('ACTIVE')"
         >
-          Active ({{ totals().active }})
+          {{ lang.tx('sup.chipActive', { n: totals().active }) }}
         </mat-chip-option>
         <mat-chip-option
           [selected]="statusFilter.value === 'INACTIVE'"
           (click)="setStatusFilter('INACTIVE')"
         >
-          Inactive ({{ totals().inactive }})
+          {{ lang.tx('sup.chipInactive', { n: totals().inactive }) }}
         </mat-chip-option>
         <mat-chip-option
           [selected]="statusFilter.value === 'SUSPENDED'"
           (click)="setStatusFilter('SUSPENDED')"
         >
-          Suspended ({{ totals().suspended }})
+          {{ lang.tx('sup.chipSuspended', { n: totals().suspended }) }}
         </mat-chip-option>
       </mat-chip-listbox>
       <div class="pf-count">
-        <span>Showing {{ pageRows().length }} of {{ page().length }} suppliers</span>
-        <button mat-button (click)="resetFilters()">Reset filters</button>
+        <span>{{ lang.tx('sup.showing', { shown: pageRows().length, total: page().length }) }}</span>
+        <button mat-button (click)="resetFilters()">{{ lang.t('sup.resetFilters') }}</button>
       </div>
     </div>
 
     @if (loading()) {
-      <div class="pf-loading" role="status" aria-label="Loading suppliers">
+      <div class="pf-loading" role="status" [attr.aria-label]="lang.t('sup.loading')">
         <mat-spinner diameter="32" />
       </div>
     } @else if (failure(); as problem) {
       @if (problem.status === 403) {
         <pf-error-state
-          title="Not permitted"
-          message="Your workspace role cannot view suppliers. Ask an admin for access."
+          [title]="lang.t('admin.usersForbidden')"
+          [message]="lang.t('sup.forbiddenMsg')"
         />
       } @else {
         <pf-error-state
-          title="Suppliers did not load"
+          [title]="lang.t('sup.failed')"
           [message]="problem.message"
-          retryLabel="Retry"
+          [retryLabel]="lang.t('common.retry')"
           (retry)="reload()"
         />
       }
     } @else if (filtered().length === 0) {
       <pf-empty-state
         [icon]="icons.truck"
-        title="No suppliers match"
-        message="Try different filters. Or add the first supplier with Add supplier above."
+        [title]="lang.t('sup.noMatch')"
+        [message]="lang.t('sup.noMatchMsg')"
       />
     } @else {
       <div class="pf-table-scroll">
@@ -129,10 +129,10 @@
           matSort
           (matSortChange)="onSort($event)"
           class="pf-table"
-          aria-label="Suppliers"
+          [attr.aria-label]="lang.t('nav.suppliers')"
         >
           <ng-container matColumnDef="supplier">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="supplier">Supplier</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="supplier">{{ lang.t('sup.colSupplier') }}</th>
             <td mat-cell *matCellDef="let row">
               <span class="supplier-cell">
                 <span class="supplier-avatar" aria-hidden="true">{{
@@ -142,13 +142,13 @@
                 <a class="pf-row-link" [routerLink]="[row.supplier.id]">{{
                   row.supplier.name
                 }}</a>
-                <span class="pf-muted">{{ row.supplier.taxId || 'No tax ID' }}</span>
+                <span class="pf-muted">{{ row.supplier.taxId || lang.t('sup.noTaxId') }}</span>
                 </span>
               </span>
             </td>
           </ng-container>
           <ng-container matColumnDef="categories">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="categories">Categories</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="categories">{{ lang.t('sup.colCategories') }}</th>
             <td mat-cell *matCellDef="let row">
               @if (row.categories.length === 0) {
                 <span class="pf-muted">N/A</span>
@@ -163,12 +163,12 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="contact">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="contact">Primary contact</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="contact">{{ lang.t('sup.colContact') }}</th>
             <td mat-cell *matCellDef="let row">
               @if (row.primaryContact) {
                 <span class="supplier-contact">
                   {{ row.primaryContact.name }}
-                  <span class="pf-muted">{{ row.primaryContact.email || 'no email' }}</span>
+                  <span class="pf-muted">{{ row.primaryContact.email || lang.t('sup.noEmail') }}</span>
                 </span>
               } @else {
                 <span class="pf-muted">N/A</span>
@@ -177,7 +177,7 @@
           </ng-container>
           <ng-container matColumnDef="performance">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="performance" class="pf-num">
-              On-time
+              {{ lang.t('sup.colOnTime') }}
             </th>
             <td mat-cell *matCellDef="let row" class="pf-num">
               @if (row.averageOnTime === null) {
@@ -193,17 +193,17 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="status">{{ lang.t('req.statusLabel') }}</th>
             <td mat-cell *matCellDef="let row">
               <pf-status-badge [status]="row.supplier.status" />
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">Actions</span></th>
+            <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">{{ lang.t('req.colActions') }}</span></th>
             <td mat-cell *matCellDef="let row">
-              <a mat-button [routerLink]="[row.supplier.id]">Open</a>
+              <a mat-button [routerLink]="[row.supplier.id]">{{ lang.t('req.open') }}</a>
               @if (canOrder) {
-                <button mat-button (click)="openOrder(row.supplier.id)">Order</button>
+                <button mat-button (click)="openOrder(row.supplier.id)">{{ lang.t('sup.order') }}</button>
               }
             </td>
           </ng-container>
@@ -217,7 +217,7 @@
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"
         (page)="onPage($event)"
-        aria-label="Supplier pages"
+        [attr.aria-label]="lang.t('sup.supplierPages')"
       />
     }
   </div>

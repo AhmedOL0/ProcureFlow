@@ -6,12 +6,12 @@ export const BUDGET_ROUTES: Routes = [
     path: '',
     loadComponent: () =>
       import('./budget-list/budget-list.component').then((m) => m.BudgetListComponent),
-    data: { breadcrumb: 'Budgets' },
+    data: { breadcrumbKey: 'bud.crumb' },
   },
   {
     path: ':id',
     loadComponent: () =>
       import('./budget-detail/budget-detail.component').then((m) => m.BudgetDetailComponent),
-    data: { breadcrumb: 'Budget detail' },
+    data: { breadcrumbKey: 'bud.detailCrumb' },
   },
 ];

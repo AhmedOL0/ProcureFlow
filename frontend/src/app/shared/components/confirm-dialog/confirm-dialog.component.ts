@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
+import { LanguageService } from '../../../core/i18n/language.service';
+
 export interface ConfirmDialogData {
   title: string;
   message: string;
@@ -18,9 +20,9 @@ export interface ConfirmDialogData {
       <p class="pf-confirm__message">{{ data.message }}</p>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancel</button>
+      <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
       <button mat-flat-button color="warn" [mat-dialog-close]="true" cdkFocusInitial>
-        {{ data.confirmLabel ?? 'Delete' }}
+        {{ data.confirmLabel ?? lang.t('dialog.deleteFallback') }}
       </button>
     </mat-dialog-actions>
   `,
@@ -36,4 +38,5 @@ export interface ConfirmDialogData {
 })
 export class ConfirmDialogComponent {
   protected readonly data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
 }

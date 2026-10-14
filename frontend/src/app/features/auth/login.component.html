@@ -1,36 +1,36 @@
 <div class="auth-shell">
   <aside class="auth-brand-panel" aria-label="About ProcureFlow">
     <img class="auth-logo" src="/brand/logo.png" alt="ProcureFlow: Smarter Procurement. Stronger Teams." />
-    <p class="auth-tagline">One record per purchase, from request to payment.</p>
+    <p class="auth-tagline">{{ lang.t('auth.tagline') }}</p>
     <ol class="auth-steps">
-      <li>Describe what you need to buy, line by line with quantities.</li>
-      <li>The right approvers are notified, with the budget impact attached.</li>
-      <li>Order, receive and pay against the same record.</li>
+      <li>{{ lang.t('auth.step1') }}</li>
+      <li>{{ lang.t('auth.step2') }}</li>
+      <li>{{ lang.t('auth.step3') }}</li>
     </ol>
-    <p class="auth-assurance">Your workspace is private to your company. Every change is logged.</p>
+    <p class="auth-assurance">{{ lang.t('auth.assurance') }}</p>
   </aside>
   <main class="auth-main">
     <mat-card class="auth-card">
       <mat-card-header>
-        <mat-card-title><h1 class="auth-title">Sign in to ProcureFlow</h1></mat-card-title>
-        <mat-card-subtitle>Your requests, approvals and spend in one place</mat-card-subtitle>
+        <mat-card-title><h1 class="auth-title">{{ lang.t('auth.signInTitle') }}</h1></mat-card-title>
+        <mat-card-subtitle>{{ lang.t('auth.signInSubtitle') }}</mat-card-subtitle>
       </mat-card-header>
 
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
         <mat-form-field appearance="outline">
-          <mat-label>Work email</mat-label>
+          <mat-label>{{ lang.t('auth.email') }}</mat-label>
           <input matInput type="email" formControlName="email" autocomplete="email" />
           @if (form.controls.email.hasError('required') && form.controls.email.touched) {
-            <mat-error>Email is required.</mat-error>
+            <mat-error>{{ lang.t('validation.emailRequired') }}</mat-error>
           }
           @if (form.controls.email.hasError('email') && form.controls.email.touched) {
-            <mat-error>Enter a valid email address.</mat-error>
+            <mat-error>{{ lang.t('validation.emailInvalid') }}</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
+          <mat-label>{{ lang.t('auth.password') }}</mat-label>
           <input
             matInput
             formControlName="password"
@@ -42,24 +42,24 @@
             matSuffix
             type="button"
             (click)="showPassword.set(!showPassword())"
-            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            [attr.aria-label]="showPassword() ? lang.t('auth.hidePassword') : lang.t('auth.showPassword')"
           >
             <lucide-angular [img]="showPassword() ? icons.hide : icons.show" [size]="18" />
           </button>
           @if (form.controls.password.hasError('required') && form.controls.password.touched) {
-            <mat-error>Password is required.</mat-error>
+            <mat-error>{{ lang.t('validation.passwordRequired') }}</mat-error>
           }
         </mat-form-field>
 
         @if (needsTenant()) {
           <mat-form-field appearance="outline">
-            <mat-label>Workspace slug</mat-label>
+            <mat-label>{{ lang.t('auth.slugLabel') }}</mat-label>
             <input matInput formControlName="tenantSlug" autocomplete="off" placeholder="acme" />
             @if (form.controls.tenantSlug.hasError('required') && form.controls.tenantSlug.touched) {
-              <mat-error>Enter your workspace slug.</mat-error>
+              <mat-error>{{ lang.t('auth.slugRequired') }}</mat-error>
             }
           </mat-form-field>
-          <p class="auth-note">Shown because this email exists in several workspaces.</p>
+          <p class="auth-note">{{ lang.t('auth.slugNote') }}</p>
         }
 
         <div class="auth-alert" role="alert">
@@ -72,16 +72,16 @@
           @if (busy()) {
             <mat-spinner diameter="18" />
           } @else {
-            Sign in
+            {{ lang.t('auth.signInButton') }}
           }
         </button>
       </form>
     </mat-card-content>
 
     <mat-card-actions class="auth-actions">
-      <span class="auth-switch">New here? <a routerLink="/register">Create a workspace</a></span>
-      <span class="auth-switch"><a routerLink="/forgot-password">Forgot password?</a></span>
+      <span class="auth-switch">{{ lang.t('auth.newHere') }} <a routerLink="/register">{{ lang.t('auth.createWorkspace') }}</a></span>
+      <span class="auth-switch"><a routerLink="/forgot-password">{{ lang.t('auth.forgotPassword') }}</a></span>
     </mat-card-actions>
-    </mat-card>
+  </mat-card>
   </main>
 </div>

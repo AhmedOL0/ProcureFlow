@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -7,12 +7,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService, getDefaultLanguage } from '../../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { FileText } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { ApiFailure, fallbackMessage, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
 import { runDownload } from '../../../shared/utils/download';
 import { formatMinor } from '../../../shared/utils/money';
 import { Invoice, InvoiceService } from '../invoices.service';
@@ -38,6 +39,20 @@ export class InvoiceDetailComponent {
   private readonly dialogs = inject(MatDialog);
   private readonly snacks = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [
+    { label: this.lang.t('nav.invoices'), url: '/invoices' },
+    { label: this.invoice()?.number ?? this.lang.t('req.fallbackCrumb') },
+  ]);
+
+  protected titleFor(number: string | null | undefined): string {
+    return this.lang.tx('inv.title', { n: number ?? '' });
+  }
+
+  protected paidLine(total: string): string {
+    return this.lang.tx('inv.paidLine', { x: total });
+  }
 
   protected readonly icons = { file: FileText };
   protected readonly formatMinor = formatMinor;
@@ -61,7 +76,7 @@ export class InvoiceDetailComponent {
   reload(): void {
     const id = this.invoiceId();
     if (!id) {
-      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.', details: {} });
+      this.failure.set({ status: 404, code: null, message: fallbackMessage(404, getDefaultLanguage()), details: {} });
       this.loading.set(false);
       return;
     }
@@ -122,7 +137,7 @@ export class InvoiceDetailComponent {
       this.invoices.pay(current.id, result.amountMinor).subscribe({
         next: () => {
           this.acting.set(false);
-          this.snacks.open('Payment recorded.', 'Dismiss', { duration: 4000 });
+          this.snacks.open(this.lang.t('inv.paidSnack'), this.lang.t('common.dismiss'), { duration: 4000 });
           this.reload();
         },
         error: (error: unknown) => {

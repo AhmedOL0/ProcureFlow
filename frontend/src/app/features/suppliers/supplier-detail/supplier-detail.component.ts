@@ -9,13 +9,15 @@ import { LucideAngularModule } from 'lucide-angular';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService, getDefaultLanguage } from '../../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { Pencil, Plus, Star, Tags, Trash2, Truck } from '../../../shared/icons';
-import { ApiFailure, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { ApiFailure, fallbackMessage, parseApiFailure, userMessageFor } from '../../../shared/utils/api-errors';
+import { formatDecimal } from '../../../shared/utils/format';
 import { Supplier, SupplierCategory, SupplierContact, SupplierPerformance, SuppliersService } from '../suppliers.service';
 import { SupplierFormDialogComponent, SupplierFormData, SupplierFormResult } from '../dialogs/supplier-form.dialog';
 import { ContactDialogComponent, ContactDialogData, ContactDialogResult } from '../dialogs/contact.dialog';
@@ -43,6 +45,7 @@ export class SupplierDetailComponent {
   private readonly dialogs = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { pencil: Pencil, plus: Plus, star: Star, tags: Tags, trash: Trash2, truck: Truck };
   protected readonly canWrite = this.auth.hasAuthority('supplier:write');
@@ -70,6 +73,26 @@ export class SupplierDetailComponent {
     return this.route.snapshot.paramMap.get('id') ?? '';
   }
 
+  protected crumbsFor(name: string | null | undefined): { label: string; url?: string }[] {
+    return [
+      { label: this.lang.t('nav.suppliers'), url: '/suppliers' },
+      { label: name ?? this.lang.t('req.fallbackCrumb') },
+    ];
+  }
+
+  protected headerDesc(taxId: string | null | undefined): string {
+    return taxId
+      ? this.lang.tx('sup.taxLine', { tax: taxId })
+      : this.lang.t('sup.noTaxFile');
+  }
+
+  protected scoreLabel(avg: number, periods: number): string {
+    const rendered = formatDecimal(avg);
+    return periods === 1
+      ? this.lang.tx('sup.scoreOne', { avg: rendered })
+      : this.lang.tx('sup.scoreMany', { avg: rendered, n: periods });
+  }
+
   constructor() {
     this.reload();
   }
@@ -77,7 +100,7 @@ export class SupplierDetailComponent {
   reload(): void {
     const id = this.supplierId();
     if (!id) {
-      this.failure.set({ status: 404, code: null, message: 'This record does not exist in your workspace.', details: {} });
+      this.failure.set({ status: 404, code: null, message: fallbackMessage(404, getDefaultLanguage()), details: {} });
       this.loading.set(false);
       return;
     }
@@ -134,9 +157,9 @@ export class SupplierDetailComponent {
       {
         width: '400px',
         data: {
-          title: `Delete ${current.name ?? 'supplier'}?`,
-          message: 'Contacts and scorecards go with it. Orders pointing at this supplier block the delete.',
-          confirmLabel: 'Delete supplier',
+          title: this.lang.tx('sup.deleteTitle', { name: current.name ?? this.lang.t('sup.fallbackTitle') }),
+          message: this.lang.t('sup.deleteMsg'),
+          confirmLabel: this.lang.t('sup.deleteConfirm'),
         },
       },
     );
@@ -182,9 +205,9 @@ export class SupplierDetailComponent {
     const dialog = this.dialogs.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
       width: '400px',
       data: {
-        title: `Remove ${contact.name ?? 'contact'}?`,
-        message: 'They will no longer be reachable from this supplier file.',
-        confirmLabel: 'Remove contact',
+        title: this.lang.tx('sup.removeContactTitle', { name: contact.name ?? 'contact' }),
+        message: this.lang.t('sup.removeContactMsg'),
+        confirmLabel: this.lang.t('sup.removeContactConfirm'),
       },
     });
     dialog.afterClosed().subscribe((confirmed) => {

@@ -1,40 +1,40 @@
 <div class="pf-page">
   <pf-page-header
-    title="Users & roles"
-    description="Workspace accounts and the roles they were created with. Least privilege: approvers decide, finance owns pots, auditors read."
-    [breadcrumbs]="[{ label: 'Users' }]"
+    [title]="lang.t('admin.usersTitle')"
+    [description]="lang.t('admin.usersDesc')"
+    [breadcrumbs]="crumbs()"
   />
 
-  @if (notice()) {
-    <p class="pf-notice" role="status">{{ notice() }}</p>
+  @if (notice(); as note) {
+    <p class="pf-notice" role="status">{{ lang.tx(note.key, note.vars) }}</p>
   }
 
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading users">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('admin.usersLoading')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     @if (problem.status === 403) {
       <pf-error-state
-        title="Not permitted"
-        message="Listing users needs user management rights. Ask an admin for access."
+        [title]="lang.t('admin.usersForbidden')"
+        [message]="lang.t('admin.usersForbiddenMsg')"
       />
     } @else {
       <pf-error-state
-        title="Users did not load"
+        [title]="lang.t('admin.usersFailed')"
         [message]="failureMessage()"
-        retryLabel="Retry"
+        [retryLabel]="lang.t('common.retry')"
         (retry)="reload()"
       />
     }
   } @else {
-    <section class="pf-panel" aria-label="Users">
+    <section class="pf-panel" [attr.aria-label]="lang.t('nav.users')">
       <div class="pf-panel__head">
-        <h2>Users ({{ page().length }})</h2>
+        <h2>{{ lang.tx('admin.usersHead', { n: page().length }) }}</h2>
       </div>
       <div class="pf-form-row">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Search email</mat-label>
+          <mat-label>{{ lang.t('admin.searchEmail') }}</mat-label>
           <input matInput [formControl]="searchBox" placeholder="boss@acme.test" />
         </mat-form-field>
       </div>
@@ -45,7 +45,7 @@
               <span
                 >{{ user.email }}
                 @if (user.verified === false) {
-                  <span class="pf-muted">(unverified)</span>
+                  <span class="pf-muted">{{ lang.t('admin.unverifiedTag') }}</span>
                 }
               </span>
               @if (departmentNames(user.id); as departments) {
@@ -56,10 +56,10 @@
               @for (role of user.roles ?? []; track role) {
                 <span class="pf-badge pf-badge--neutral">{{ role }}</span>
               } @empty {
-                <span class="pf-muted">no roles</span>
+                <span class="pf-muted">{{ lang.t('admin.noRoles') }}</span>
               }
               @if (canManageUsers) {
-                <button mat-button (click)="resetPassword(user)">Reset password</button>
+                <button mat-button (click)="resetPassword(user)">{{ lang.t('admin.resetPasswordBtn') }}</button>
               }
             </span>
           </li>
@@ -68,25 +68,25 @@
       @if (canManageUsers) {
         <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Email</mat-label>
+            <mat-label>{{ lang.t('admin.emailLabel') }}</mat-label>
             <input matInput type="email" [formControl]="newEmail" />
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Password (12+ characters)</mat-label>
+            <mat-label>{{ lang.t('admin.password12') }}</mat-label>
             <input matInput type="password" [formControl]="newPassword" />
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Roles</mat-label>
+            <mat-label>{{ lang.t('admin.rolesLabel') }}</mat-label>
             <mat-select [formControl]="newRoles" multiple>
               @for (role of roleOptions; track role) {
                 <mat-option [value]="role">{{ role }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
-          <button mat-flat-button color="primary" (click)="createUser()">Create user</button>
+          <button mat-flat-button color="primary" (click)="createUser()">{{ lang.t('admin.createUser') }}</button>
         </div>
         <p class="pf-muted">
-          Roles assign at creation, and change through the admin console. Self-change is refused.
+          {{ lang.t('admin.rolesNote') }}
         </p>
       }
       <mat-paginator
@@ -95,21 +95,21 @@
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"
         (page)="onPage($event)"
-        aria-label="User pages"
+        [attr.aria-label]="lang.t('admin.userPages')"
       />
       <p class="pf-muted">
-        Approval thresholds live under
-        <a class="pf-row-link" routerLink="/admin/workflows">Approval policies</a>
-        and cost centers under
-        <a class="pf-row-link" routerLink="/admin/departments">Departments</a>.
+        {{ lang.t('admin.thresholdsPrefix') }}
+        <a class="pf-row-link" routerLink="/admin/workflows">{{ lang.t('settings.policies') }}</a>
+        {{ lang.t('admin.thresholdsMid') }}
+        <a class="pf-row-link" routerLink="/admin/departments">{{ lang.t('nav.departments') }}</a>.
       </p>
     </section>
 
     @if (canManageUsers) {
-      <section class="pf-panel" aria-label="Invites">
-        <div class="pf-panel__head"><h2>Invites ({{ invites().length }})</h2></div>
+      <section class="pf-panel" [attr.aria-label]="lang.t('admin.invites')">
+        <div class="pf-panel__head"><h2>{{ lang.tx('admin.invitesHead', { n: invites().length }) }}</h2></div>
         @if (invites().length === 0) {
-          <p class="pf-muted">No open invites. Joining a workspace needs one.</p>
+          <p class="pf-muted">{{ lang.t('admin.noInvites') }}</p>
         } @else {
           <ul class="pf-list">
             @for (invite of invites(); track invite.id) {
@@ -117,7 +117,7 @@
                 <span>{{ invite.email }}</span>
                 <span class="pf-list__actions">
                   <span class="pf-muted">{{ (invite.roles ?? []).join(', ') }}</span>
-                  <button mat-button color="warn" (click)="revokeInvite(invite)">Revoke</button>
+                  <button mat-button color="warn" (click)="revokeInvite(invite)">{{ lang.t('admin.revoke') }}</button>
                 </span>
               </li>
             }
@@ -125,18 +125,18 @@
         }
         <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Email</mat-label>
+            <mat-label>{{ lang.t('admin.emailLabel') }}</mat-label>
             <input matInput type="email" [formControl]="inviteEmail" />
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Roles</mat-label>
+            <mat-label>{{ lang.t('admin.rolesLabel') }}</mat-label>
             <mat-select [formControl]="inviteRoles" multiple>
               @for (role of roleOptions; track role) {
                 <mat-option [value]="role">{{ role }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
-          <button mat-flat-button color="primary" (click)="createInvite()">Send invite</button>
+          <button mat-flat-button color="primary" (click)="createInvite()">{{ lang.t('admin.sendInvite') }}</button>
         </div>
       </section>
     }

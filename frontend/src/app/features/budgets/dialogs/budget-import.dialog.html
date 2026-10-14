@@ -1,28 +1,28 @@
-<h2 mat-dialog-title>Import budget pots</h2>
+<h2 mat-dialog-title>{{ lang.t('bud.importTitle') }}</h2>
 <mat-dialog-content>
   <p class="import-intro">
-    Bulk-open from <strong>.xlsx</strong> or <strong>.csv</strong> (max 5 MB, 500 rows).
-    Columns: <span class="pf-data-mono">name</span>,
-    <span class="pf-data-mono">period</span> (YYYY-MM) and
-    <span class="pf-data-mono">amount</span> (major units, up to 2 decimals) required,
-    <span class="pf-data-mono">currency</span> optional (default MAD). Every row validates
-    first. Any failure opens <strong>nothing</strong>; fix the rows and re-upload.
+    {{ lang.t('bud.impLead') }} <strong>.xlsx</strong> {{ lang.t('sup.impOr') }} <strong>.csv</strong> {{ lang.t('sup.impLimits') }}
+    {{ lang.t('sup.impCols') }} <span class="pf-data-mono">name</span>,
+    <span class="pf-data-mono">period</span> (YYYY-MM) {{ lang.t('bud.impAnd') }}
+    <span class="pf-data-mono">amount</span> {{ lang.t('bud.impAmountHint') }} {{ lang.t('sup.impRequired') }}
+    <span class="pf-data-mono">currency</span> {{ lang.t('sup.impOptional') }} {{ lang.t('bud.impDefault') }} {{ lang.t('bud.impAtomic') }}
+    <strong>{{ lang.t('bud.impNothing') }}</strong>{{ lang.t('sup.impFix') }}
   </p>
   <div class="import-pick">
     <input
       type="file"
       accept=".xlsx,.csv"
-      aria-label="Import file"
+      [attr.aria-label]="lang.t('sup.fileAria')"
       class="import-file"
       (change)="pick($event)"
       #fileInput
     />
-    <button mat-stroked-button (click)="fileInput.click()">Choose file</button>
-    <span class="import-file-name">{{ fileName() ?? 'No file chosen' }}</span>
-    <button mat-stroked-button (click)="template()">Download template</button>
+    <button mat-stroked-button (click)="fileInput.click()">{{ lang.t('sup.chooseFile') }}</button>
+    <span class="import-file-name">{{ fileName() ?? lang.t('sup.noFile') }}</span>
+    <button mat-stroked-button (click)="template()">{{ lang.t('sup.templateBtn') }}</button>
   </div>
   @if (created() !== null) {
-    <p class="import-done" role="status">{{ created() }} pot{{ created() === 1 ? '' : 's' }} opened.</p>
+    <p class="import-done" role="status">{{ created() === 1 ? lang.t('bud.impDoneOne') : lang.tx('bud.impDoneMany', { n: created() ?? 0 }) }}</p>
   }
   @if (failure()) {
     <p class="dialog-error" role="alert">{{ failure() }}</p>
@@ -31,7 +31,7 @@
     <ul class="import-errors">
       @for (error of rowErrors(); track $index) {
         <li>
-          <span class="pf-data-mono">Row {{ error.row }} · {{ error.field }}</span>
+          <span class="pf-data-mono">{{ lang.tx('sup.impRow', { row: error.row, field: error.field }) }}</span>
           <span>{{ error.message }}</span>
         </li>
       }
@@ -39,7 +39,7 @@
   }
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button (click)="close()">Close</button>
+  <button mat-button (click)="close()">{{ lang.t('common.close') }}</button>
   <button
     mat-flat-button
     color="primary"
@@ -49,7 +49,7 @@
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      Import
+      {{ lang.t('sup.import') }}
     }
   </button>
 </mat-dialog-actions>

@@ -13,6 +13,7 @@ export {
   EyeOff,
   FileClock,
   FileText,
+  Globe,
   Inbox,
   LayoutDashboard,
   ListChecks,

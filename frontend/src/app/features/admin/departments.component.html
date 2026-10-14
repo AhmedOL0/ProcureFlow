@@ -1,33 +1,33 @@
 <div class="pf-page">
   <pf-page-header
-    title="Departments"
-    description="Cost-center structure and who sits where. Assignments resolve to names only for user managers."
-    [breadcrumbs]="[{ label: 'Departments' }]"
+    [title]="lang.t('nav.departments')"
+    [description]="lang.t('admin.deptsDesc')"
+    [breadcrumbs]="crumbs()"
   />
 
-  @if (notice()) {
-    <p class="pf-notice" role="status">{{ notice() }}</p>
+  @if (notice(); as note) {
+    <p class="pf-notice" role="status">{{ lang.tx(note.key, note.vars) }}</p>
   }
 
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading departments">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('admin.deptsLoading')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     <pf-error-state
-      title="Departments did not load"
+      [title]="lang.t('admin.deptsFailed')"
       [message]="failureMessage()"
-      retryLabel="Retry"
+      [retryLabel]="lang.t('common.retry')"
       (retry)="reload()"
     />
   } @else {
-    <section class="pf-panel" aria-label="Departments">
-      <h2>Departments ({{ deptPage().length }})</h2>
+    <section class="pf-panel" [attr.aria-label]="lang.t('nav.departments')">
+      <h2>{{ lang.tx('admin.deptsHead', { n: deptPage().length }) }}</h2>
       @if (departments().length === 0) {
         <pf-empty-state
           [icon]="icons.building"
-          title="No departments yet"
-          message="Create the first cost center to organize requests and memberships."
+          [title]="lang.t('admin.noDepts')"
+          [message]="lang.t('admin.noDeptsMsg')"
         />
       } @else {
         <ul class="pf-list">
@@ -36,13 +36,13 @@
             <li class="pf-list__row">
               <span class="pf-list__main">
                 <span>{{ department.name }}</span>
-                <span class="pf-list__sub">{{ count }} member{{ count === 1 ? '' : 's' }}</span>
+                <span class="pf-list__sub">{{ memberLabel(count) }}</span>
               </span>
               @if (canManageDepartments) {
                 <span class="pf-list__actions">
-                  <button mat-button (click)="renameDepartment(department)">Rename</button>
+                  <button mat-button (click)="renameDepartment(department)">{{ lang.t('admin.rename') }}</button>
                   <button mat-button color="warn" (click)="deleteDepartment(department)">
-                    Delete
+                    {{ lang.t('common.delete') }}
                   </button>
                 </span>
               }
@@ -53,7 +53,7 @@
       @if (canManageDepartments) {
         <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>New department</mat-label>
+            <mat-label>{{ lang.t('admin.newDept') }}</mat-label>
             <input matInput [formControl]="departmentName" />
           </mat-form-field>
           <button
@@ -61,7 +61,7 @@
             (click)="createDepartment()"
             [disabled]="!departmentName.value.trim()"
           >
-            Add
+            {{ lang.t('admin.add') }}
           </button>
         </div>
       }
@@ -71,14 +71,14 @@
         [pageSize]="deptPage().pageSize"
         [pageSizeOptions]="[10, 25, 50]"
         (page)="onDeptPage($event)"
-        aria-label="Department pages"
+        [attr.aria-label]="lang.t('admin.deptPages')"
       />
     </section>
 
-    <section class="pf-panel" aria-label="Memberships">
-      <h2>Memberships ({{ memberPage().length }})</h2>
+    <section class="pf-panel" [attr.aria-label]="lang.t('admin.memberships')">
+      <h2>{{ lang.tx('admin.membersHead', { n: memberPage().length }) }}</h2>
       @if (memberships().length === 0) {
-        <p class="pf-muted">Nobody assigned to departments yet.</p>
+        <p class="pf-muted">{{ lang.t('admin.nobodyAssigned') }}</p>
       } @else {
         <ul class="pf-list">
           @for (membership of memberships(); track membership.id) {
@@ -89,7 +89,7 @@
               >
               @if (canManageDepartments) {
                 <button mat-button color="warn" (click)="removeMembership(membership)">
-                  Remove
+                  {{ lang.t('admin.remove') }}
                 </button>
               }
             </li>
@@ -99,7 +99,7 @@
       @if (canManageDepartments) {
         <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>User</mat-label>
+            <mat-label>{{ lang.t('admin.userLabel') }}</mat-label>
             <mat-select [formControl]="memberUser">
               @for (user of users(); track user.id) {
                 <mat-option [value]="user.id">{{ user.email }}</mat-option>
@@ -107,7 +107,7 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Department</mat-label>
+            <mat-label>{{ lang.t('admin.deptLabel') }}</mat-label>
             <mat-select [formControl]="memberDepartment">
               @for (department of departments(); track department.id) {
                 <mat-option [value]="department.id">{{ department.name }}</mat-option>
@@ -119,7 +119,7 @@
             (click)="addMembership()"
             [disabled]="!memberUser.value || !memberDepartment.value"
           >
-            Assign
+            {{ lang.t('admin.assign') }}
           </button>
         </div>
       }
@@ -129,7 +129,7 @@
         [pageSize]="memberPage().pageSize"
         [pageSizeOptions]="[10, 25, 50]"
         (page)="onMemberPage($event)"
-        aria-label="Membership pages"
+        [attr.aria-label]="lang.t('admin.memberPages')"
       />
     </section>
   }

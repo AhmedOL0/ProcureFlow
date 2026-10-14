@@ -18,6 +18,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 
 import { formatMinor } from '../../utils/money';
 import { buildSpendOption, type SpendSeriesPoint } from '../../utils/charts';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { ThemeService } from '../../../core/theme/theme.service';
 
 use([BarChart, GridComponent, TooltipComponent, CanvasRenderer]);
@@ -54,6 +55,7 @@ export class SpendChartComponent implements AfterViewInit, OnDestroy {
   private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly themes = inject(ThemeService);
+  protected readonly lang = inject(LanguageService);
   private chart: ECharts | null = null;
   private observer: ResizeObserver | null = null;
 
@@ -63,6 +65,8 @@ export class SpendChartComponent implements AfterViewInit, OnDestroy {
       this.currency();
       // Theme flip re-reads the token palette from CSS in render().
       this.themes.theme();
+      // Language flip re-labels the series in render().
+      this.lang.lang();
       this.render();
     });
   }
@@ -114,6 +118,11 @@ export class SpendChartComponent implements AfterViewInit, OnDestroy {
         theme,
         this.currency(),
         !prefersReducedMotion(),
+        {
+          ordered: this.lang.t('ana.ordered'),
+          invoiced: this.lang.t('ana.invoiced'),
+          paid: this.lang.t('ana.paid'),
+        },
       ),
     );
   }

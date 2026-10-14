@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { formatMinor } from '../../../shared/utils/money';
+import { LanguageService } from '../../../core/i18n/language.service';
 
 export interface PayDialogData {
   remaining: number;
@@ -22,6 +23,7 @@ export interface PayDialogData {
 export class PayDialogComponent {
   private readonly dialog = inject(MatDialogRef<PayDialogComponent, PayDialogResult>);
   protected readonly data = inject<PayDialogData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
 
   readonly amount = new FormControl<number>(0, {
     nonNullable: true,
@@ -38,7 +40,9 @@ export class PayDialogComponent {
     }
     if (this.amount.value > this.data.remaining) {
       this.failure.set(
-        `That exceeds the remaining balance of ${formatMinor(this.data.remaining, this.data.currency)}.`,
+        this.lang.tx('inv.overpay', {
+          x: formatMinor(this.data.remaining, this.data.currency),
+        }),
       );
       return;
     }

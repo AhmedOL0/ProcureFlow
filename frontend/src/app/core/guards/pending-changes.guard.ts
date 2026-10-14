@@ -7,6 +7,7 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { LanguageService } from '../i18n/language.service';
 
 /** Screens with SavableDrafts opt into the unsaved-work prompt. */
 export interface SavableDraft {
@@ -23,14 +24,15 @@ export const pendingChangesGuard: CanDeactivateFn<SavableDraft> = (component) =>
     return true;
   }
   const dialogs = inject(MatDialog);
+  const lang = inject(LanguageService);
   const dialog = dialogs.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
     ConfirmDialogComponent,
     {
       width: '400px',
       data: {
-        title: 'Discard this draft?',
-        message: 'Your entries are not saved yet. Leaving now loses them.',
-        confirmLabel: 'Discard draft',
+        title: lang.t('guard.discardTitle'),
+        message: lang.t('guard.discardMsg'),
+        confirmLabel: lang.t('guard.discardConfirm'),
       },
     },
   );

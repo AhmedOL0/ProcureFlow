@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
 import { InvoiceService } from '../invoices.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { OrderLine, OrderService, PurchaseOrder } from '../../orders/orders.service';
 import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-errors';
 
@@ -24,6 +25,7 @@ export class CreateInvoiceDialogComponent {
   private readonly invoices = inject(InvoiceService);
   private readonly orders = inject(OrderService);
   private readonly dialog = inject(MatDialogRef<CreateInvoiceDialogComponent, CreateInvoiceDialogResult>);
+  protected readonly lang = inject(LanguageService);
 
   readonly orderControl = new FormControl<string>('', {
     nonNullable: true,
@@ -82,7 +84,7 @@ export class CreateInvoiceDialogComponent {
       .filter((row) => row.control.value > 0 && row.line.id)
       .map((row) => ({ orderItemId: row.line.id as string, quantity: Math.floor(row.control.value) }));
     if (lines.length === 0) {
-      this.failure.set('Invoice at least one unit from the order lines.');
+      this.failure.set(this.lang.t('inv.needLines'));
       return;
     }
     this.busy.set(true);

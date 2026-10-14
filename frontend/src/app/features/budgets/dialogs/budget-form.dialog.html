@@ -1,37 +1,37 @@
-<h2 mat-dialog-title>New budget pot</h2>
+<h2 mat-dialog-title>{{ lang.t('bud.newPotTitle') }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" (ngSubmit)="save()" class="dialog-form">
     <mat-form-field appearance="outline">
-      <mat-label>Pot name</mat-label>
+      <mat-label>{{ lang.t('bud.potName') }}</mat-label>
       <input matInput formControlName="name" placeholder="Engineering" />
       @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-        <mat-error>A name is required.</mat-error>
+        <mat-error>{{ lang.t('bud.nameRequired') }}</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Period</mat-label>
+      <mat-label>{{ lang.t('sup.colPeriod') }}</mat-label>
       <input matInput type="month" formControlName="period" />
       @if (form.controls.period.hasError('required') && form.controls.period.touched) {
-        <mat-error>A month is required.</mat-error>
+        <mat-error>{{ lang.t('bud.periodRequired') }}</mat-error>
       }
-      <mat-hint>Name and month must be unique together.</mat-hint>
+      <mat-hint>{{ lang.t('bud.uniqueHint') }}</mat-hint>
     </mat-form-field>
 
     <div class="dialog-row">
       <mat-form-field appearance="outline">
-        <mat-label>Amount</mat-label>
+        <mat-label>{{ lang.t('bud.amountLabel') }}</mat-label>
         <input matInput formControlName="amount" inputmode="decimal" placeholder="25000.00" />
         @if (form.controls.amount.hasError('required') && form.controls.amount.touched) {
-          <mat-error>An amount is required.</mat-error>
+          <mat-error>{{ lang.t('bud.amountRequired') }}</mat-error>
         }
         @if (form.controls.amount.hasError('pattern') && form.controls.amount.touched) {
-          <mat-error>Enter a number with up to 2 decimals.</mat-error>
+          <mat-error>{{ lang.t('admin.amountError') }}</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="dialog-narrow">
-        <mat-label>Currency</mat-label>
+        <mat-label>{{ lang.t('bud.currencyLabel') }}</mat-label>
         <input matInput formControlName="currency" maxlength="3" placeholder="MAD" />
       </mat-form-field>
     </div>
@@ -42,12 +42,12 @@
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
   <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      Create pot
+      {{ lang.t('bud.createPot') }}
     }
   </button>
 </mat-dialog-actions>

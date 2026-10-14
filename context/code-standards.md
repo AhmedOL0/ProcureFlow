@@ -48,6 +48,16 @@
   TestBed only for components with real behavior; E2E covers journeys,
   not permutations.
 - Follow `ui-context.md` anti-slop rules; they are merge gates, not advice.
+- French/English UI copy lives in typed catalogs (`core/i18n/en.ts` is
+  the key source, `fr.ts` is `Record<I18nKey, string>` so a missing key
+  fails the build; a Vitest case pins `{placeholder}` parity). Templates
+  call `lang.t()`/`lang.tx()` — never inline literals; status/role codes
+  and server-composed text (errors, notifications, import row messages)
+  stay English until backend locale negotiation exists. Straight
+  apostrophes only in `fr.ts` (curly quotes break the toolchain).
+  Transient notices carry `{key, vars}` and render via `tx`; route
+  breadcrumbs use `data.breadcrumbKey` resolved in the shell; `<html
+  lang>` flips with the preference via APP_INITIALIZER.
 
 ## Testing
 

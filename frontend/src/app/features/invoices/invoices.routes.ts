@@ -5,11 +5,11 @@ export const INVOICE_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./invoice-list/invoice-list.component').then((m) => m.InvoiceListComponent),
-    data: { breadcrumb: 'Invoices' },
+    data: { breadcrumbKey: 'nav.invoices' },
   },
   {
     path: ':id',
     loadComponent: () => import('./invoice-detail/invoice-detail.component').then((m) => m.InvoiceDetailComponent),
-    data: { breadcrumb: 'Invoice file' },
+    data: { breadcrumbKey: 'inv.crumbFile' },
   },
 ];

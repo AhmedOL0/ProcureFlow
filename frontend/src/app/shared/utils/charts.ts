@@ -58,10 +58,18 @@ export function formatAxisMinor(minor: number | null | undefined): string {
 }
 
 const SPEND_SERIES = [
-  { key: 'ordered', label: 'Ordered' },
-  { key: 'invoiced', label: 'Invoiced' },
-  { key: 'paid', label: 'Paid' },
+  { key: 'ordered' },
+  { key: 'invoiced' },
+  { key: 'paid' },
 ] as const;
+
+export interface SpendLabels {
+  ordered: string;
+  invoiced: string;
+  paid: string;
+}
+
+const EN_SPEND_LABELS: SpendLabels = { ordered: 'Ordered', invoiced: 'Invoiced', paid: 'Paid' };
 
 /** Grouped ordered/invoiced/paid bars with axis tooltip and series focus. */
 export function buildSpendOption(
@@ -69,6 +77,7 @@ export function buildSpendOption(
   theme: SpendTheme,
   currency: string,
   animate: boolean,
+  labels: SpendLabels = EN_SPEND_LABELS,
 ): EChartsCoreOption {
   const peak = points.reduce(
     (max, point) => Math.max(max, point.ordered, point.invoiced, point.paid),
@@ -109,7 +118,7 @@ export function buildSpendOption(
       },
     },
     series: SPEND_SERIES.map((column) => ({
-      name: column.label,
+      name: labels[column.key],
       type: 'bar',
       data: points.map((point) => point[column.key]),
       itemStyle: { color: colors[column.key], borderRadius: [3, 3, 0, 0] },

@@ -1,31 +1,31 @@
 <div class="pf-page">
   <pf-page-header
-    title="Procurement overview"
-    description="What needs your decision, and where every request stands."
+    [title]="lang.t('dashboard.title')"
+    [description]="lang.t('dashboard.desc')"
     [breadcrumbs]="[]"
   >
     <div slot="actions">
       @if (canRequest) {
         <a mat-flat-button color="primary" routerLink="/requests/new">
-          <lucide-angular [img]="icons.plus" [size]="16" /> New request
+          <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('dashboard.newRequest') }}
         </a>
       }
     </div>
   </pf-page-header>
 
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading overview">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('dashboard.loading')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     <pf-error-state
-      title="Overview did not load"
+      [title]="lang.t('dashboard.overviewFailed')"
       [message]="problem.message"
-      retryLabel="Retry"
+      [retryLabel]="lang.t('common.retry')"
       (retry)="reload()"
     />
   } @else {
-    <div class="pf-kpis" role="region" aria-label="Workspace summary">
+    <div class="pf-kpis" role="region" [attr.aria-label]="lang.t('dashboard.summary')">
       @for (kpi of kpis(); track kpi.label) {
         <div class="pf-kpi">
           <div class="pf-kpi__head">
@@ -39,7 +39,7 @@
     </div>
 
     @if (showFinance()) {
-      <div class="pf-kpis" role="region" aria-label="Financial pulse">
+      <div class="pf-kpis" role="region" [attr.aria-label]="lang.t('dashboard.finance')">
         @for (kpi of financeKpis(); track kpi.label) {
           <div class="pf-kpi">
             <div class="pf-kpi__head">
@@ -54,64 +54,64 @@
     }
     @if (financeFailed()) {
       <p class="dashboard-note" role="status">
-        Financial figures did not load. Operational data above is unaffected.
+        {{ lang.t('dashboard.financeFailed') }}
       </p>
     }
     @if (mixedSpend()) {
       <p class="pf-notice pf-notice--error" role="alert">
-        Spend mixes {{ spendCodes().join(', ') }}. Figures below are per-currency on
-        <a routerLink="/analytics">Analytics</a>, never merged here.
+        {{ lang.tx('dashboard.mixedNotice', { codes: spendCodes().join(', ') }) }}
+        <a routerLink="/analytics">{{ lang.t('dashboard.analyticsLink') }}</a>{{ lang.t('dashboard.mixedTail') }}
       </p>
     }
 
-    @if (approvalKpis(); as flow) {      <div class="dashboard-flow" role="region" aria-label="Approval flow">
+    @if (approvalKpis(); as flow) {      <div class="dashboard-flow" role="region" [attr.aria-label]="lang.t('dashboard.flow')">
         <div class="dashboard-flow__stat">
           <span class="dashboard-flow__value pf-data-mono">{{ flow.pending }}</span>
-          <span class="dashboard-flow__label">pending</span>
+          <span class="dashboard-flow__label">{{ lang.t('dashboard.pending') }}</span>
         </div>
         <div class="dashboard-flow__stat">
           <span class="dashboard-flow__value pf-data-mono">{{ flow.decided }}</span>
-          <span class="dashboard-flow__label">decided</span>
+          <span class="dashboard-flow__label">{{ lang.t('dashboard.decided') }}</span>
         </div>
         <div class="dashboard-flow__stat">
           <span class="dashboard-flow__value">{{ leadHours(flow.avgLeadHours) }}</span>
-          <span class="dashboard-flow__label">avg lead</span>
+          <span class="dashboard-flow__label">{{ lang.t('dashboard.avgLead') }}</span>
         </div>
         <div class="dashboard-flow__stat">
           <span class="dashboard-flow__value">{{ leadHours(flow.maxLeadHours) }}</span>
-          <span class="dashboard-flow__label">max lead</span>
+          <span class="dashboard-flow__label">{{ lang.t('dashboard.maxLead') }}</span>
         </div>
         @if (decisionRate(); as rate) {
           <div class="dashboard-flow__stat">
             <span class="dashboard-flow__value">{{ rate }}</span>
-            <span class="dashboard-flow__label">decision rate</span>
+            <span class="dashboard-flow__label">{{ lang.t('dashboard.decisionRate') }}</span>
           </div>
         }
-        <a routerLink="/analytics">Analytics</a>
+        <a routerLink="/analytics">{{ lang.t('dashboard.analyticsLink') }}</a>
       </div>
     }
 
     @if (trend().length > 0) {
-      <section class="pf-table-card" aria-label="Spend trend">
+      <section class="pf-table-card" [attr.aria-label]="lang.t('dashboard.trend')">
         <div class="pf-card-head dashboard-trend-head">
           <div class="pf-section-head">
-            <h2>Spend trend</h2>
-            <a routerLink="/analytics">Full trajectory</a>
+            <h2>{{ lang.t('dashboard.trend') }}</h2>
+            <a routerLink="/analytics">{{ lang.t('dashboard.fullTrajectory') }}</a>
           </div>
-          <mat-chip-listbox aria-label="Trend view">
+          <mat-chip-listbox [attr.aria-label]="lang.t('dashboard.trendView')">
             <mat-chip-option [selected]="trendMode() === 'monthly'" (click)="trendMode.set('monthly')">
-              Monthly
+              {{ lang.t('dashboard.monthly') }}
             </mat-chip-option>
             <mat-chip-option [selected]="trendMode() === 'category'" (click)="trendMode.set('category')">
-              Category
+              {{ lang.t('dashboard.category') }}
             </mat-chip-option>
           </mat-chip-listbox>
         </div>
         @if (trendMode() === 'monthly') {
           @if (mixedSpend()) {
             <pf-empty-state
-              title="Mixed currencies"
-              message="Monthly bars would merge codes. Open the per-currency split on Analytics."
+              [title]="lang.t('dashboard.mixedTitle')"
+              [message]="lang.t('dashboard.mixedMonthMsg')"
             />
           } @else {
             <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics($event)" />
@@ -119,13 +119,13 @@
         } @else {
           @if (trendSlices().length === 0) {
             <pf-empty-state
-              title="No categorized spend"
-              message="Category totals appear once ordered lines carry categories."
+              [title]="lang.t('dashboard.noCategoryTitle')"
+              [message]="lang.t('dashboard.noCategoryMsg')"
             />
           } @else if (mixedSpend()) {
             <pf-empty-state
-              title="Mixed currencies"
-              message="Category shares would merge codes. Open the per-currency split on Analytics."
+              [title]="lang.t('dashboard.mixedTitle')"
+              [message]="lang.t('dashboard.mixedCategoryMsg')"
             />
           } @else {
             <app-donut-chart [slices]="trendSlices()" />
@@ -135,18 +135,18 @@
     }
 
     <div class="pf-columns">
-      <section class="pf-table-card" aria-label="Awaiting approval">
+      <section class="pf-table-card" [attr.aria-label]="lang.t('dashboard.awaitingTitle')">
         <div class="pf-card-head">
           <div class="pf-section-head">
-            <h2>Awaiting approval</h2>
-            <a routerLink="/approvals">Open inbox</a>
+            <h2>{{ lang.t('dashboard.awaitingTitle') }}</h2>
+            <a routerLink="/approvals">{{ lang.t('dashboard.openInbox') }}</a>
           </div>
         </div>
         @if (awaiting().length === 0) {
           <pf-empty-state
             [icon]="icons.approvals"
-            title="Queue is clear"
-            message="Submitted requests land here for review."
+            [title]="lang.t('dashboard.queueClearTitle')"
+            [message]="lang.t('dashboard.queueClearMsg')"
           />
         } @else {
           <ul class="pf-rows">
@@ -157,7 +157,7 @@
                 }}</span>
                 <div class="pf-row__main">
                   <a class="pf-row__title" [routerLink]="['/requests', row.id]">
-                    {{ row.title || 'Untitled request' }}
+                    {{ row.title || lang.t('dashboard.untitled') }}
                   </a>
                   <span class="pf-row__meta">
                     <span class="pf-badge" [class]="priorityTone(row.priority)"> {{ row.priority ?? 'MEDIUM' }} </span>
@@ -165,25 +165,25 @@
                     <span class="pf-data-mono">{{ formatMinor(row.totalMinor) }}</span>
                   </span>
                 </div>
-                <a mat-stroked-button [routerLink]="['/requests', row.id]">Review</a>
+                <a mat-stroked-button [routerLink]="['/requests', row.id]">{{ lang.t('dashboard.review') }}</a>
               </li>
             }
           </ul>
         }
       </section>
 
-      <section class="pf-table-card" aria-label="Recent requests">
+      <section class="pf-table-card" [attr.aria-label]="lang.t('dashboard.recentTitle')">
         <div class="pf-card-head">
           <div class="pf-section-head">
-            <h2>Recent requests</h2>
-            <a routerLink="/requests">View all</a>
+            <h2>{{ lang.t('dashboard.recentTitle') }}</h2>
+            <a routerLink="/requests">{{ lang.t('common.viewAll') }}</a>
           </div>
         </div>
         @if (recent().length === 0) {
           <pf-empty-state
             [icon]="icons.open"
-            title="No requests yet"
-            message="Raise the first request to start the procure-to-pay flow."
+            [title]="lang.t('dashboard.noRequestsTitle')"
+            [message]="lang.t('dashboard.noRequestsMsg')"
           />
         } @else {
           <ul class="pf-rows">
@@ -191,7 +191,7 @@
               <li class="pf-row">
                 <div class="pf-row__main">
                   <a class="pf-row__title" [routerLink]="['/requests', row.id]">
-                    {{ row.title || 'Untitled request' }}
+                    {{ row.title || lang.t('dashboard.untitled') }}
                   </a>
                   <span class="pf-row__meta">
                     <pf-status-badge [status]="row.status ?? ''" /> ·
@@ -211,9 +211,9 @@
       <div class="dashboard-audit" role="note" aria-label="Audit trail">
         <lucide-angular [img]="icons.shield" [size]="18" aria-hidden="true" />
         <p>
-          <strong>Audit trail active.</strong>
-          Every decision, transition and payment in this workspace is recorded.
-          <a routerLink="/admin/audit">review the trail</a>.
+          <strong>{{ lang.t('dashboard.auditTitle') }}</strong>
+          {{ lang.t('dashboard.auditMsg') }}
+          <a routerLink="/admin/audit">{{ lang.t('dashboard.auditLink') }}</a>.
         </p>
       </div>
     }

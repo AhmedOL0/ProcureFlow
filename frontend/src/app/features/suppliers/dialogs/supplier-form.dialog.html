@@ -1,43 +1,43 @@
-<h2 mat-dialog-title>{{ isCreate() ? 'Add supplier' : 'Edit supplier' }}</h2>
+<h2 mat-dialog-title>{{ isCreate() ? lang.t('sup.add') : lang.t('sup.editSupplier') }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form" (ngSubmit)="save()">
     <fieldset class="dialog-section">
-      <legend>Identity</legend>
+      <legend>{{ lang.t('sup.identity') }}</legend>
       <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
+        <mat-label>{{ lang.t('sup.nameLabel') }}</mat-label>
         <input matInput formControlName="name" maxlength="200" />
         @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-          <mat-error>Name is required.</mat-error>
+          <mat-error>{{ lang.t('sup.nameRequired') }}</mat-error>
         }
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Tax ID</mat-label>
+        <mat-label>{{ lang.t('sup.taxLabel') }}</mat-label>
         <input matInput formControlName="taxId" />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ lang.t('req.statusLabel') }}</mat-label>
         <mat-select formControlName="status">
-          <mat-option value="ACTIVE">Active</mat-option>
-          <mat-option value="INACTIVE">Inactive</mat-option>
-          <mat-option value="SUSPENDED">Suspended</mat-option>
+          <mat-option value="ACTIVE">{{ lang.t('sup.optActive') }}</mat-option>
+          <mat-option value="INACTIVE">{{ lang.t('sup.optInactive') }}</mat-option>
+          <mat-option value="SUSPENDED">{{ lang.t('sup.optSuspended') }}</mat-option>
         </mat-select>
       </mat-form-field>
     </fieldset>
     <fieldset class="dialog-section">
-      <legend>Contact</legend>
+      <legend>{{ lang.t('sup.contactLegend') }}</legend>
       <mat-form-field appearance="outline">
-        <mat-label>Email</mat-label>
+        <mat-label>{{ lang.t('admin.emailLabel') }}</mat-label>
         <input matInput type="email" formControlName="email" />
         @if (form.controls.email.hasError('email') && form.controls.email.touched) {
-          <mat-error>Enter a valid email address.</mat-error>
+          <mat-error>{{ lang.t('validation.emailInvalid') }}</mat-error>
         }
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Phone</mat-label>
+        <mat-label>{{ lang.t('sup.phoneLabel') }}</mat-label>
         <input matInput formControlName="phone" autocomplete="off" />
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Address</mat-label>
+        <mat-label>{{ lang.t('sup.addressLabel') }}</mat-label>
         <textarea matInput formControlName="address" rows="2"></textarea>
       </mat-form-field>
     </fieldset>
@@ -47,12 +47,12 @@
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
   <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      {{ isCreate() ? 'Add supplier' : 'Save changes' }}
+      {{ isCreate() ? lang.t('sup.add') : lang.t('req.saveChanges') }}
     }
   </button>
 </mat-dialog-actions>

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -6,6 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
+import { LanguageService } from '../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
@@ -39,6 +40,7 @@ import { humanizeLabel } from '../../shared/utils/names';
 })
 export class NotificationsComponent {
   protected readonly inbox = inject(NotificationCenterService);
+  protected readonly lang = inject(LanguageService);
   protected readonly icons = { bell: Bell };
   protected readonly formatInstant =
     formatInstant;
@@ -46,6 +48,8 @@ export class NotificationsComponent {
 
   protected readonly unreadOnly = signal(false);
   protected readonly visible = this.inbox.items;
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.notifications') }]);
 
   constructor() {
     this.inbox.refresh();

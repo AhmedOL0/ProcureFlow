@@ -11,6 +11,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { LanguageService } from '../../core/i18n/language.service';
 import { Eye, EyeOff } from '../../shared/icons';
 import { parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
 
@@ -38,6 +39,7 @@ import { parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
 })
 export class ResetPasswordComponent {
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(LanguageService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 

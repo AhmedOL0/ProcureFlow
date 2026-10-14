@@ -1,8 +1,8 @@
-<h2 mat-dialog-title>New invoice</h2>
+<h2 mat-dialog-title>{{ lang.t('inv.newInvoice') }}</h2>
 <mat-dialog-content>
   <div class="dialog-form">
     <mat-form-field appearance="outline">
-      <mat-label>Sent order</mat-label>
+      <mat-label>{{ lang.t('inv.sentOrder') }}</mat-label>
       <mat-select [formControl]="orderControl">
         @for (order of candidates(); track order.id) {
           <mat-option [value]="order.id"
@@ -10,24 +10,24 @@
           >
         }
       </mat-select>
-      <mat-hint>Only sent orders can be invoiced.</mat-hint>
+      <mat-hint>{{ lang.t('inv.orderHint') }}</mat-hint>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Invoice number</mat-label>
+      <mat-label>{{ lang.t('inv.numberLabel') }}</mat-label>
       <input matInput [formControl]="numberControl" maxlength="50" placeholder="INV-2026-001" />
       @if (numberControl.hasError('required') && numberControl.touched) {
-        <mat-error>An invoice number is required.</mat-error>
+        <mat-error>{{ lang.t('inv.numberRequired') }}</mat-error>
       }
       @if (numberControl.hasError('maxlength') && numberControl.touched) {
-        <mat-error>Keep it under 50 characters.</mat-error>
+        <mat-error>{{ lang.t('inv.numberMax') }}</mat-error>
       }
     </mat-form-field>
     @for (row of quantities(); track row.line.id) {
       <mat-form-field appearance="outline">
-        <mat-label>{{ row.line.description }} (ordered {{ row.line.quantity }})</mat-label>
+        <mat-label>{{ lang.tx('inv.qtyLabel', { desc: row.line.description ?? '', n: row.line.quantity ?? 0 }) }}</mat-label>
         <input matInput type="number" [formControl]="row.control" min="0" step="1" />
         @if (row.control.touched && row.control.invalid) {
-          <mat-error>Enter 0 or more.</mat-error>
+          <mat-error>{{ lang.t('inv.qtyError') }}</mat-error>
         }
       </mat-form-field>
     }
@@ -37,7 +37,7 @@
   </div>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
   <button
     mat-flat-button
     color="primary"
@@ -47,7 +47,7 @@
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      Book invoice
+      {{ lang.t('inv.bookBtn') }}
     }
   </button>
 </mat-dialog-actions>

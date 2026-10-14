@@ -1,4 +1,4 @@
-<a class="pf-skip-link" href="#main-content">Skip to main content</a>
+<a class="pf-skip-link" href="#main-content">{{ lang.t('a11y.skipLink') }}</a>
 <mat-sidenav-container class="shell">
   <mat-sidenav
     class="shell__rail"
@@ -17,7 +17,7 @@
       <button
         class="shell__tenant"
         [matMenuTriggerFor]="tenantMenu"
-        aria-label="Workspace options"
+        [attr.aria-label]="lang.t('nav.workspaceOptions')"
       >
         <span class="shell__tenant-dot" aria-hidden="true"></span>
         <span class="shell__tenant-text">
@@ -31,22 +31,22 @@
           <span class="shell__tenant-name">{{ shellUser.tenantSlug }}</span>
           <span class="shell__tenant-user">{{ shellUser.email }}</span>
         </div>
-        <a mat-menu-item routerLink="/register">Join another workspace</a>
-        <button mat-menu-item (click)="signOut()">Sign out</button>
+        <a mat-menu-item routerLink="/register">{{ lang.t('nav.joinAnother') }}</a>
+        <button mat-menu-item (click)="signOut()">{{ lang.t('nav.signOut') }}</button>
       </mat-menu>
     }
     @if (canSeeCopilot) {
       <a class="shell__ai" routerLink="/copilot">
         <lucide-angular [img]="icons.sparkles" [size]="18" aria-hidden="true" />
         <span class="shell__ai-text">
-          <span class="shell__ai-title">ProcureAI</span>
-          <span class="shell__ai-sub">Ask about your spend</span>
+          <span class="shell__ai-title">{{ lang.t('nav.copilotFull') }}</span>
+          <span class="shell__ai-sub">{{ lang.t('nav.copilotSub') }}</span>
         </span>
       </a>
     }
-    <nav class="shell__nav" aria-label="Primary">
-      @for (section of visibleNav(); track section.label) {
-        <div class="shell__section">{{ section.label }}</div>
+    <nav class="shell__nav" [attr.aria-label]="lang.t('nav.primary')">
+      @for (section of visibleNav(); track section.labelKey) {
+        <div class="shell__section">{{ lang.t(section.labelKey) }}</div>
         <mat-nav-list>
           @for (item of section.items; track item.url) {
             <a
@@ -57,7 +57,7 @@
               (click)="closeOnNavigate()"
             >
               <lucide-angular matListItemIcon [img]="item.icon" [size]="18" aria-hidden="true" />
-              <span matListItemTitle>{{ item.label }}</span>
+              <span matListItemTitle>{{ lang.t(item.labelKey) }}</span>
             </a>
           }
         </mat-nav-list>
@@ -73,7 +73,7 @@
         <button
           mat-icon-button
           (click)="signOut()"
-          aria-label="Sign out"
+          [attr.aria-label]="lang.t('nav.signOut')"
           class="shell__signout"
         >
           <lucide-angular [img]="icons.logout" [size]="18" aria-hidden="true" />
@@ -84,11 +84,11 @@
 
   <mat-sidenav-content class="shell__main">
     <mat-toolbar class="shell__bar">
-      <button mat-icon-button (click)="toggleDrawer()" aria-label="Toggle navigation">
+      <button mat-icon-button (click)="toggleDrawer()" [attr.aria-label]="lang.t('nav.toggleNav')">
         <lucide-angular [img]="icons.menu" [size]="20" />
       </button>
       @if (breadcrumbs().length > 0) {
-        <nav class="shell__crumbs" aria-label="Location">
+        <nav class="shell__crumbs" [attr.aria-label]="lang.t('nav.location')">
           @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
             <span [attr.aria-current]="last ? 'page' : null">{{ crumb.label }}</span>
           }
@@ -105,22 +105,42 @@
       </button>
       <button
         mat-icon-button
+        [matMenuTriggerFor]="langMenu"
+        [attr.aria-label]="lang.t('nav.language')"
+      >
+        <lucide-angular [img]="icons.globe" [size]="20" />
+      </button>
+      <button
+        mat-icon-button
         [matMenuTriggerFor]="inboxMenu"
         (menuOpened)="openInbox()"
-        aria-label="Notifications"
+        [attr.aria-label]="lang.t('nav.notifications')"
       >
         <lucide-angular [img]="icons.bell" [size]="20" />
         @if (inbox.unreadTotal() > 0) {
           <span class="shell__dot" aria-hidden="true">{{ inbox.unreadTotal() }}</span>
         }
       </button>
-      <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Account">
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="userMenu"
+        [attr.aria-label]="lang.t('nav.account')"
+      >
         <lucide-angular [img]="icons.user" [size]="20" />
       </button>
     </mat-toolbar>
 
+    <mat-menu #langMenu="matMenu">
+      <button mat-menu-item (click)="useLanguage('en')">
+        <span>{{ lang.t('nav.languageEnglish') }}</span>
+      </button>
+      <button mat-menu-item (click)="useLanguage('fr')">
+        <span>{{ lang.t('nav.languageFrench') }}</span>
+      </button>
+    </mat-menu>
+
     <mat-menu #inboxMenu="matMenu" class="shell__inbox">
-      <div class="shell__inbox-head" mat-menu-item disabled>Notifications</div>
+      <div class="shell__inbox-head" mat-menu-item disabled>{{ lang.t('nav.notifications') }}</div>
       @for (item of inbox.items().slice(0, 8); track item.id) {
         <button mat-menu-item (click)="read(item)" [class.shell__unread]="!item.read">
           <span class="shell__inbox-title">{{ item.title }}</span>
@@ -128,10 +148,10 @@
         </button>
       } @empty {
         <div class="shell__inbox-empty" mat-menu-item disabled>
-          <span role="status">No notifications yet.</span>
+          <span role="status">{{ lang.t('nav.inboxEmpty') }}</span>
         </div>
       }
-      <a mat-menu-item routerLink="/notifications" class="shell__inbox-all">View all</a>
+      <a mat-menu-item routerLink="/notifications" class="shell__inbox-all">{{ lang.t('common.viewAll') }}</a>
     </mat-menu>
 
     <mat-menu #userMenu="matMenu">
@@ -142,8 +162,8 @@
           <span class="shell__user-tenant">{{ menuUser.tenantSlug }}</span>
         </div>
       }
-      <a mat-menu-item routerLink="/settings">Account settings</a>
-      <button mat-menu-item (click)="signOut()">Sign out</button>
+      <a mat-menu-item routerLink="/settings">{{ lang.t('nav.settings') }}</a>
+      <button mat-menu-item (click)="signOut()">{{ lang.t('nav.signOut') }}</button>
     </mat-menu>
 
     <main id="main-content" class="shell__content" tabindex="-1">

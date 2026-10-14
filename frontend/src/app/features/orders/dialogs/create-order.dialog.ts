@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
 import { OrderService } from '../orders.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { ProcurementService, PurchaseRequest } from '../../procurement/procurement.service';
 import { Supplier, SuppliersService } from '../../suppliers/suppliers.service';
 import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-errors';
@@ -28,6 +29,7 @@ export class CreateOrderDialogComponent {
   private readonly suppliers = inject(SuppliersService);
   private readonly dialog = inject(MatDialogRef<CreateOrderDialogComponent, CreateOrderDialogResult>);
   private readonly preset = inject<CreateOrderDialogData>(MAT_DIALOG_DATA, { optional: true });
+  protected readonly lang = inject(LanguageService);
 
   readonly requestControl = new FormControl<string>('', {
     nonNullable: true,

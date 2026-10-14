@@ -1,32 +1,32 @@
 <div class="pf-page">
   @if (loading()) {
-    <div class="pf-loading" role="status" aria-label="Loading order file">
+    <div class="pf-loading" role="status" [attr.aria-label]="lang.t('ord.loadingFile')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     @if (problem.status === 404) {
       <pf-error-state
-        title="Order not found"
-        message="It may have been deleted, or it belongs to another workspace."
+        [title]="lang.t('ord.notFound')"
+        [message]="lang.t('req.notFoundMsg')"
       />
     } @else if (problem.status === 403) {
       <pf-error-state
-        title="Not permitted"
-        message="Your workspace role cannot view purchase orders. Ask an admin for access."
+        [title]="lang.t('admin.usersForbidden')"
+        [message]="lang.t('ord.forbiddenMsg')"
       />
     } @else {
       <pf-error-state
-        title="Order file did not load"
+        [title]="lang.t('ord.fileFailed')"
         [message]="failureMessage()"
-        retryLabel="Retry"
+        [retryLabel]="lang.t('common.retry')"
         (retry)="reload()"
       />
     }
   } @else if (order(); as current) {
     <pf-page-header
-      [title]="'Order from ' + supplierName()"
-      description="Lines were snapshotted from the approved request. Later request edits never rewrite history."
-      [breadcrumbs]="[{ label: 'Orders', url: '/orders' }, { label: 'Order file' }]"
+      [title]="lang.tx('ord.fromSupplier', { name: supplierName() })"
+      [description]="lang.t('ord.fileDesc')"
+      [breadcrumbs]="crumbs()"
     >
       <div slot="actions">
         <button mat-stroked-button (click)="downloadPdf()" [disabled]="busyExport()">
@@ -39,22 +39,22 @@
         @if (canWrite) {
           @if (canSend()) {
             <button mat-flat-button color="primary" (click)="send()" [disabled]="acting()">
-              Send order
+              {{ lang.t('ord.send') }}
             </button>
           }
           @if (canReceive()) {
             <button mat-flat-button color="primary" (click)="openReceive()" [disabled]="acting()">
-              Record receipt
+              {{ lang.t('ord.receive') }}
             </button>
           }
           @if (canClose()) {
             <button mat-flat-button color="primary" (click)="close()" [disabled]="acting()">
-              Close order
+              {{ lang.t('ord.closeBtn') }}
             </button>
           }
           @if (canCancel()) {
             <button mat-stroked-button color="warn" (click)="cancel()" [disabled]="acting()">
-              Cancel
+              {{ lang.t('dialog.cancel') }}
             </button>
           }
         }
@@ -72,7 +72,7 @@
       }}</span>
       @if (current.requestId) {
         <a class="pf-row-link" [routerLink]="['/requests', current.requestId]"
-          >Originating request</a
+          >{{ lang.t('ord.originLink') }}</a
         >
       }
       @if (current.supplierId) {
@@ -82,26 +82,26 @@
       }
     </div>
 
-    <div class="pf-kpis" role="region" aria-label="Fulfillment summary">
+    <div class="pf-kpis" role="region" [attr.aria-label]="lang.t('ord.fulfillment')">
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Committed total</span>
+        <span class="pf-kpi__label">{{ lang.t('ord.committed') }}</span>
         <div class="pf-kpi__value">{{ formatMinor(current.totalMinor, current.currency) }}</div>
-        <div class="pf-kpi__sub">{{ (current.lines ?? []).length }} lines</div>
+        <div class="pf-kpi__sub">{{ linesLabel((current.lines ?? []).length) }}</div>
       </div>
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Received</span>
-        <div class="pf-kpi__value">{{ receivedTotal() }} of {{ orderedTotal() }}</div>
-        <div class="pf-kpi__sub">units across all lines</div>
+        <span class="pf-kpi__label">{{ lang.t('ord.received') }}</span>
+        <div class="pf-kpi__value">{{ lang.tx('ord.ofUnits', { a: receivedTotal(), b: orderedTotal() }) }}</div>
+        <div class="pf-kpi__sub">{{ lang.t('ord.unitsSub') }}</div>
       </div>
       <div class="pf-kpi">
-        <span class="pf-kpi__label">Receipt progress</span>
+        <span class="pf-kpi__label">{{ lang.t('ord.progress') }}</span>
         <div class="pf-kpi__value">{{ receiptPct().toFixed(0) }}%</div>
-        <div class="pf-kpi__sub">of ordered quantity</div>
+        <div class="pf-kpi__sub">{{ lang.t('ord.qtySub') }}</div>
       </div>
     </div>
 
     @if (!cancelled()) {
-      <ol class="order-steps" aria-label="Fulfillment progress">
+      <ol class="order-steps" [attr.aria-label]="lang.t('ord.stepsAria')">
         @for (step of steps; track step) {
           <li class="order-steps__step" [attr.data-state]="stepState(step)">
             <span class="order-steps__dot" aria-hidden="true"></span>
@@ -110,32 +110,31 @@
         }
       </ol>
     } @else {
-      <p class="pf-muted">This order was cancelled. The pipeline ends here.</p>
+      <p class="pf-muted">{{ lang.t('ord.cancelledNote') }}</p>
     }
 
-    <section class="pf-panel" aria-label="Lines">
+    <section class="pf-panel" [attr.aria-label]="lang.t('ord.lines')">
       <div class="pf-panel__head">
         <h2>
-          Lines ({{ (current.lines ?? []).length }}): {{ receivedTotal() }} of
-          {{ orderedTotal() }} received
+          {{ lang.tx('ord.linesHead', { n: (current.lines ?? []).length, a: receivedTotal(), b: orderedTotal() }) }}
         </h2>
       </div>
       @if ((current.lines ?? []).length === 0) {
         <pf-empty-state
           [icon]="icons.truck"
-          title="No lines on this order"
-          message="An order without lines cannot be received or invoiced."
+          [title]="lang.t('ord.noLines')"
+          [message]="lang.t('ord.noLinesMsg')"
         />
       } @else {
         <div class="pf-table-scroll">
-          <table class="pf-table" aria-label="Order lines">
+          <table class="pf-table" [attr.aria-label]="lang.t('ord.linesTable')">
             <thead>
               <tr>
-                <th scope="col">Description</th>
-                <th scope="col" class="pf-num">Ordered</th>
-                <th scope="col" class="pf-num">Received</th>
-                <th scope="col" class="pf-num">Unit price</th>
-                <th scope="col" class="pf-num">Line total</th>
+                <th scope="col">{{ lang.t('req.colDesc') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('ord.colOrdered') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('ord.received') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('req.colUnit') }}</th>
+                <th scope="col" class="pf-num">{{ lang.t('req.colLine') }}</th>
               </tr>
             </thead>
             <tbody>

@@ -1,8 +1,8 @@
-<h2 mat-dialog-title>Manage categories</h2>
+<h2 mat-dialog-title>{{ lang.t('sup.manageCats') }}</h2>
 <mat-dialog-content>
   <div class="dialog-form">
     <mat-form-field appearance="outline">
-      <mat-label>Assigned categories</mat-label>
+      <mat-label>{{ lang.t('sup.assignedCats') }}</mat-label>
       <mat-select [formControl]="selection" multiple>
         @for (category of catalog(); track category.id) {
           <mat-option [value]="category.id">{{ category.name }}</mat-option>
@@ -10,12 +10,12 @@
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>New category name</mat-label>
+      <mat-label>{{ lang.t('sup.newCatLabel') }}</mat-label>
       <input matInput [formControl]="newName" maxlength="200" />
     </mat-form-field>
     <div>
       <button mat-stroked-button (click)="createCategory()" [disabled]="!newName.value.trim() || busy()">
-        Add to catalog
+        {{ lang.t('sup.addToCatalog') }}
       </button>
     </div>
     @if (failure()) {
@@ -24,12 +24,12 @@
   </div>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
   <button mat-flat-button color="primary" (click)="save()" [disabled]="busy()">
     @if (busy()) {
       <mat-spinner diameter="18" />
     } @else {
-      Save categories
+      {{ lang.t('sup.saveCats') }}
     }
   </button>
 </mat-dialog-actions>

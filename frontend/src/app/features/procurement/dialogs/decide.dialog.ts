@@ -5,27 +5,29 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { LanguageService } from '../../../core/i18n/language.service';
+
 /** Approve/reject with an optional comment. The verdict is immutable. */
 @Component({
   selector: 'app-decide-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title>{{ data.approved ? 'Approve request' : 'Reject request' }}</h2>
+    <h2 mat-dialog-title>{{ data.approved ? lang.t('req.approveTitle') : lang.t('req.rejectTitle') }}</h2>
     <mat-dialog-content>
-      <p class="decide-sub">This verdict ("{{ data.title }}") cannot be changed afterwards.</p>
+      <p class="decide-sub">{{ lang.tx('req.verdictNote', { title: data.title }) }}</p>
       <mat-form-field appearance="outline" class="decide-field">
-        <mat-label>Comment (optional)</mat-label>
+        <mat-label>{{ lang.t('req.commentLabel') }}</mat-label>
         <textarea matInput [formControl]="comment" rows="2"></textarea>
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancel</button>
+      <button mat-button mat-dialog-close>{{ lang.t('dialog.cancel') }}</button>
       <button
         mat-flat-button
         [color]="data.approved ? 'primary' : 'warn'"
         (click)="confirm()"
       >
-        {{ data.approved ? 'Approve' : 'Reject' }}
+        {{ data.approved ? lang.t('req.approve') : lang.t('req.reject') }}
       </button>
     </mat-dialog-actions>
   `,
@@ -46,6 +48,7 @@ import { MatInputModule } from '@angular/material/input';
 export class DecideDialogComponent {
   private readonly dialog = inject(MatDialogRef<DecideDialogComponent, DecideDialogResult>);
   protected readonly data = inject<DecideDialogData>(MAT_DIALOG_DATA);
+  protected readonly lang = inject(LanguageService);
   readonly comment = new FormControl('', { nonNullable: true });
   readonly busy = signal(false);
 

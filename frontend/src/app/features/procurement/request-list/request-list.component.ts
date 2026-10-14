@@ -15,6 +15,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { catchError, debounceTime, distinctUntilChanged, forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -74,6 +75,7 @@ export class RequestListComponent {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly org = inject(OrganizationService);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { plus: Plus, search: Search, file: FileText };
   protected readonly formatMinor = formatMinor;
@@ -81,6 +83,22 @@ export class RequestListComponent {
   protected readonly canRequest = this.auth.hasAuthority('procurement:request');
   /** 'mine' shows only requests raised by the caller; anything else shows all. */
   protected readonly mineOnly = this.route.snapshot.data['mode'] === 'mine';
+
+  protected pageTitle(): string {
+    return this.mineOnly ? this.lang.t('req.mineTitle') : this.lang.t('req.allTitle');
+  }
+
+  protected pageDesc(): string {
+    return this.mineOnly ? this.lang.t('req.mineDesc') : this.lang.t('req.allDesc');
+  }
+
+  protected crumbs(): { label: string }[] {
+    return [{ label: this.mineOnly ? this.lang.t('req.mineTitle') : this.lang.t('req.crumbAll') }];
+  }
+
+  protected emptyMsg(): string {
+    return this.mineOnly ? this.lang.t('req.mineEmptyMsg') : this.lang.t('req.allEmptyMsg');
+  }
 
   readonly searchBox = new FormControl('', { nonNullable: true });
   readonly statusFilter = new FormControl<string | null>(null);

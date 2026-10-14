@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { ProcurementService } from '../procurement.service';
 import { userMessageFor, parseApiFailure } from '../../../shared/utils/api-errors';
 import { SavableDraft } from '../../../core/guards/pending-changes.guard';
@@ -36,6 +37,7 @@ const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 export class RequestCreateComponent implements SavableDraft {
   private readonly requests = inject(ProcurementService);
   private readonly router = inject(Router);
+  protected readonly lang = inject(LanguageService);
   private saved = false;
 
   readonly priorities = PRIORITIES;
@@ -49,6 +51,13 @@ export class RequestCreateComponent implements SavableDraft {
   });
   readonly busy = signal(false);
   readonly failure = signal<string | null>(null);
+
+  protected crumbs(): { label: string; url?: string }[] {
+    return [
+      { label: this.lang.t('req.crumbAll'), url: '/requests' },
+      { label: this.lang.t('req.newTitle') },
+    ];
+  }
 
   /** The guard asks this before leaving an untouched-or-saved form alone. */
   hasUnsavedDraft(): boolean {

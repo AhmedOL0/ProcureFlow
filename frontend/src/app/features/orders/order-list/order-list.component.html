@@ -1,20 +1,20 @@
 <div class="pf-page">
   <pf-page-header
-    title="Purchase orders"
-    description="Supplier orders born from approved requests. Send them, receive goods, close them out."
-    [breadcrumbs]="[{ label: 'Orders' }]"
+    [title]="lang.t('ord.title')"
+    [description]="lang.t('ord.desc')"
+    [breadcrumbs]="crumbs()"
   >
     <div slot="actions">
       <button mat-stroked-button (click)="exportXlsx()" [disabled]="busyExport()">
         @if (busyExport()) {
           <mat-spinner diameter="16" />
         } @else {
-          Export Excel
+          {{ lang.t('admin.exportExcel') }}
         }
       </button>
       @if (canWrite) {
         <button mat-flat-button color="primary" (click)="openCreate()">
-          <lucide-angular [img]="icons.plus" [size]="16" /> New order
+          <lucide-angular [img]="icons.plus" [size]="16" /> {{ lang.t('ord.newOrder') }}
         </button>
       }
     </div>
@@ -27,14 +27,14 @@
   <div class="pf-table-card">
     <div class="pf-filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Search supplier</mat-label>
+        <mat-label>{{ lang.t('ord.search') }}</mat-label>
         <input matInput [formControl]="searchBox" placeholder="Acme" />
         <lucide-angular matSuffix [img]="icons.search" [size]="18" />
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pf-filter-sm">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ lang.t('req.statusLabel') }}</mat-label>
         <mat-select [formControl]="statusFilter">
-          <mat-option [value]="null">All</mat-option>
+          <mat-option [value]="null">{{ lang.t('sup.allOption') }}</mat-option>
           @for (status of statuses; track status) {
             <mat-option [value]="status">{{ status }}</mat-option>
           }
@@ -43,28 +43,28 @@
     </div>
 
     @if (loading()) {
-      <div class="pf-loading" role="status" aria-label="Loading orders">
+      <div class="pf-loading" role="status" [attr.aria-label]="lang.t('ord.loading')">
         <mat-spinner diameter="32" />
       </div>
     } @else if (failure(); as problem) {
       @if (problem.status === 403) {
         <pf-error-state
-          title="Not permitted"
-          message="Your workspace role cannot view purchase orders. Ask an admin for access."
+          [title]="lang.t('admin.usersForbidden')"
+          [message]="lang.t('ord.forbiddenMsg')"
         />
       } @else {
         <pf-error-state
-          title="Orders did not load"
+          [title]="lang.t('ord.failed')"
           [message]="problem.message"
-          retryLabel="Retry"
+          [retryLabel]="lang.t('common.retry')"
           (retry)="reload()"
         />
       }
     } @else if (filtered().length === 0) {
       <pf-empty-state
         [icon]="icons.truck"
-        title="No orders match"
-        message="Orders start from an approved request. Approve one first, then come back."
+        [title]="lang.t('ord.noMatch')"
+        [message]="lang.t('ord.noMatchMsg')"
       />
     } @else {
       <div class="pf-table-scroll">
@@ -74,16 +74,16 @@
           matSort
           (matSortChange)="onSort($event)"
           class="pf-table"
-          aria-label="Purchase orders"
+          [attr.aria-label]="lang.t('ord.title')"
         >
           <ng-container matColumnDef="ref">
-            <th mat-header-cell *matHeaderCellDef>Order</th>
+            <th mat-header-cell *matHeaderCellDef>{{ lang.t('ord.colOrder') }}</th>
             <td mat-cell *matCellDef="let row" class="pf-data-mono">
               <a class="pf-row-link" [routerLink]="[row.id]">{{ shortId(row.id) }}</a>
             </td>
           </ng-container>
           <ng-container matColumnDef="supplier">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="supplier">Supplier</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="supplier">{{ lang.t('sup.colSupplier') }}</th>
             <td mat-cell *matCellDef="let row">
               @if (row.supplierId) {
                 <a class="pf-row-link" [routerLink]="['/suppliers', row.supplierId]">{{
@@ -95,7 +95,7 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="request">
-            <th mat-header-cell *matHeaderCellDef>Request</th>
+            <th mat-header-cell *matHeaderCellDef>{{ lang.t('req.colRequest') }}</th>
             <td mat-cell *matCellDef="let row">
               @if (row.requestId) {
                 <a class="pf-row-link" [routerLink]="['/requests', row.requestId]">{{
@@ -107,25 +107,25 @@
             </td>
           </ng-container>
           <ng-container matColumnDef="lines">
-            <th mat-header-cell *matHeaderCellDef class="pf-num">Lines</th>
+            <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('ord.colLines') }}</th>
             <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
               {{ (row.lines ?? []).length }}
             </td>
           </ng-container>
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="status">{{ lang.t('req.statusLabel') }}</th>
             <td mat-cell *matCellDef="let row"><pf-status-badge [status]="row.status" /></td>
           </ng-container>
           <ng-container matColumnDef="total">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="total" class="pf-num">Total</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="total" class="pf-num">{{ lang.t('req.colTotal') }}</th>
             <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
               {{ formatMinor(row.totalMinor, row.currency) }}
             </td>
           </ng-container>
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">Actions</span></th>
+            <th mat-header-cell *matHeaderCellDef><span class="pf-sr-only">{{ lang.t('req.colActions') }}</span></th>
             <td mat-cell *matCellDef="let row">
-              <a mat-button [routerLink]="[row.id]">Open</a>
+              <a mat-button [routerLink]="[row.id]">{{ lang.t('req.open') }}</a>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -138,7 +138,7 @@
         [pageSize]="page().pageSize"
         [pageSizeOptions]="[10, 25, 50]"
         (page)="onPage($event)"
-        aria-label="Order pages"
+        [attr.aria-label]="lang.t('ord.orderPages')"
       />
     }
   </div>

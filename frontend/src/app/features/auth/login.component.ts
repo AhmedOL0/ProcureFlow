@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { LanguageService } from '../../core/i18n/language.service';
 import { Eye, EyeOff } from '../../shared/icons';
 
 /**
@@ -23,6 +24,7 @@ import { Eye, EyeOff } from '../../shared/icons';
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
+  protected readonly lang = inject(LanguageService);
 
   protected readonly icons = { show: Eye, hide: EyeOff };
 
@@ -46,7 +48,7 @@ export class LoginComponent {
       this.form.controls.tenantSlug.setValidators(Validators.required);
       this.form.controls.tenantSlug.updateValueAndValidity();
       this.form.controls.tenantSlug.markAsTouched();
-      this.failure.set('Enter your workspace slug to continue.');
+      this.failure.set(this.lang.t('auth.slugContinue'));
       return;
     }
     this.busy.set(true);
@@ -56,10 +58,10 @@ export class LoginComponent {
         this.busy.set(false);
         if (this.auth.apiErrorCode(error) === 'LOGIN_AMBIGUOUS') {
           this.needsTenant.set(true);
-          this.failure.set('This email lives in several workspaces. Enter your workspace slug below.');
+          this.failure.set(this.lang.t('auth.ambiguousLogin'));
           return;
         }
-        this.failure.set('Invalid email or password.');
+        this.failure.set(this.lang.t('auth.invalidCredentials'));
       },
     });
   }

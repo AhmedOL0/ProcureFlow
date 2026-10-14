@@ -1,26 +1,26 @@
 <div class="pf-page">
   <pf-page-header
-    title="Analytics & reports"
-    description="Server-computed spend, supplier and approval aggregates. Server filtering stops at the period. Category and supplier searches filter the returned rows."
-    [breadcrumbs]="[{ label: 'Analytics' }]"
+    [title]="lang.t('ana.title')"
+    [description]="lang.t('ana.desc')"
+    [breadcrumbs]="crumbs()"
   >
     <div slot="actions">
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="analytics-period">
-        <mat-label>Period</mat-label>
+        <mat-label>{{ lang.t('sup.colPeriod') }}</mat-label>
         <input matInput type="month" [formControl]="periodBox" (change)="reload()" />
       </mat-form-field>
-      <button mat-button (click)="clearPeriod()">All time</button>
-      <button mat-stroked-button (click)="exportCsv()">Export CSV</button>
-      <button mat-stroked-button (click)="reportPdf()" [disabled]="busyExport()">Report PDF</button>
-      <button mat-stroked-button (click)="reportXlsx()" [disabled]="busyExport()">Report Excel</button>
+      <button mat-button (click)="clearPeriod()">{{ lang.t('ana.allTime') }}</button>
+      <button mat-stroked-button (click)="exportCsv()">{{ lang.t('ana.exportCsv') }}</button>
+      <button mat-stroked-button (click)="reportPdf()" [disabled]="busyExport()">{{ lang.t('ana.reportPdf') }}</button>
+      <button mat-stroked-button (click)="reportXlsx()" [disabled]="busyExport()">{{ lang.t('ana.reportXlsx') }}</button>
     </div>
   </pf-page-header>
 
   @if (exportError()) {
     <p class="pf-notice pf-notice--error" role="alert">{{ exportError() }}</p>
   }
-  <div class="analytics-months" role="group" aria-label="Recent months">
-    <span class="pf-muted">Recent:</span>
+  <div class="analytics-months" role="group" [attr.aria-label]="lang.t('ana.recentGroup')">
+    <span class="pf-muted">{{ lang.t('ana.recentLabel') }}</span>
     @for (month of recentMonths(); track month) {
       <button mat-button (click)="pickMonth(month)" [disabled]="periodBox.value === month">
         {{ month }}
@@ -29,20 +29,20 @@
   </div>
 
   @if (loading()) {
-      <div class="pf-loading" role="status" aria-label="Loading analytics">
+      <div class="pf-loading" role="status" [attr.aria-label]="lang.t('ana.loading')">
       <mat-spinner diameter="32" />
     </div>
   } @else if (failure(); as problem) {
     @if (problem.status === 403) {
       <pf-error-state
-        title="Not permitted"
-        message="Your workspace role cannot view analytics. Ask an admin for access."
+        [title]="lang.t('admin.usersForbidden')"
+        [message]="lang.t('ana.forbiddenMsg')"
       />
     } @else {
       <pf-error-state
-        title="Analytics did not load"
+        [title]="lang.t('ana.failed')"
         [message]="problem.message"
-        retryLabel="Retry"
+        [retryLabel]="lang.t('common.retry')"
         (retry)="reload()"
       />
     }
@@ -50,73 +50,73 @@
     @if (spend()) {
       @if (mixed()) {
         <p class="pf-notice pf-notice--error" role="alert">
-          Totals mix {{ currencies().join(', ') }}. Figures below are split per currency, never merged.
+          {{ lang.tx('ana.mixedNotice', { codes: currencies().join(', ') }) }}
         </p>
       }
-      <div class="pf-kpis" role="region" aria-label="Spend totals">
+      <div class="pf-kpis" role="region" [attr.aria-label]="lang.t('ana.spendRegion')">
         @for (group of kpiGroups(); track group.code) {
           <div class="pf-kpi">
-            <span class="pf-kpi__label">Requested{{ mixed() ? ' · ' + group.code : '' }}</span>
+            <span class="pf-kpi__label">{{ lang.t('ana.requested') }}{{ mixed() ? ' · ' + group.code : '' }}</span>
             <div class="pf-kpi__value">{{ formatMinor(group.requested, group.code) }}</div>
-            <div class="pf-kpi__sub">draft demand in view</div>
+            <div class="pf-kpi__sub">{{ lang.t('ana.requestedSub') }}</div>
           </div>
           <div class="pf-kpi">
-            <span class="pf-kpi__label">Ordered{{ mixed() ? ' · ' + group.code : '' }}</span>
+            <span class="pf-kpi__label">{{ lang.t('ana.ordered') }}{{ mixed() ? ' · ' + group.code : '' }}</span>
             <div class="pf-kpi__value">{{ formatMinor(group.ordered, group.code) }}</div>
-            <div class="pf-kpi__sub">committed to suppliers</div>
+            <div class="pf-kpi__sub">{{ lang.t('dashboard.committedSub') }}</div>
           </div>
           <div class="pf-kpi">
-            <span class="pf-kpi__label">Invoiced{{ mixed() ? ' · ' + group.code : '' }}</span>
+            <span class="pf-kpi__label">{{ lang.t('ana.invoiced') }}{{ mixed() ? ' · ' + group.code : '' }}</span>
             <div class="pf-kpi__value">{{ formatMinor(group.invoiced, group.code) }}</div>
-            <div class="pf-kpi__sub">billed, paid or not</div>
+            <div class="pf-kpi__sub">{{ lang.t('ana.invoicedSub') }}</div>
           </div>
           <div class="pf-kpi">
-            <span class="pf-kpi__label">Paid{{ mixed() ? ' · ' + group.code : '' }}</span>
+            <span class="pf-kpi__label">{{ lang.t('ana.paid') }}{{ mixed() ? ' · ' + group.code : '' }}</span>
             <div class="pf-kpi__value">{{ formatMinor(group.paid, group.code) }}</div>
-            <div class="pf-kpi__sub">settled with suppliers</div>
+            <div class="pf-kpi__sub">{{ lang.t('dashboard.settledSub') }}</div>
           </div>
         }
       </div>
     }
 
     <div class="pf-columns">
-      <section class="pf-table-card" aria-label="Spend by period">
+      <section class="pf-table-card" [attr.aria-label]="lang.t('ana.trajectoryAria')">
         <div class="pf-card-head">
-          <div class="pf-section-head"><h2>Spend trajectory</h2></div>
+          <div class="pf-section-head"><h2>{{ lang.t('ana.trajectory') }}</h2></div>
         </div>
         @if (months().length === 0) {
           <pf-empty-state
             [icon]="icons.wallet"
-            title="No monthly movement"
-            message="Ordered, invoiced and paid totals appear here once purchasing moves."
+            [title]="lang.t('ana.noMovement')"
+            [message]="lang.t('ana.noMovementMsg')"
           />
         } @else if (mixed()) {
           <div class="pf-table-scroll">
-            <table mat-table [dataSource]="months()" class="pf-table" aria-label="Spend by period and currency">
+            <table mat-table [dataSource]="months()" class="pf-table" [attr.aria-label]="lang.t('ana.mixedTable')">
               <ng-container matColumnDef="period">
-                <th mat-header-cell *matHeaderCellDef>Period</th>
+                <th mat-header-cell *matHeaderCellDef>{{ lang.t('sup.colPeriod') }}</th>
                 <td mat-cell *matCellDef="let row">
                   <button mat-button (click)="pickMonth(row.period ?? '')">{{ row.period }}</button>
                 </td>
               </ng-container>
               <ng-container matColumnDef="currency">
-                <th mat-header-cell *matHeaderCellDef>Currency</th>
+                <th mat-header-cell *matHeaderCellDef>{{ lang.t('bud.currencyLabel') }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.currency }}</td>
               </ng-container>
               <ng-container matColumnDef="ordered">
-                <th mat-header-cell *matHeaderCellDef class="pf-num">Ordered</th>
+                <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('ana.ordered') }}</th>
                 <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
                   {{ formatMinor(row.orderedMinor, row.currency ?? 'MAD') }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="invoiced">
-                <th mat-header-cell *matHeaderCellDef class="pf-num">Invoiced</th>
+                <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('ana.invoiced') }}</th>
                 <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
                   {{ formatMinor(row.invoicedMinor, row.currency ?? 'MAD') }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="paid">
-                <th mat-header-cell *matHeaderCellDef class="pf-num">Paid</th>
+                <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('ana.paid') }}</th>
                 <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
                   {{ formatMinor(row.paidMinor, row.currency ?? 'MAD') }}
                 </td>
@@ -130,12 +130,12 @@
         }
       </section>
 
-      <section class="pf-table-card" aria-label="Spend by category">
+      <section class="pf-table-card" [attr.aria-label]="lang.t('ana.categoryAria')">
         <div class="pf-card-head">
-          <div class="pf-section-head"><h2>Category allocation</h2></div>
+          <div class="pf-section-head"><h2>{{ lang.t('ana.allocation') }}</h2></div>
           <div class="analytics-card-filter">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Filter categories</mat-label>
+              <mat-label>{{ lang.t('ana.filterCats') }}</mat-label>
               <input matInput [formControl]="categoryBox" placeholder="Cloud" />
             </mat-form-field>
           </div>
@@ -143,24 +143,24 @@
         @if (categories().length === 0) {
           <pf-empty-state
             [icon]="icons.wallet"
-            title="No categorized spend"
-            message="Category totals appear once ordered lines carry categories."
+            [title]="lang.t('dashboard.noCategoryTitle')"
+            [message]="lang.t('dashboard.noCategoryMsg')"
           />
         } @else if (mixed()) {
           <div class="pf-table-scroll">
-            <table mat-table [dataSource]="categories()" class="pf-table" aria-label="Spend by category and currency">
+            <table mat-table [dataSource]="categories()" class="pf-table" [attr.aria-label]="lang.t('ana.mixedCatTable')">
               <ng-container matColumnDef="category">
-                <th mat-header-cell *matHeaderCellDef>Category</th>
+                <th mat-header-cell *matHeaderCellDef>{{ lang.t('dashboard.category') }}</th>
                 <td mat-cell *matCellDef="let row">
                   <button mat-button (click)="drillToCategory(row.category)">{{ row.category }}</button>
                 </td>
               </ng-container>
               <ng-container matColumnDef="currency">
-                <th mat-header-cell *matHeaderCellDef>Currency</th>
+                <th mat-header-cell *matHeaderCellDef>{{ lang.t('bud.currencyLabel') }}</th>
                 <td mat-cell *matCellDef="let row">{{ row.currency }}</td>
               </ng-container>
               <ng-container matColumnDef="amount">
-                <th mat-header-cell *matHeaderCellDef class="pf-num">Amount</th>
+                <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('bud.colAmount') }}</th>
                 <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
                   {{ formatMinor(row.amountMinor, row.currency) }}
                 </td>
@@ -176,12 +176,12 @@
     </div>
 
     <div class="pf-columns">
-      <section class="pf-table-card" aria-label="Supplier scorecards">
+      <section class="pf-table-card" [attr.aria-label]="lang.t('ana.supplierAria')">
         <div class="pf-card-head">
-          <div class="pf-section-head"><h2>Supplier performance</h2></div>
+          <div class="pf-section-head"><h2>{{ lang.t('ana.supplierPerf') }}</h2></div>
           <div class="analytics-card-filter">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Filter suppliers</mat-label>
+              <mat-label>{{ lang.t('ana.filterSups') }}</mat-label>
               <input matInput [formControl]="supplierBox" placeholder="Bechtle" />
             </mat-form-field>
           </div>
@@ -189,26 +189,26 @@
         @if (suppliers().length === 0) {
           <pf-empty-state
             [icon]="icons.truck"
-            title="No scorecard data"
-            message="Record supplier scorecards to see on-time and quality averages here."
+            [title]="lang.t('ana.noScores')"
+            [message]="lang.t('ana.noScoresMsg')"
           />
         } @else {
           <div class="pf-table-scroll">
-            <table mat-table [dataSource]="suppliers()" class="pf-table" aria-label="Supplier KPIs">
+            <table mat-table [dataSource]="suppliers()" class="pf-table" [attr.aria-label]="lang.t('ana.supTable')">
               <ng-container matColumnDef="supplier">
-                <th mat-header-cell *matHeaderCellDef>Supplier</th>
+                <th mat-header-cell *matHeaderCellDef>{{ lang.t('sup.colSupplier') }}</th>
                 <td mat-cell *matCellDef="let row">
                   <a [routerLink]="['/suppliers', row.supplierId]">{{ row.supplierName }}</a>
                 </td>
               </ng-container>
               <ng-container matColumnDef="periods">
-                <th mat-header-cell *matHeaderCellDef class="pf-num">Periods</th>
+                <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('ana.colPeriods') }}</th>
                 <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
                   {{ row.periods }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="onTime">
-                <th mat-header-cell *matHeaderCellDef class="pf-num">On-time %</th>
+                <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('sup.colOnTimePct') }}</th>
                 <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
                   <span class="pf-meter-row">
                     {{ row.avgOnTime ?? 'N/A' }}
@@ -222,7 +222,7 @@
                 </td>
               </ng-container>
               <ng-container matColumnDef="quality">
-                <th mat-header-cell *matHeaderCellDef class="pf-num">Quality</th>
+                <th mat-header-cell *matHeaderCellDef class="pf-num">{{ lang.t('sup.colQuality') }}</th>
                 <td mat-cell *matCellDef="let row" class="pf-num pf-data-mono">
                   {{ row.avgQuality ?? 'N/A' }}
                 </td>
@@ -235,60 +235,60 @@
       </section>
 
       <div class="analytics-stack">
-        <section class="pf-table-card" aria-label="Approval lead times">
+        <section class="pf-table-card" [attr.aria-label]="lang.t('ana.flowAria')">
           <div class="pf-card-head">
-            <div class="pf-section-head"><h2>Approval flow</h2></div>
+            <div class="pf-section-head"><h2>{{ lang.t('dashboard.flow') }}</h2></div>
           </div>
           @if (approvalKpis(); as kpis) {
             <dl class="analytics-facts">
               <div>
-                <dt>Pending</dt>
+                <dt>{{ lang.t('dashboard.pending') }}</dt>
                 <dd class="pf-data-mono">{{ kpis.pending }}</dd>
               </div>
               <div>
-                <dt>Decided</dt>
+                <dt>{{ lang.t('dashboard.decided') }}</dt>
                 <dd class="pf-data-mono">{{ kpis.decided }}</dd>
               </div>
               <div>
-                <dt>Avg lead</dt>
+                <dt>{{ lang.t('dashboard.avgLead') }}</dt>
                 <dd>{{ hours(kpis.avgLeadHours) }}</dd>
               </div>
               <div>
-                <dt>Max lead</dt>
+                <dt>{{ lang.t('dashboard.maxLead') }}</dt>
                 <dd>{{ hours(kpis.maxLeadHours) }}</dd>
               </div>
             </dl>
           } @else {
             <pf-empty-state
               [icon]="icons.inbox"
-              title="No approval data"
-              message="Lead-time aggregates appear once decisions are recorded."
+              [title]="lang.t('ana.noApproval')"
+              [message]="lang.t('ana.noApprovalMsg')"
             />
           }
         </section>
 
-        <section class="pf-table-card" aria-label="AI usage">
+        <section class="pf-table-card" [attr.aria-label]="lang.t('ana.aiAria')">
           <div class="pf-card-head">
-            <div class="pf-section-head"><h2>Copilot usage</h2></div>
+            <div class="pf-section-head"><h2>{{ lang.t('ana.copilotUsage') }}</h2></div>
           </div>
           @if (!canSeeAiUsage) {
             <pf-empty-state
               [icon]="icons.inbox"
-              title="Restricted"
-              message="AI metering is visible to workspaces with copilot access."
+              [title]="lang.t('ana.restricted')"
+              [message]="lang.t('ana.restrictedMsg')"
             />
           } @else if (aiUsage(); as usage) {
             <dl class="analytics-facts">
               <div>
-                <dt>Calls</dt>
+                <dt>{{ lang.t('ana.calls') }}</dt>
                 <dd class="pf-data-mono">{{ usage.calls }}</dd>
               </div>
               <div>
-                <dt>Prompt tokens</dt>
+                <dt>{{ lang.t('ana.promptTokens') }}</dt>
                 <dd class="pf-data-mono">{{ usage.promptTokens }}</dd>
               </div>
               <div>
-                <dt>Completion tokens</dt>
+                <dt>{{ lang.t('ana.completionTokens') }}</dt>
                 <dd class="pf-data-mono">{{ usage.completionTokens }}</dd>
               </div>
             </dl>
@@ -298,15 +298,14 @@
                   <li class="analytics-bar-row">
                     <div class="analytics-bar-meta">
                       <span>{{ feature.feature }}</span>
-                      <span class="pf-data-mono">{{ feature.calls }} calls</span>
+                      <span class="pf-data-mono">{{ lang.tx('ana.callsSub', { n: feature.calls ?? 0 }) }}</span>
                     </div>
                   </li>
                 }
               </ul>
             }
             <p class="analytics-note">
-              Copilot answers are disabled in this workspace (AI_ENABLED=false). This panel meters
-              usage only.
+              {{ lang.t('ana.aiNote') }}
             </p>
           }
         </section>

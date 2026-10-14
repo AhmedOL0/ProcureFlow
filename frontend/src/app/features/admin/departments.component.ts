@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -11,6 +11,8 @@ import { LucideAngularModule } from 'lucide-angular';
 import { forkJoin, of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import type { I18nKey } from '../../core/i18n/en';
+import { LanguageService } from '../../core/i18n/language.service';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -50,6 +52,9 @@ export class DepartmentsComponent {
   private readonly org = inject(OrganizationService);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(MatDialog);
+  protected readonly lang = inject(LanguageService);
+
+  protected readonly crumbs = computed(() => [{ label: this.lang.t('nav.departments') }]);
 
   protected readonly icons = { building: Building2 };
   protected readonly canManageDepartments = this.auth.hasAuthority('department:manage');
@@ -60,7 +65,13 @@ export class DepartmentsComponent {
   protected readonly departments = signal<Department[]>([]);
   protected readonly memberships = signal<Membership[]>([]);
   protected readonly users = signal<WorkspaceUser[]>([]);
-  protected readonly notice = signal<string | null>(null);
+  protected readonly notice = signal<{ key: I18nKey; vars: Record<string, string | number> } | null>(
+    null,
+  );
+
+  protected notify(key: I18nKey, vars: Record<string, string | number> = {}): void {
+    this.notice.set({ key, vars });
+  }
   protected readonly deptPage = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
   protected readonly memberPage = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
 
@@ -140,6 +151,12 @@ export class DepartmentsComponent {
     return this.memberships().filter((m) => m.departmentId === departmentId).length;
   }
 
+  protected memberLabel(count: number): string {
+    return count === 1
+      ? this.lang.t('admin.memberOne')
+      : this.lang.tx('admin.memberMany', { n: count });
+  }
+
   createDepartment(): void {
     const name = this.departmentName.value.trim();
     if (!name) {
@@ -148,7 +165,7 @@ export class DepartmentsComponent {
     this.org.createDepartment(name).subscribe({
       next: () => {
         this.departmentName.reset('');
-        this.notice.set('Department created.');
+        this.notify('admin.deptCreated');
         this.reload();
       },
       error: (error: unknown) => this.failure.set(parseApiFailure(error)),
@@ -162,8 +179,8 @@ export class DepartmentsComponent {
     const dialog = this.dialogs.open(PromptDialogComponent, {
       width: '400px',
       data: {
-        title: 'Rename department',
-        label: 'Department name',
+        title: this.lang.t('admin.renameDeptTitle'),
+        label: this.lang.t('admin.deptNameLabel'),
         initial: department.name ?? '',
       },
     });
@@ -186,9 +203,11 @@ export class DepartmentsComponent {
       {
         width: '400px',
         data: {
-          title: `Delete ${department.name ?? 'department'}?`,
-          message: 'Only empty departments can be deleted. The backend refuses the rest.',
-          confirmLabel: 'Delete department',
+          title: this.lang.tx('admin.deleteDeptTitle', {
+            name: department.name ?? this.lang.t('admin.deptLabel'),
+          }),
+          message: this.lang.t('admin.deleteDeptMsg'),
+          confirmLabel: this.lang.t('admin.deleteDeptConfirm'),
         },
       },
     );
@@ -208,7 +227,7 @@ export class DepartmentsComponent {
     }
     this.org.addMembership(this.memberUser.value, this.memberDepartment.value).subscribe({
       next: () => {
-        this.notice.set('Membership added.');
+        this.notify('admin.memberAdded');
         this.reload();
       },
       error: (error: unknown) => this.failure.set(parseApiFailure(error)),
@@ -224,10 +243,12 @@ export class DepartmentsComponent {
       {
         width: '400px',
         data: {
-          title: `Remove ${this.userEmail(membership.userId)} from ${this.departmentNameOf(membership.departmentId)}?`,
-          message:
-            'The person keeps their workspace account. Only the department assignment ends.',
-          confirmLabel: 'Remove assignment',
+          title: this.lang.tx('admin.removeMemberTitle', {
+            user: this.userEmail(membership.userId),
+            dept: this.departmentNameOf(membership.departmentId),
+          }),
+          message: this.lang.t('admin.removeMemberMsg'),
+          confirmLabel: this.lang.t('admin.removeMemberConfirm'),
         },
       },
     );

@@ -41,13 +41,13 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-        data: { breadcrumb: 'Dashboard' },
+        data: { breadcrumbKey: 'nav.dashboard' },
       },
       {
         path: 'workspace',
         loadComponent: () =>
           import('./features/workspace/my-workspace.component').then((m) => m.MyWorkspaceComponent),
-        data: { breadcrumb: 'My workspace' },
+        data: { breadcrumbKey: 'workspace.title' },
       },
       {
         path: 'suppliers',
@@ -65,7 +65,7 @@ export const routes: Routes = [
           import('./features/procurement/approval-inbox/approval-inbox.component').then(
             (m) => m.ApprovalInboxComponent,
           ),
-        data: { breadcrumb: 'Approvals' },
+        data: { breadcrumbKey: 'nav.approvals' },
       },
       {
         path: 'orders',
@@ -85,13 +85,13 @@ export const routes: Routes = [
         path: 'analytics',
         loadComponent: () =>
           import('./features/analytics/analytics.component').then((m) => m.AnalyticsComponent),
-        data: { breadcrumb: 'Analytics' },
+        data: { breadcrumbKey: 'nav.analytics' },
       },
       {
         path: 'copilot',
         loadComponent: () =>
           import('./features/copilot/copilot.component').then((m) => m.CopilotComponent),
-        data: { breadcrumb: 'Copilot' },
+        data: { breadcrumbKey: 'nav.copilot' },
       },
       {
         path: 'notifications',
@@ -99,13 +99,13 @@ export const routes: Routes = [
           import('./features/notifications/notifications.component').then(
             (m) => m.NotificationsComponent,
           ),
-        data: { breadcrumb: 'Notifications' },
+        data: { breadcrumbKey: 'nav.notifications' },
       },
       {
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings.component').then((m) => m.SettingsComponent),
-        data: { breadcrumb: 'Settings' },
+        data: { breadcrumbKey: 'settings.crumb' },
       },
       {
         path: 'admin',
