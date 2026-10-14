@@ -17,6 +17,13 @@ spring:
         generate_statistics: true
   flyway:
     enabled: true
+  data:
+    mongodb:
+      # Hermetic by default: no test touches shared mongo unless it brings
+      # its own container (DynamicPropertySource overrides this, which wins).
+      # Without it, extract tests would write junk docs into dev mongo
+      # whenever it happens to run (lived once as acme-* debris).
+      uri: mongodb://localhost:9/hermetic?serverSelectionTimeoutMS=1000&connectTimeoutMS=1000
 
 app:
   jwt:
