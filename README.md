@@ -11,9 +11,10 @@ boundaries.
 > Status: **working product, pre-release hardening.** The Angular frontend
 > covers the page map end to end (dashboard, workspace, procurement,
 > fulfillment, budgets, analytics, copilot, admin) against the real API;
-> the backend carries 166 integration tests plus unit/ArchUnit gates
-> (measured 2026-10-12; JaCoCo 84.1% line / 66.8% branch over 70/40 floors).
-> Screenshots below are all live captures. See `docs/demo.md` to click
+> the backend carries 196 integration tests plus unit/ArchUnit gates
+> (JaCoCo line 0.70 / branch 0.40 floors enforced in CI).
+> Screenshots below capture the real UI (39 uses fixture data, like the
+> e2e suite). See `docs/demo.md` to click
 > through it yourself, and `docs/project-management/sprint-plan.md` for
 > the delivery record.
 
@@ -21,8 +22,8 @@ boundaries.
 
 Mid-size companies buy through email threads and spreadsheets: approvals are
 untraceable, budgets are checked after the money is spent, and supplier
-performance lives in people's heads. ProcureFlow makes every step explicit,
-auditable and fast: request → budget reservation → approval → order → invoice,
+performance lives in people's heads. ProcureFlow makes every step explicit
+and auditable: request → budget reservation → approval → order → invoice,
 with AI assistance where judgment is needed.
 
 ## Target users
@@ -30,12 +31,12 @@ with AI assistance where judgment is needed.
 Six seeded roles compose the personas (see `docs/architecture/security.md`
 for the permission matrix):
 
-- **Requesters** (`MEMBER`) — raise purchase requests and track them.
-- **Approvers / managers** (`APPROVER`) — decide with budget context.
-- **Procurement officers** (`OFFICER`) — suppliers, orders, invoices.
-- **Finance** (`FINANCE`) — budgets, invoices, spend analytics.
-- **Auditors** (`AUDITOR`) — read-only trail and views.
-- **Tenant admins** (`TENANT_ADMIN`) — users, departments, roles, lanes.
+- **Requesters** (`MEMBER`): raise purchase requests and track them.
+- **Approvers / managers** (`APPROVER`): decide with budget context.
+- **Procurement officers** (`OFFICER`): suppliers, orders, invoices.
+- **Finance** (`FINANCE`): budgets, invoices, spend analytics.
+- **Auditors** (`AUDITOR`): read-only trail and views.
+- **Tenant admins** (`TENANT_ADMIN`): users, departments, roles, lanes.
 
 ## Screens (live captures)
 
@@ -61,18 +62,18 @@ boundaries in CI. Twelve modules: identity, organization, supplier,
 procurement, approval, budget, purchaseorder, invoice, notification, audit,
 analytics, ai.
 
-- `docs/architecture/overview.md` — system context and principles
-- `docs/architecture/modular-monolith.md` — module rules and dependency policy
-- `docs/architecture/multi-tenancy.md` — tenant isolation strategy
-- `docs/architecture/security.md` — authN/authZ design (incl. role matrix)
-- `docs/decisions/` — ADRs (001 modular monolith … 009 password reset)
+- `docs/architecture/overview.md`: system context and principles
+- `docs/architecture/modular-monolith.md`: module rules and dependency policy
+- `docs/architecture/multi-tenancy.md`: tenant isolation strategy
+- `docs/architecture/security.md`: authN/authZ design (incl. role matrix)
+- `docs/decisions/`: ADRs (001 modular monolith through 012 polyglot persistence)
 
 Key trade-offs, not slogans: a modular monolith (one deployable, strict
-module boundaries) over microservices — the team is small and distributed
-transactions would buy nothing; JWT body-carried tokens over HttpOnly
+module boundaries) over microservices. The team is small and distributed
+transactions would buy nothing. JWT body-carried tokens over HttpOnly
 cookies for the first client (documented XSS-hygiene debt, refresh theft
-detection included); server-computed analytics over client aggregation
-(the UI never totals money it did not fetch in full); AI behind a provider
+detection included). Server-computed analytics over client aggregation
+(the UI never totals money it did not fetch in full). AI behind a provider
 port with validated, KPI-cited outputs instead of a chat widget stapled on.
 
 ## Technology stack
@@ -98,16 +99,16 @@ cd frontend && npm install && npm start   # http://localhost:4200
 ```
 
 Notes that bite newcomers (full list in `AGENTS.md`): `./mvnw spring-boot:run`
-does **not** read `.env` — export the vars first, or boot with
-`SPRING_DATASOURCE_PASSWORD=… JWT_SECRET=…`; port 8080 is commonly taken
+does **not** read `.env`: export the vars first, or boot with
+`SPRING_DATASOURCE_PASSWORD=... JWT_SECRET=...`; port 8080 is commonly taken
 (local Apache), so run manual backends on `:8081`
 (`-Dspring-boot.run.jvmArguments=-Dserver.port=8081`) or set `BACKEND_PORT`
-— compose itself defaults to `:8080`. The `gen:api` script targets `:8081`;
-`spring-boot:run` serves recompiled classes — run `compile` first when
+. Compose itself defaults to `:8080`. The `gen:api` script targets `:8081`;
+`spring-boot:run` serves recompiled classes: run `compile` first when
 in doubt.
 
 API docs need the backend up with docs enabled (dev profile):
-`http://localhost:8081/swagger-ui.html` (dev) — disabled by default
+`http://localhost:8081/swagger-ui.html` (dev), disabled by default
 elsewhere. Live OpenAPI at `/v3/api-docs`.
 
 The dev profile allows the local SPA origins for CORS; production allows
@@ -117,7 +118,7 @@ nothing unless `CORS_ALLOWED_ORIGINS` is set.
 
 All routes live under `/api/v1/...` with a consistent problem envelope
 (`docs/api/README.md` is the contract; live OpenAPI at `/v3/api-docs`).
-Angular types are generated from the live contract — boot the backend on
+Angular types are generated from the live contract: boot the backend on
 `:8081`, then `cd frontend && npm run gen:api`, checked in at
 `src/lib/api-types.gen.ts`.
 
@@ -134,7 +135,7 @@ Angular types are generated from the live contract — boot the backend on
 | Notifications | `/notifications` | Event-driven personal inbox |
 | Audit | `/audit-events` | Append-only trail with secret redaction, admin read |
 | Analytics | `/analytics/...` | Spend, supplier and approval KPIs (read-only) |
-| AI copilot | `/ai/...` | KPI-cited chat, spend explanations, request extraction, quotation comparison (metered, `ai:use`) |
+| AI copilot | `/ai/...` | KPI-cited chat, spend explanations, request extraction, extraction history, quotation comparison (metered, `ai:use`) |
 | Frontend | `/login`, `/register`, `/forgot-password`, `/reset-password`, `/dashboard`, `/workspace`, `/suppliers`, `/requests`, `/requests/mine`, `/approvals`, `/orders`, `/invoices`, `/budgets`, `/analytics`, `/copilot`, `/notifications`, `/settings`, `/admin`, `/admin/users`, `/admin/departments`, `/admin/workflows`, `/admin/audit` | Session shell + every workflow screen, all API-backed |
 
 Current contract truths (the conventions doc is aspirational in places):
@@ -148,20 +149,21 @@ carries `timestamp` alongside the documented fields.
 Full picture in `docs/testing/strategy.md`. Local gates (must pass before
 every push):
 
-- Backend: `cd backend && ./mvnw verify` — 166 integration tests
-  (Testcontainers over real PostgreSQL 16) plus unit/ArchUnit: auth,
-  tenant isolation, suppliers (incl. xlsx/csv import), procurement, approvals (incl. decision
+- Backend: `cd backend && ./mvnw verify`: 196 integration tests
+  (Testcontainers over real PostgreSQL 16, plus MongoDB for extraction
+  history) plus unit/ArchUnit: auth,
+  tenant isolation, suppliers (incl. xlsx/csv import + antivirus scan), procurement, approvals (incl. decision
   races), budgets (incl. reservation race), orders, invoices,
-  notifications, audit, analytics, copilot, documents (PDF/xlsx export),
+  notifications, audit, analytics (incl. aggregation bounds), copilot + extraction history, documents (PDF/xlsx export),
   account (incl. token races),
   roles, metrics. JaCoCo floors (line 0.70 / branch 0.40) fail the build
   on regression.
 - Frontend unit: `cd frontend && npm test` (Vitest, 54 tests)
 - Frontend E2E: `cd frontend && npx playwright install chromium && npm run test:e2e`
-  (64 runs: 32 tests × chromium + firefox — 17 stubbed critical journeys
+  (68 runs: 34 tests × chromium + firefox: 19 stubbed critical journeys
   incl. chart drills and document download/import, 7 auth, 7 axe, 1 smoke: request-to-approval,
   unsaved-draft guard, budget, order, invoice, admin, analytics,
-  copilot success/failure, notifications, settings, session expiry)
+  copilot success/failure, copilot history, notifications, settings, session expiry)
 - API types: regenerate after any API change and commit the result.
 
 ## AI architecture
@@ -170,7 +172,7 @@ Angular never calls Groq. Flow: Angular → Spring Boot → `ai` module
 (prompts, validation, auth, usage metering) → Groq API. The `GroqAiProvider`
 is live (`openai/gpt-oss-120b`, 503 per use case while `AI_ENABLED=false`);
 prompts are versioned (`Prompts.VERSION`, metered per call), outputs are
-validated, and prompts carry KPI aggregates only — no user identities or
+validated, and prompts carry KPI aggregates only. No user identities or
 secrets. Use cases: KPI-cited chat, spend explanations, request extraction,
 quotation comparison, plus a per-tenant usage endpoint. Answers render as
 text with citations and model tags; the UI cancels in-flight calls and
@@ -193,9 +195,11 @@ ADR-009 (password reset).
 
 ## Observability
 
-Actuator exposes `health`, `info` and `prometheus`; Prometheus + Grafana
-configs live in `infrastructure/monitoring/` (alert rules in
-`prometheus/alerts.yml`: overspend spikes, 5xx rate, AI failures/usage).
+Actuator exposes `health`, `info` and `prometheus`. The opt-in
+observability profile scrapes them into Prometheus, ships container logs
+to Loki (level/trace labels), and serves both in Grafana with alert rules
+(overspend spikes, 5xx rate, AI failures/usage); see
+`infrastructure/monitoring/README.md` for the verify commands.
 Domain counters (`procureflow.decisions`, `procureflow.budget.*`,
 `procureflow.invoices*`, `procureflow.ai.calls`) ship from the services;
 AI token usage is metered per tenant in `ai_usage`. Failures carry
@@ -207,7 +211,7 @@ AI token usage is metered per tenant in `ai_usage`. Failures carry
 `frontend-ci.yml` (build + Vitest + Playwright on Chromium),
 `security.yml` (Trivy fs scan, npm audit). Docker images build from
 `backend/Dockerfile` (non-root) and `frontend/Dockerfile` (nginx, gzip,
-immutable caching). No cloud deployment is wired — deliberately:
+immutable caching). No cloud deployment is wired deliberately:
 deployment needs explicit target authorization.
 
 ## Demo
@@ -224,14 +228,15 @@ what to try per persona, and the reset procedure.
 ## Known limitations
 
 - Email delivery blocked live at Brevo auth (credentials wired, `525
-  Unauthorized IP` — source IP allowlisting pending); reset flow is
+  Unauthorized IP`: source IP allowlisting pending); reset flow is
   proven with mocks + log-mode, not an inbox receipt.
 - Directory listings are paged server-side; no `/api/v2`. Login, register,
   refresh, reset and AI usage are rate-limited/capped (see above).
-- Approval inbox resolves decisions per row (N+1 reads) — fine at current
-  scale, needs a bulk endpoint before high-volume tenants.
+- Approval inbox resolves decisions per row (N+1 reads). Fine at current
+  scale. Needs a bulk endpoint before high-volume tenants.
 - Frontend bundle ~1.8MB total JS / 6KB main across lazy chunks (largest
-  lazy chunk 513KB: ECharts); no perf work beyond measurement yet.
+  lazy chunk 513KB: ECharts); k6 read-mix and grouped-aggregation numbers
+  recorded in `infrastructure/load/README.md`.
 
 ## License
 
