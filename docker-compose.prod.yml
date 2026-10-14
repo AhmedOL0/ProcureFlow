@@ -1,0 +1,117 @@
+# ============================================================
+# ProcureFlow — production-shape overlay (LOCAL ONLY, never applied)
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml
+#        --profile scan --profile observability up -d --build
+# See infrastructure/prod/README.md first. Nothing here touches the
+# dev stack: separate project volumes (pgdata-prod, ...), no published
+# DB ports, TLS only through the edge.
+# ============================================================
+
+name: procureflow-prod
+
+services:
+  edge:
+    build:
+      context: ./infrastructure/prod
+      dockerfile: Dockerfile
+    container_name: procureflow-prod-edge
+    restart: unless-stopped
+    ports:
+      - "${EDGE_PORT:-8443}:443"
+    volumes:
+      - tlsdata:/tls
+
+  postgres:
+    extends:
+      service: postgres
+      file: docker-compose.yml
+    container_name: procureflow-prod-postgres
+    # WAL archiving to /wal (pgwal) is what makes PITR possible; without
+    # it a base backup only restores to its own timestamp (RPO = age).
+    # /wal ownership is fixed by the wrapper entrypoint (fresh named
+    # volumes arrive root-owned and postgres cannot write them). Invoked
+    # through sh: Windows checkouts carry no exec bit on the mount.
+    entrypoint: ["sh", "/prod-entrypoint.sh"]
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=replica"
+      - "-c"
+      - "archive_mode=on"
+      - "-c"
+      - "archive_command=test ! -f /wal/%f && cp %p /wal/%f"
+      - "-c"
+      - "max_wal_senders=3"
+    ports: !reset []
+    volumes:
+      - pgdata-prod:/var/lib/postgresql/data
+      - pgwal:/wal
+      - ./infrastructure/prod/pg-entrypoint.sh:/prod-entrypoint.sh:ro
+      - ./infrastructure/prod/pg-init-hba.sh:/docker-entrypoint-initdb.d/pg-init-hba.sh:ro
+
+  backend:
+    extends:
+      service: backend
+      file: docker-compose.yml
+    container_name: procureflow-prod-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clamav:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: "prod"
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-https://localhost:8443}
+      # Antivirus enforced in prod shape (fail closed on unreachable).
+      CLAMAV_HOST: clamav
+    # Plain mem_limit/cpus (not deploy.resources): applied by `up`,
+    # where deploy limits are swarm-only and silently ignored.
+    mem_limit: 1g
+    cpus: 1.0
+    ports: !reset []
+
+  frontend:
+    extends:
+      service: frontend
+      file: docker-compose.yml
+    container_name: procureflow-prod-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    # Same-origin through the edge: the baked API base must be the edge
+    # URL, not the internal backend address browsers cannot reach.
+    build:
+      args:
+        ANGULAR_API_URL: ${ANGULAR_API_URL:-https://localhost:8443}
+    mem_limit: 256m
+    cpus: 0.5
+    ports: !reset []
+
+  clamav:
+    extends:
+      service: clamav
+      file: docker-compose.yml
+    container_name: procureflow-prod-clamav
+    restart: unless-stopped
+
+  db-backup:
+    extends:
+      service: db-backup
+      file: docker-compose.yml
+    container_name: procureflow-prod-backup
+    # Encrypted dumps are mandatory in prod shape: the overlay refuses to
+    # configure without a key (fail fast, never silent plaintext).
+    environment:
+      BACKUP_ENCRYPT_KEY: ${BACKUP_ENCRYPT_KEY:?BACKUP_ENCRYPT_KEY must be set for the prod overlay}
+    volumes:
+      - pgbackups-prod:/backups
+      - ./infrastructure/docker/backup/backup.sh:/backup.sh:ro
+      - ./infrastructure/docker/backup/pitr-base.sh:/pitr-base.sh:ro
+
+volumes:
+  pgdata-prod:
+  pgwal:
+  pgbackups-prod:
+  tlsdata:

@@ -1,0 +1,7 @@
+# Production-shape backend profile. The base file is local-dev-first;
+# this document only changes what a shared deployment needs. Compose it
+# with SPRING_PROFILES_ACTIVE=prod (json composes too: "prod,json").
+server:
+  # Behind the TLS edge: honor X-Forwarded-Proto/For for links and
+  # redirects instead of the internal http scheme.
+  forward-headers-strategy: framework

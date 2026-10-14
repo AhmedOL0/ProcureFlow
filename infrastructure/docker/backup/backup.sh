@@ -21,15 +21,36 @@ if [ "${SIZE}" -lt 1024 ]; then
     exit 1
 fi
 
+# Optional encryption-at-rest: with BACKUP_ENCRYPT_KEY (or _FILE) set, the
+# plaintext dump never survives the run — it is encrypted in place and only
+# the .enc file is retained. Needs the backup image (openssl); the stock
+# postgres image fails here loudly instead of writing plaintext silently.
+if [ -n "${BACKUP_ENCRYPT_KEY_FILE:-}" ]; then
+    BACKUP_ENCRYPT_KEY="$(cat "${BACKUP_ENCRYPT_KEY_FILE}")"
+fi
+if [ -n "${BACKUP_ENCRYPT_KEY:-}" ]; then
+    command -v openssl >/dev/null 2>&1 || {
+        echo "backup FAILED: BACKUP_ENCRYPT_KEY is set but openssl is missing" >&2
+        rm -f "${FILE}"
+        exit 1
+    }
+    openssl enc -aes-256-cbc -pbkdf2 -pass env:BACKUP_ENCRYPT_KEY \
+        -in "${FILE}" -out "${FILE}.enc"
+    rm -f "${FILE}"
+    FILE="${FILE}.enc"
+    SIZE="$(wc -c <"${FILE}")"
+fi
+
 # Prune oldest beyond retention (newest N survive; never delete the just-written file).
+# The glob covers plaintext .dump and encrypted .dump.enc alike.
 KEPT=0
-for dump in $(ls -t "${OUT_DIR}"/procureflow-*.dump 2>/dev/null); do
+for dump in $(ls -t "${OUT_DIR}"/procureflow-*.dump* 2>/dev/null); do
     KEPT=$((KEPT + 1))
     if [ "${KEPT}" -gt "${RETENTION}" ] && [ "${dump}" != "${FILE}" ]; then
         rm -f "${dump}"
     fi
 done
-ls -t "${OUT_DIR}"/procureflow-*.dump | head -n "${RETENTION}" >/dev/null
+ls -t "${OUT_DIR}"/procureflow-*.dump* | head -n "${RETENTION}" >/dev/null
 
 echo "backup OK: ${FILE} (${SIZE} bytes, retention ${RETENTION})"
 

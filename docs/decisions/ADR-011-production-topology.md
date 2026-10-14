@@ -1,6 +1,10 @@
-# ADR-011: Production topology (proposed — decision required)
+# ADR-011: Production topology (reference implemented locally)
 
-- Status: Proposed (audit H-2; nothing below is built yet)
+- Status: Reference implemented 2026-10-14 (`docker-compose.prod.yml` +
+  `infrastructure/prod/`); managed-Postgres path still recommended for
+  shared data. Nothing applied to real infrastructure.
+
+- Status: Reference implemented (see 2026-10-14 update at the end); the managed-DB recommendation below still stands for shared data.
 - Context: ProcureFlow runs local/demo only today — compose with a single
   `pgdata` volume, a local-only backup sidecar (dump + one canary restore
   drilled), empty Terraform, no TLS/proxy, secrets in an env file, no
@@ -28,6 +32,13 @@
   the local-dev story, not the durability story. Monitoring configs
   (`infrastructure/monitoring`) finally get a collector to aim at, which
   also retires the observability gap for the production topology.
+- 2026-10-14 update: the self-hosted alternative is now BUILT and DRILLED
+  locally as the deployment-ready reference (TLS edge with snakeoil boot,
+  WAL archiving + PITR replay proven, encrypted dumps + restore proven,
+  enforced antivirus, RPO zero-loss / RTO ~100 s measured, Hetzner target
+  in `infrastructure/terraform` validated but never applied). What stays
+  open for shared data: a real account, real certificates, off-host copies,
+  managed Postgres with PITR. Revisit triggers unchanged.
 - Revisit triggers: signing the first shared/demo-external tenant (must
   resolve before), or cost/residency forcing a different target (rewrite
   this ADR with the new topology).
