@@ -19,6 +19,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 
 import { formatMinor } from '../../utils/money';
 import { buildDonutOption, segmentAt } from '../../utils/charts';
+import { ThemeService } from '../../../core/theme/theme.service';
 
 use([PieChart, TooltipComponent, CanvasRenderer]);
 
@@ -62,12 +63,13 @@ export class DonutChartComponent implements AfterViewInit, OnDestroy {
     return this.slices().map((slice, index) => ({
       ...slice,
       css: `donut-segment--${index % 6}`,
-      share: total > 0 && slice.value > 0 ? `${((slice.value / total) * 100).toFixed(1)}%` : '—',
+      share: total > 0 && slice.value > 0 ? `${((slice.value / total) * 100).toFixed(1)}%` : 'N/A',
     }));
   });
 
   private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly themes = inject(ThemeService);
   private chart: ECharts | null = null;
   private observer: ResizeObserver | null = null;
 
@@ -75,6 +77,8 @@ export class DonutChartComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       this.slices();
       this.currency();
+      // Theme flip re-reads the token palette from CSS in render().
+      this.themes.theme();
       this.render();
     });
   }

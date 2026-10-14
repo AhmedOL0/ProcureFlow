@@ -1,7 +1,7 @@
 <div class="pf-page">
   <pf-page-header
     title="Approval policies"
-    description="Amount lanes with ordered approver steps, plus bounded delegations. Escalation runs on the lane threshold — there is no manual escalate button."
+    description="Amount lanes with ordered approver steps, plus bounded delegations. Escalation runs on the lane threshold. There is no manual escalate button."
     [breadcrumbs]="[{ label: 'Policies' }]"
   />
 
@@ -101,7 +101,7 @@
 
     @if (selectedLane(); as lane) {
       <section class="pf-panel" aria-label="Lane steps">
-        <h2>Steps — {{ lane.name }} ({{ steps().length }})</h2>
+        <h2>Steps: {{ lane.name }} ({{ steps().length }})</h2>
         @if (steps().length === 0) {
         <p class="pf-muted">No steps yet. The first added step decides first.</p>
       } @else {

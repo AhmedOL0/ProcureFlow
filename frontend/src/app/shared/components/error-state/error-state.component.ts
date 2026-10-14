@@ -45,7 +45,7 @@ import { CircleAlert } from '../../../shared/icons';
       }
       .pf-state__title {
         font: var(--pf-headline-sm);
-        color: var(--pf-navy);
+        color: var(--pf-heading);
         margin: 0;
       }
       .pf-state__message {

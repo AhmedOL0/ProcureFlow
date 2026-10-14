@@ -119,18 +119,18 @@ export class ApprovalInboxComponent {
 
   protected decidedAt(row: DecidedRow): string {    const at = row.decision?.createdAt;
     if (!at) {
-      return '—';
+      return 'N/A';
     }
     const date = new Date(at);
-    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
   }
 
   protected submittedAt(request: PurchaseRequest): string {
     if (!request.submittedAt) {
-      return '—';
+      return 'N/A';
     }
     const date = new Date(request.submittedAt);
-    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
   }
 
   toggle(row: PurchaseRequest): void {

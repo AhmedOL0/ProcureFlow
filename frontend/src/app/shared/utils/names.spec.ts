@@ -35,7 +35,7 @@ describe('humanizeLabel', () => {
   });
 
   it('falls back to a dash when empty', () => {
-    expect(humanizeLabel(null)).toBe('—');
-    expect(humanizeLabel('')).toBe('—');
+    expect(humanizeLabel(null)).toBe('N/A');
+    expect(humanizeLabel('')).toBe('N/A');
   });
 });

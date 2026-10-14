@@ -25,7 +25,7 @@
   } @else if (invoice(); as current) {
     <pf-page-header
       [title]="'Invoice ' + (current.number ?? '')"
-      [description]="'Tracking payment status only — recording a payment never transfers money.'"
+      [description]="'Tracking payment status only. Recording a payment never transfers money.'"
       [breadcrumbs]="[{ label: 'Invoices', url: '/invoices' }, { label: current.number ?? 'File' }]"
     >
       <div slot="actions">
@@ -82,7 +82,7 @@
           <tbody>
             @for (line of current.match ?? []; track line.orderItemId) {
               <tr>
-                <td class="pf-data-mono">{{ (line.orderItemId ?? '').slice(0, 8) }}…</td>
+                <td class="pf-data-mono">{{ (line.orderItemId ?? '').slice(0, 8) }}...</td>
                 <td class="pf-num pf-data-mono">{{ line.orderedQty }}</td>
                 <td class="pf-num pf-data-mono">{{ line.receivedQty }}</td>
                 <td class="pf-num pf-data-mono">{{ line.invoicedQty }}</td>

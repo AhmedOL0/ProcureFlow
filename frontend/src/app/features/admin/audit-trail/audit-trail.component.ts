@@ -143,13 +143,13 @@ export class AuditTrailComponent {
 
   protected readableTime(at: string | null | undefined): string {
     if (!at) {
-      return '—';
+      return 'N/A';
     }
     const date = new Date(at);
-    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
   }
 
   protected shortId(id: string | null | undefined): string {
-    return id ? `${id.slice(0, 8)}…` : '—';
+    return id ? `${id.slice(0, 8)}...` : 'N/A';
   }
 }

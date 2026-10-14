@@ -90,9 +90,9 @@ export class RequestDetailComponent {
     const names = this.supplierNames();
     return (supplierId: string | null | undefined): string => {
       if (!supplierId) {
-        return '—';
+        return 'N/A';
       }
-      return names.get(supplierId) ?? '…';
+      return names.get(supplierId) ?? '...';
     };
   });
 
@@ -210,10 +210,10 @@ export class RequestDetailComponent {
 
   protected readableDate(at: string | null | undefined): string {
     if (!at) {
-      return '—';
+      return 'N/A';
     }
     const date = new Date(at);
-    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
   }
 
   private announce(message: string): void {
@@ -347,7 +347,7 @@ export class RequestDetailComponent {
       this.requests.decide(current.id, approved, result.comment).subscribe({
         next: () => {
           this.acting.set(false);
-          this.announce(approved ? 'Approved — budget reserved.' : 'Rejected.');
+          this.announce(approved ? 'Approved. Budget reserved.' : 'Rejected.');
           this.reload();
         },
         error: (error: unknown) => {

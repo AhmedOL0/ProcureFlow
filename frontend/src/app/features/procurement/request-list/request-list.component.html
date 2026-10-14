@@ -3,8 +3,8 @@
     [title]="mineOnly ? 'My requests' : 'Purchase requests'"
     [description]="
       mineOnly
-        ? 'Requests you raised — follow them from draft to decision.'
-        : 'What the workspace wants to buy — draft it, add lines, submit it for approval.'
+        ? 'Requests you raised. Follow them from draft to decision.'
+        : 'What the workspace wants to buy. Draft it, add lines, submit it for approval.'
     "
     [breadcrumbs]="[{ label: mineOnly ? 'My requests' : 'Requests' }]"
   >
@@ -89,8 +89,8 @@
         title="No requests match"
         [message]="
           mineOnly
-            ? 'You have not raised a request yet — start one with New request above.'
-            : 'Try different filters — or raise the first request with New request above.'
+            ? 'You have not raised a request yet. Start one with New request above.'
+            : 'Try different filters. Or raise the first request with New request above.'
         "
       />
     } @else {
@@ -127,7 +127,7 @@
           </ng-container>
           <ng-container matColumnDef="priority">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="priority">Priority</th>
-            <td mat-cell *matCellDef="let row">{{ row.priority ?? '—' }}</td>
+            <td mat-cell *matCellDef="let row">{{ row.priority ?? 'N/A' }}</td>
           </ng-container>
           <ng-container matColumnDef="total">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="total" class="pf-num">Total</th>

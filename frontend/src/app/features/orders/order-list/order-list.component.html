@@ -1,7 +1,7 @@
 <div class="pf-page">
   <pf-page-header
     title="Purchase orders"
-    description="Supplier orders born from approved requests — send them, receive goods, close them out."
+    description="Supplier orders born from approved requests. Send them, receive goods, close them out."
     [breadcrumbs]="[{ label: 'Orders' }]"
   >
     <div slot="actions">
@@ -64,7 +64,7 @@
       <pf-empty-state
         [icon]="icons.truck"
         title="No orders match"
-        message="Orders start from an approved request — approve one first, then come back."
+        message="Orders start from an approved request. Approve one first, then come back."
       />
     } @else {
       <div class="pf-table-scroll">
@@ -102,7 +102,7 @@
                   shortId(row.requestId)
                 }}</a>
               } @else {
-                —
+                N/A
               }
             </td>
           </ng-container>

@@ -13,7 +13,7 @@
   } @else if (pot(); as row) {
     <pf-page-header
       [title]="row.name ?? 'Budget pot'"
-      [description]="'Period ' + (row.period ?? '—') + ' · allocations, holds and remainder.'"
+      [description]="'Period ' + (row.period ?? 'N/A') + ' · allocations, holds and remainder.'"
       [breadcrumbs]="[{ label: 'Budgets', url: '/budgets' }, { label: row.name ?? 'Pot' }]"
     >
       <div slot="actions">

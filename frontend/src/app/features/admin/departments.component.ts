@@ -25,7 +25,7 @@ import { Department, Membership, OrganizationService, WorkspaceUser } from './or
 
 /**
  * Departments & assignments: cost-center structure plus who sits where.
- * Only empty departments can be deleted — the backend refuses the rest
+ * Only empty departments can be deleted. The backend refuses the rest
  * with an explicit conflict. The member picker lists users only when the
  * caller may manage users; otherwise assignments resolve to id prefixes.
  */
@@ -187,7 +187,7 @@ export class DepartmentsComponent {
         width: '400px',
         data: {
           title: `Delete ${department.name ?? 'department'}?`,
-          message: 'Only empty departments can be deleted — the backend refuses the rest.',
+          message: 'Only empty departments can be deleted. The backend refuses the rest.',
           confirmLabel: 'Delete department',
         },
       },
@@ -226,7 +226,7 @@ export class DepartmentsComponent {
         data: {
           title: `Remove ${this.userEmail(membership.userId)} from ${this.departmentNameOf(membership.departmentId)}?`,
           message:
-            'The person keeps their workspace account — only the department assignment ends.',
+            'The person keeps their workspace account. Only the department assignment ends.',
           confirmLabel: 'Remove assignment',
         },
       },

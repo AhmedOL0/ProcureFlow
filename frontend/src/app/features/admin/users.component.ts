@@ -163,7 +163,7 @@ export class UsersComponent {
       next: () => {
         this.inviteEmail.reset('');
         this.inviteRoles.reset(['MEMBER']);
-        this.notice.set('Invite sent — the link travels by mail and works once.');
+        this.notice.set('Invite sent. The link travels by mail and works once.');
         this.loadInvites();
       },
       error: (error: unknown) => this.failure.set(parseApiFailure(error)),

@@ -229,6 +229,10 @@ ProcureFlow/
 22. Kill dev servers by PORT (`netstat -ano` → PID), never by cmdline
     substring (`bin\ng" serve` never matches `ng serve`) — zombies serve
     stale bundles for hours and poison every verification after them.
+    Two squatters to check when assertions contradict fresh code: the
+    compose frontend on :4200 (stale image — `docker compose stop
+    frontend`, Playwright reuses whatever answers) and long HMR sessions
+    (restart ng serve; hot reloads degrade into broken bundles).
 23. Check build exit codes immediately (`$out = ...; $LASTEXITCODE`),
     never through a pipe — truncated output and wrong `$?` hide red builds.
 24. `(ngSubmit)` without `[formGroup]` never fires (it is not a native

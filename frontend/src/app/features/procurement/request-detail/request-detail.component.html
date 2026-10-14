@@ -87,7 +87,7 @@
 
     @if (decision(); as verdict) {
       <section class="pf-panel" aria-label="Decision">
-        <h2>Decision — {{ verdict.decision }}</h2>
+        <h2>Decision: {{ verdict.decision }}</h2>
         @if (verdict.comment) {
           <p class="request-note">“{{ verdict.comment }}”</p>
         }
@@ -113,12 +113,12 @@
     @if (canSeeBudget) {
       @let pot = budget();
       <section class="pf-panel" aria-label="Budget context">
-        <h2>Budget — this month</h2>
+        <h2>Budget: this month</h2>
         @if (pot === null) {
-          <p class="request-muted">Loading budget…</p>
+          <p class="request-muted">Loading budget...</p>
         } @else if (pot === 'missing') {
           <p class="request-muted">
-            No budget configured for this month — approvals proceed unreserved.
+            No budget configured for this month. Approvals proceed unreserved.
           </p>
         } @else {
           <p class="request-budget">
@@ -199,7 +199,7 @@
               @for (item of current.items ?? []; track item.id) {
                 <tr>
                   <td>{{ item.description }}</td>
-                  <td>{{ item.category || '—' }}</td>
+                  <td>{{ item.category || 'N/A' }}</td>
                   <td class="pf-num pf-data-mono">{{ item.quantity }}</td>
                   <td class="pf-num pf-data-mono">
                     {{ formatMinor(item.unitPriceMinor ?? 0, item.currency ?? 'MAD') }}

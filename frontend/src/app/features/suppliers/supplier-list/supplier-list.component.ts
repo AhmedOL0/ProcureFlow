@@ -125,7 +125,7 @@ export class SupplierListComponent {
       },
       {
         label: 'Avg on-time delivery',
-        value: avg === null ? '—' : `${avg.toFixed(1)}%`,
+        value: avg === null ? 'N/A' : `${avg.toFixed(1)}%`,
         sub: 'across this page',
         bar: avg,
       },

@@ -25,7 +25,7 @@
   } @else if (order(); as current) {
     <pf-page-header
       [title]="'Order from ' + supplierName()"
-      description="Lines were snapshotted from the approved request — later request edits never rewrite history."
+      description="Lines were snapshotted from the approved request. Later request edits never rewrite history."
       [breadcrumbs]="[{ label: 'Orders', url: '/orders' }, { label: 'Order file' }]"
     >
       <div slot="actions">
@@ -110,13 +110,13 @@
         }
       </ol>
     } @else {
-      <p class="pf-muted">This order was cancelled — the pipeline ends here.</p>
+      <p class="pf-muted">This order was cancelled. The pipeline ends here.</p>
     }
 
     <section class="pf-panel" aria-label="Lines">
       <div class="pf-panel__head">
         <h2>
-          Lines ({{ (current.lines ?? []).length }}) — {{ receivedTotal() }} of
+          Lines ({{ (current.lines ?? []).length }}): {{ receivedTotal() }} of
           {{ orderedTotal() }} received
         </h2>
       </div>

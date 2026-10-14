@@ -1,7 +1,7 @@
 <div class="pf-page">
   <pf-page-header
     title="Approval inbox"
-    description="Submitted requests awaiting a verdict, and recent outcomes. Verdicts happen on the dossier — only the assigned approver or an active delegate can decide."
+    description="Submitted requests awaiting a verdict, and recent outcomes. Verdicts happen on the dossier. Only the assigned approver or an active delegate can decide."
     [breadcrumbs]="[{ label: 'Approvals' }]"
   />
 
@@ -64,7 +64,7 @@
             </ng-container>
             <ng-container matColumnDef="priority">
               <th mat-header-cell *matHeaderCellDef>Priority</th>
-              <td mat-cell *matCellDef="let row">{{ row.priority ?? '—' }}</td>
+              <td mat-cell *matCellDef="let row">{{ row.priority ?? 'N/A' }}</td>
             </ng-container>
             <ng-container matColumnDef="total">
               <th mat-header-cell *matHeaderCellDef class="pf-num">Total</th>
@@ -99,7 +99,7 @@
                         }}</span>
                       </li>
                     } @empty {
-                      <li class="pf-muted">Loading lines…</li>
+                      <li class="pf-muted">Loading lines...</li>
                     }
                   </ul>
                 }

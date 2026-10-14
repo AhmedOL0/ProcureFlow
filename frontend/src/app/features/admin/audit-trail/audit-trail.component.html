@@ -1,7 +1,7 @@
 <div class="pf-page">
   <pf-page-header
     title="Audit trail"
-    description="Who did what to which record, newest first. Append-only — nothing here can change or delete rows."
+    description="Who did what to which record, newest first. Append-only. Nothing here can change or delete rows."
     [breadcrumbs]="[{ label: 'Audit' }]"
   />
 
@@ -101,11 +101,11 @@
                 <div class="audit-payloads" [attr.id]="'payloads-' + row.id">
                   <div>
                     <p class="audit-payload__label">Before</p>
-                    <pre class="audit-payload">{{ row.beforeJson || '—' }}</pre>
+                    <pre class="audit-payload">{{ row.beforeJson || 'N/A' }}</pre>
                   </div>
                   <div>
                     <p class="audit-payload__label">After</p>
-                    <pre class="audit-payload">{{ row.afterJson || '—' }}</pre>
+                    <pre class="audit-payload">{{ row.afterJson || 'N/A' }}</pre>
                   </div>
                 </div>
               }

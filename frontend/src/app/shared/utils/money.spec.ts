@@ -10,9 +10,9 @@ describe('money', () => {
   });
 
   it('handles missing values and currencies', () => {
-    expect(formatMinor(null)).toBe('—');
-    expect(formatMinor(undefined)).toBe('—');
-    expect(formatMinor(NaN)).toBe('—');
+    expect(formatMinor(null)).toBe('N/A');
+    expect(formatMinor(undefined)).toBe('N/A');
+    expect(formatMinor(NaN)).toBe('N/A');
     expect(formatMinor(100, 'XX')).toContain('1.00');
   });
 });

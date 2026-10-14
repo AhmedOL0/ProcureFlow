@@ -70,7 +70,7 @@ export class InvoiceListComponent {
   protected readonly statuses = STATUSES;
 
   protected shortId(id: string | null | undefined): string {
-    return id ? id.slice(0, 8) : '—';
+    return id ? id.slice(0, 8) : 'N/A';
   }
 
   protected balanceOf(row: Invoice): number {

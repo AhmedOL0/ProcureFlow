@@ -4,13 +4,21 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 19 — extraction follow-ups (feature/extraction-followups, this
-change).** Create-from-extraction through the `RequestDrafting` port
-(same guarded idempotent path, X-Replay mirrored, row linked) +
-"Recent drafts" shelf in the copilot view (per-row create-or-opened).
-Probe-tenant debris dropped (PG + Mongo).
+**Phase 20 — dark mode (feature/dark-mode, this change).** Stored
+preference (OS-seeded first visit) applied pre-paint via APP_INITIALIZER;
+shell toolbar toggle with persistence; full dark token twins (ratios
+re-checked) + Material dark theme; charts re-render from CSS on flip;
+white-chip brand lockup; `pf-heading` split (navy text failed on dark);
+axe-clean dark login + dashboard both browsers. Evidence 40/41. Purge:
+em dashes gone from all user strings (periods/colons, N/A markers),
+specs updated, truncate length invariant kept.
 
 ## Completed
+
+### Phase 19 — extraction follow-ups (merged PR #38)
+- Create-from-extraction through `RequestDrafting` (guarded idempotent
+  path, X-Replay mirrored, row linked) + copilot Recent-drafts shelf;
+  probe debris dropped. Gates: 196 IT, 59 Vitest, 34+34 e2e.
 
 ### Phase 18 — AI extraction history on MongoDB (merged PR #37)
 - Validated extract-request drafts as versioned tenant-scoped Mongo docs

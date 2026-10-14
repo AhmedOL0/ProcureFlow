@@ -262,7 +262,7 @@ export class WorkflowsComponent {
     const min = formatMinor(lane.minAmountMinor);
     return lane.maxAmountMinor === null || lane.maxAmountMinor === undefined
       ? `${min} and up`
-      : `${min} – ${formatMinor(lane.maxAmountMinor)}`;
+      : `${min} - ${formatMinor(lane.maxAmountMinor)}`;
   }
 
   protected failureMessage(): string {

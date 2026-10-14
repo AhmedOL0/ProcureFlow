@@ -21,6 +21,7 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
+import { ThemeService } from '../../core/theme/theme.service';
 import {
   Bell,
   Building2,
@@ -32,12 +33,14 @@ import {
   ListChecks,
   LogOut,
   Menu,
+  Moon,
   Network,
   Receipt,
   Settings,
   ShieldCheck,
   Sparkles,
   Stamp,
+  Sun,
   Truck,
   User,
   Users,
@@ -93,10 +96,13 @@ export class ShellComponent {
   private readonly breakpoints = inject(BreakpointObserver);
   protected readonly auth = inject(AuthService);
   protected readonly inbox = inject(NotificationCenterService);
+  private readonly themes = inject(ThemeService);
 
   protected readonly icons = {
     bell: Bell,
     menu: Menu,
+    moon: Moon,
+    sun: Sun,
     dashboard: LayoutDashboard,
     truck: Truck,
     user: User,
@@ -105,6 +111,14 @@ export class ShellComponent {
     sparkles: Sparkles,
   };
   protected readonly canSeeCopilot = this.auth.hasAuthority('ai:use');
+  protected readonly isDark = computed(() => this.themes.theme() === 'dark');
+  protected readonly themeLabel = computed(() =>
+    this.isDark() ? 'Switch to light mode' : 'Switch to dark mode',
+  );
+
+  protected toggleTheme(): void {
+    this.themes.toggle();
+  }
 
   /** Display name: profile names when set, else the email handle. */
   protected readonly displayName = computed(() => {

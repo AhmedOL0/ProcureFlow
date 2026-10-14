@@ -50,12 +50,12 @@ const CODE_MESSAGES: Record<string, string> = {
   SUPPLIER_REFERENCED: 'This supplier is used by purchase documents and cannot be deleted.',
   CATEGORY_IN_USE: 'This category is assigned to suppliers and cannot be deleted.',
   EMAIL_IN_USE: 'This email is already registered in this workspace.',
-  LOGIN_AMBIGUOUS: 'This email lives in several workspaces — enter your workspace slug.',
-  PASSWORD_TOO_LONG: 'That password is too long for secure hashing — use at most 72 characters.',
+  LOGIN_AMBIGUOUS: 'This email lives in several workspaces. Enter your workspace slug.',
+  PASSWORD_TOO_LONG: 'That password is too long for secure hashing. Use at most 72 characters.',
   INVALID_CREDENTIALS: 'Invalid email or password.',
   CONTACT_NOT_FOUND: 'This contact no longer exists.',
   SUPPLIER_NOT_FOUND: 'This supplier no longer exists in your workspace.',
-  IMPORT_VALIDATION_FAILED: 'Some rows failed validation — nothing was imported. Fix the rows below and re-upload.',
+  IMPORT_VALIDATION_FAILED: 'Some rows failed validation. Nothing was imported. Fix the rows below and re-upload.',
   MISSING_COLUMNS: "The file needs at least a 'name' column.",
   UNSUPPORTED_FILE: 'Only .xlsx and .csv files can be imported.',
   CORRUPT_FILE: 'The file could not be parsed. Check it opens in Excel first.',
@@ -63,9 +63,9 @@ const CODE_MESSAGES: Record<string, string> = {
   FILE_TOO_LARGE: 'The file exceeds the 5 MB import limit.',
   TOO_MANY_ROWS: 'Import is limited to 500 rows per file.',
   NO_DATA_ROWS: 'The file has no data rows.',
-  EXPORT_TOO_LARGE: 'Too many rows for one export — narrow the filters and try again.',
+  EXPORT_TOO_LARGE: 'Too many rows for one export. Narrow the filters and try again.',
   MALFORMED_UPLOAD: 'The upload could not be read. Try again.',
-  TOO_MANY_REQUESTS: 'Too many attempts — wait a little and try again.',
+  TOO_MANY_REQUESTS: 'Too many attempts. Wait a little and try again.',
 };
 
 export function userMessageFor(failure: ApiFailure): string {

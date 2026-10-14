@@ -24,7 +24,7 @@
     @let me = user();
     @if (me && me.verified === false) {
       <div class="pf-notice" role="status">
-        Mailbox unverified — password resets stay locked until you confirm it.
+        Mailbox unverified. Password resets stay locked until you confirm it.
         @if (!resent()) {
           <button mat-button (click)="resendVerification()">Resend verification email</button>
         } @else {
@@ -67,7 +67,7 @@
       </div>
       <div class="settings-body" [formGroup]="passwordForm">
         <p class="pf-muted">
-          Changing your password signs you out everywhere — you sign in again with the new one.
+          Changing your password signs you out everywhere. You sign in again with the new one.
         </p>
         <div class="pf-form-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -151,7 +151,7 @@
     <section class="pf-panel" aria-label="Workspace administration">
       <h2>Workspace administration</h2>
       <p class="pf-muted">
-        Tenant-wide controls live on their own screens — account settings
+        Tenant-wide controls live on their own screens. Account settings
         stay personal.
       </p>
       <ul class="pf-list">

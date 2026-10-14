@@ -1,11 +1,11 @@
 /** Human timestamps for metadata lines. Pure — covered by Vitest. */
 export function formatInstant(value: string | null | undefined): string {
   if (!value) {
-    return '—';
+    return 'N/A';
   }
   const time = Date.parse(value);
   if (Number.isNaN(time)) {
-    return '—';
+    return 'N/A';
   }
   return new Date(time).toLocaleString(undefined, {
     year: 'numeric',
@@ -49,11 +49,11 @@ export function slaStatus(
  */
 export function timeAgo(value: string | null | undefined, now: number = Date.now()): string {
   if (!value) {
-    return '—';
+    return 'N/A';
   }
   const time = Date.parse(value);
   if (Number.isNaN(time)) {
-    return '—';
+    return 'N/A';
   }
   const seconds = Math.max(0, Math.floor((now - time) / 1000));
   if (seconds < 60) {

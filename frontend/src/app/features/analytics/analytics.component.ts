@@ -305,7 +305,7 @@ export class AnalyticsComponent {
 
   hours(value: number | null | undefined): string {
     if (value === null || value === undefined || !Number.isFinite(value)) {
-      return '—';
+      return 'N/A';
     }
     return `${value.toFixed(1)}h`;
   }
