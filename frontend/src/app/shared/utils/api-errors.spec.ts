@@ -24,7 +24,7 @@ describe('api-errors', () => {
       }),
     );
     expect(failure.details).toEqual({ 'row.2.email': 'Not a valid email address', errorCount: '1' });
-    expect(userMessageFor(failure)).toContain('nothing was imported');
+    expect(userMessageFor(failure)).toContain('Nothing was imported');
   });
 
   it('falls back per status without an envelope', () => {

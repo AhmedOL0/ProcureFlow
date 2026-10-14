@@ -1,7 +1,7 @@
 <div class="pf-page">
   <pf-page-header
     title="ProcureAI copilot"
-    description="KPI-cited answers over your workspace data. Every answer shows its sources and model — nothing is generated from thin air."
+    description="KPI-cited answers over your workspace data. Every answer shows its sources and model. Nothing is generated from thin air."
     [breadcrumbs]="[{ label: 'Copilot' }]"
   />
 
@@ -45,7 +45,7 @@
         @if (busy()) {
           <div class="copilot-loading" role="status" aria-label="Thinking">
             <mat-spinner diameter="28" />
-            <span class="copilot-thinking">Reading your KPIs…</span>
+            <span class="copilot-thinking">Reading your KPIs...</span>
             <button mat-button (click)="cancel()">Cancel</button>
           </div>
         } @else if (failure(); as problem) {
@@ -58,7 +58,7 @@
         } @else if (answer(); as result) {
           <article class="copilot-answer">
             <p class="copilot-ai-tag">
-              AI-generated interpretation — verify against the citations below
+              AI-generated interpretation. Verify against the citations below
             </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
@@ -86,7 +86,7 @@
           <pf-empty-state
             [icon]="icons.sparkles"
             title="Ask anything grounded"
-            message="Answers cite the analytics endpoints behind them — try spend, approvals or suppliers."
+            message="Answers cite the analytics endpoints behind them. Try spend, approvals or suppliers."
           />
         }
       </div>
@@ -109,7 +109,7 @@
         @if (busy()) {
           <div class="copilot-loading" role="status" aria-label="Explaining">
             <mat-spinner diameter="28" />
-            <span class="copilot-thinking">Aggregating spend…</span>
+            <span class="copilot-thinking">Aggregating spend...</span>
             <button mat-button (click)="cancel()">Cancel</button>
           </div>
         } @else if (failure(); as problem) {
@@ -122,7 +122,7 @@
         } @else if (answer(); as result) {
           <article class="copilot-answer">
             <p class="copilot-ai-tag">
-              AI-generated interpretation — verify against the citations below
+              AI-generated interpretation. Verify against the citations below
             </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
@@ -186,7 +186,7 @@
         @if (busy()) {
           <div class="copilot-loading" role="status" aria-label="Structuring">
             <mat-spinner diameter="28" />
-            <span class="copilot-thinking">Structuring the draft…</span>
+            <span class="copilot-thinking">Structuring the draft...</span>
             <button mat-button (click)="cancel()">Cancel</button>
           </div>
         } @else if (failure(); as problem) {
@@ -210,7 +210,7 @@
                 }
               </ul>
               <p class="copilot-muted">
-                Items stay listed for transcription — supplier links need workspace validation the
+                Items stay listed for transcription. Supplier links need workspace validation the
                 model cannot provide.
               </p>
             }
@@ -253,7 +253,7 @@
             }
           </ul>
         } @else {
-          <p class="copilot-muted">No saved extractions yet — structure a draft above.</p>
+          <p class="copilot-muted">No saved extractions yet. Structure a draft above.</p>
         }
       </div>
     </section>
@@ -302,7 +302,7 @@
         @if (busy()) {
           <div class="copilot-loading" role="status" aria-label="Comparing">
             <mat-spinner diameter="28" />
-            <span class="copilot-thinking">Weighing the quotes…</span>
+            <span class="copilot-thinking">Weighing the quotes...</span>
             <button mat-button (click)="cancel()">Cancel</button>
           </div>
         } @else if (failure(); as problem) {
@@ -315,7 +315,7 @@
         } @else if (answer(); as result) {
           <article class="copilot-answer">
             <p class="copilot-ai-tag">
-              AI-generated interpretation — verify against the citations below
+              AI-generated interpretation. Verify against the citations below
             </p>
             <p class="copilot-answer__text">{{ result.answer }}</p>
             @if ((result.citations ?? []).length > 0) {
@@ -343,7 +343,7 @@
           <pf-empty-state
             [icon]="icons.sparkles"
             title="Two quotes minimum"
-            message="Add supplier quotes above — the copilot explains the trade-offs, you decide."
+            message="Add supplier quotes above. The copilot explains the trade-offs, you decide."
           />
         }
       </div>

@@ -12,7 +12,7 @@ import { MatInputModule } from '@angular/material/input';
   template: `
     <h2 mat-dialog-title>{{ data.approved ? 'Approve request' : 'Reject request' }}</h2>
     <mat-dialog-content>
-      <p class="decide-sub">“{{ data.title }}” — this verdict cannot be changed afterwards.</p>
+      <p class="decide-sub">This verdict ("{{ data.title }}") cannot be changed afterwards.</p>
       <mat-form-field appearance="outline" class="decide-field">
         <mat-label>Comment (optional)</mat-label>
         <textarea matInput [formControl]="comment" rows="2"></textarea>

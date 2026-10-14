@@ -6,7 +6,7 @@
       <mat-select [formControl]="orderControl">
         @for (order of candidates(); track order.id) {
           <mat-option [value]="order.id"
-            >{{ order.id?.slice(0, 8) }}… · {{ order.status }}</mat-option
+            >{{ order.id?.slice(0, 8) }}... · {{ order.status }}</mat-option
           >
         }
       </mat-select>

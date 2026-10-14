@@ -3,16 +3,16 @@ import { describe, expect, it } from 'vitest';
 import { formatInstant, slaStatus, timeAgo } from './time';
 
 describe('formatInstant', () => {
-  it('returns an em dash for missing or invalid input', () => {
-    expect(formatInstant(null)).toBe('—');
-    expect(formatInstant(undefined)).toBe('—');
-    expect(formatInstant('')).toBe('—');
-    expect(formatInstant('not-a-date')).toBe('—');
+  it('returns an N/A marker for missing or invalid input', () => {
+    expect(formatInstant(null)).toBe('N/A');
+    expect(formatInstant(undefined)).toBe('N/A');
+    expect(formatInstant('')).toBe('N/A');
+    expect(formatInstant('not-a-date')).toBe('N/A');
   });
 
   it('renders real timestamps readably', () => {
     const rendered = formatInstant('2026-10-10T01:22:39.678Z');
-    expect(rendered).not.toBe('—');
+    expect(rendered).not.toBe('N/A');
     expect(rendered).toContain('2026');
   });
 });
@@ -20,11 +20,11 @@ describe('formatInstant', () => {
 describe('timeAgo', () => {
   const now = Date.parse('2026-10-11T12:00:00.000Z');
 
-  it('returns an em dash for missing or invalid input', () => {
-    expect(timeAgo(null, now)).toBe('—');
-    expect(timeAgo(undefined, now)).toBe('—');
-    expect(timeAgo('', now)).toBe('—');
-    expect(timeAgo('not-a-date', now)).toBe('—');
+  it('returns an N/A marker for missing or invalid input', () => {
+    expect(timeAgo(null, now)).toBe('N/A');
+    expect(timeAgo(undefined, now)).toBe('N/A');
+    expect(timeAgo('', now)).toBe('N/A');
+    expect(timeAgo('not-a-date', now)).toBe('N/A');
   });
 
   it('scales from just now to days, then falls back to absolute', () => {

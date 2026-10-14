@@ -75,9 +75,9 @@ export class OrderListComponent {
     const names = this.supplierNames();
     return (supplierId: string | null | undefined): string => {
       if (!supplierId) {
-        return '—';
+        return 'N/A';
       }
-      return names.get(supplierId) ?? '…';
+      return names.get(supplierId) ?? '...';
     };
   });
 
@@ -174,7 +174,7 @@ export class OrderListComponent {
   }
 
   protected shortId(id: string | null | undefined): string {
-    return id ? id.slice(0, 8) : '—';
+    return id ? id.slice(0, 8) : 'N/A';
   }
 
   openCreate(): void {

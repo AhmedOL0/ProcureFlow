@@ -54,12 +54,12 @@
     }
     @if (financeFailed()) {
       <p class="dashboard-note" role="status">
-        Financial figures did not load — operational data above is unaffected.
+        Financial figures did not load. Operational data above is unaffected.
       </p>
     }
     @if (mixedSpend()) {
       <p class="pf-notice pf-notice--error" role="alert">
-        Spend mixes {{ spendCodes().join(', ') }} — figures below are per-currency on
+        Spend mixes {{ spendCodes().join(', ') }}. Figures below are per-currency on
         <a routerLink="/analytics">Analytics</a>, never merged here.
       </p>
     }
@@ -111,7 +111,7 @@
           @if (mixedSpend()) {
             <pf-empty-state
               title="Mixed currencies"
-              message="Monthly bars would merge codes — open the per-currency split on Analytics."
+              message="Monthly bars would merge codes. Open the per-currency split on Analytics."
             />
           } @else {
             <app-spend-chart [months]="trendPoints()" (monthSelected)="openAnalytics($event)" />
@@ -125,7 +125,7 @@
           } @else if (mixedSpend()) {
             <pf-empty-state
               title="Mixed currencies"
-              message="Category shares would merge codes — open the per-currency split on Analytics."
+              message="Category shares would merge codes. Open the per-currency split on Analytics."
             />
           } @else {
             <app-donut-chart [slices]="trendSlices()" />
@@ -212,7 +212,7 @@
         <lucide-angular [img]="icons.shield" [size]="18" aria-hidden="true" />
         <p>
           <strong>Audit trail active.</strong>
-          Every decision, transition and payment in this workspace is recorded —
+          Every decision, transition and payment in this workspace is recorded.
           <a routerLink="/admin/audit">review the trail</a>.
         </p>
       </div>

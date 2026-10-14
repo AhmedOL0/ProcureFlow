@@ -52,7 +52,7 @@ export class OrderDetailComponent {
   protected readonly exportError = signal<string | null>(null);
   protected readonly failure = signal<ApiFailure | null>(null);
   protected readonly order = signal<PurchaseOrder | null>(null);
-  protected readonly supplierName = signal<string>('…');
+  protected readonly supplierName = signal<string>('...');
 
   protected readonly status = computed(() => this.order()?.status ?? null);
   protected readonly canSend = computed(() => this.status() === 'DRAFT');
@@ -132,7 +132,7 @@ export class OrderDetailComponent {
 
   private resolveSupplier(supplierId: string | null | undefined): void {
     if (!supplierId) {
-      this.supplierName.set('—');
+      this.supplierName.set('N/A');
       return;
     }
     this.suppliers.get(supplierId).subscribe({

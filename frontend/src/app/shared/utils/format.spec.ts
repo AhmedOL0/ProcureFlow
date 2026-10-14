@@ -16,10 +16,10 @@ describe('truncate', () => {
     expect(truncate('short')).toBe('short');
   });
 
-  it('truncates long text with an ellipsis', () => {
+  it('truncates long text with trailing dots', () => {
     const out = truncate('a'.repeat(100), 80);
     expect(out.length).toBeLessThanOrEqual(80);
-    expect(out.endsWith('…')).toBe(true);
+    expect(out.endsWith('...')).toBe(true);
   });
 });
 
@@ -28,9 +28,9 @@ describe('formatDate', () => {
     expect(formatDate('2026-10-12T10:00:00Z')).toBe('12 Oct 2026');
   });
 
-  it('returns a dash for missing or invalid input', () => {
-    expect(formatDate(null)).toBe('—');
-    expect(formatDate(undefined)).toBe('—');
-    expect(formatDate('not-a-date')).toBe('—');
+  it('returns an N/A marker for missing or invalid input', () => {
+    expect(formatDate(null)).toBe('N/A');
+    expect(formatDate(undefined)).toBe('N/A');
+    expect(formatDate('not-a-date')).toBe('N/A');
   });
 });

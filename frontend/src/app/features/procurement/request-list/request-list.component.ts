@@ -179,21 +179,21 @@ export class RequestListComponent {
   protected requesterName(request: PurchaseRequest): string {
     const user = this.users().find((u) => u.id === request.requesterId);
     if (!user) {
-      return '—';
+      return 'N/A';
     }
     const full = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
-    return full || user.email || '—';
+    return full || user.email || 'N/A';
   }
 
   protected requesterDepartments(request: PurchaseRequest): string {
     if (!request.requesterId) {
-      return '—';
+      return 'N/A';
     }
     const names = this.memberships()
       .filter((m) => m.userId === request.requesterId)
       .map((m) => this.departments().find((d) => d.id === m.departmentId)?.name ?? '')
       .filter(Boolean);
-    return names.length > 0 ? names.join(', ') : '—';
+    return names.length > 0 ? names.join(', ') : 'N/A';
   }
 
   private compareRows(sort: Sort): (a: PurchaseRequest, b: PurchaseRequest) => number {

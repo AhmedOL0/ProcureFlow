@@ -15,7 +15,7 @@ import { Eye, EyeOff } from '../../shared/icons';
 import { parseApiFailure, userMessageFor } from '../../shared/utils/api-errors';
 
 /**
- * Redeems a reset link (?token=…). Tokens are single-use and short-lived:
+ * Redeems a reset link (?token=...). Tokens are single-use and short-lived:
  * unknown links 404, spent or expired ones 410 — each with words that say
  * what to do next (request a fresh link). Success routes to login; the
  * flow never signs anyone in by itself.

@@ -29,7 +29,7 @@ export const pendingChangesGuard: CanDeactivateFn<SavableDraft> = (component) =>
       width: '400px',
       data: {
         title: 'Discard this draft?',
-        message: 'Your entries are not saved yet — leaving now loses them.',
+        message: 'Your entries are not saved yet. Leaving now loses them.',
         confirmLabel: 'Discard draft',
       },
     },

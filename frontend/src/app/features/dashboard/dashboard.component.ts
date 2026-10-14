@@ -134,13 +134,13 @@ export class DashboardComponent {
       },
       {
         label: 'Active suppliers',
-        value: this.activeSuppliers() === null ? '—' : `${this.activeSuppliers()}`,
+        value: this.activeSuppliers() === null ? 'N/A' : `${this.activeSuppliers()}`,
         sub: 'vendors you can buy from',
         icon: Building2,
       },
       {
         label: 'Open orders',
-        value: this.openOrders() === null ? '—' : `${this.openOrders()}`,
+        value: this.openOrders() === null ? 'N/A' : `${this.openOrders()}`,
         sub: 'sent or partially received',
         icon: Truck,
       },
@@ -158,13 +158,13 @@ export class DashboardComponent {
     return [
       {
         label: 'Ordered spend (all time)',
-        value: this.mixedSpend() ? `${this.spendCodes().length} currencies` : flow ? formatMinor(flow.orderedMinor, this.spendCode()) : '—',
+        value: this.mixedSpend() ? `${this.spendCodes().length} currencies` : flow ? formatMinor(flow.orderedMinor, this.spendCode()) : 'N/A',
         sub: this.mixedSpend() ? 'split per currency on Analytics' : (orderedDelta ?? 'committed to suppliers'),
         icon: ChartColumn,
       },
       {
         label: 'Paid out (all time)',
-        value: this.mixedSpend() ? `${this.spendCodes().length} currencies` : flow ? formatMinor(flow.paidMinor, this.spendCode()) : '—',
+        value: this.mixedSpend() ? `${this.spendCodes().length} currencies` : flow ? formatMinor(flow.paidMinor, this.spendCode()) : 'N/A',
         sub: this.mixedSpend() ? 'split per currency on Analytics' : (paidDelta ?? 'settled with suppliers'),
         icon: CircleCheck,
       },
@@ -226,11 +226,11 @@ export class DashboardComponent {
     // invoice-list scan, bounded at any scale. Meaningless across codes, so
     // mixed tenants get a pointer instead of a merged figure.
     if (!this.canSeeInvoices) {
-      return { value: '—', sub: 'no invoice access' };
+      return { value: 'N/A', sub: 'no invoice access' };
     }
     const flow = this.spend();
     if (!flow) {
-      return { value: '—', sub: 'figures unavailable' };
+      return { value: 'N/A', sub: 'figures unavailable' };
     }
     if (this.mixedSpend()) {
       return { value: 'Mixed', sub: 'split per currency on Analytics' };
@@ -244,7 +244,7 @@ export class DashboardComponent {
 
   private budgetLabel(): { value: string; sub: string } {
     if (!this.canSeeBudgets) {
-      return { value: '—', sub: 'no budget access' };
+      return { value: 'N/A', sub: 'no budget access' };
     }
     const pots = this.monthPots();
     if (pots.length === 0) {
@@ -375,7 +375,7 @@ export class DashboardComponent {
 
   leadHours(value: number | null | undefined): string {
     if (value === null || value === undefined || !Number.isFinite(value)) {
-      return '—';
+      return 'N/A';
     }
     return `${value.toFixed(1)}h`;
   }

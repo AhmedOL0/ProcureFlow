@@ -27,7 +27,7 @@ export function humanizeRole(role: string | null | undefined): string {
 export function humanizeLabel(value: string | null | undefined): string {
   const words = (value ?? '').toLowerCase().split('_').filter(Boolean);
   if (words.length === 0) {
-    return '—';
+    return 'N/A';
   }
   const [first, ...rest] = words as [string, ...string[]];
   return [first.charAt(0).toUpperCase() + first.slice(1), ...rest].join(' ');

@@ -68,7 +68,7 @@
       @if (contacts().length === 0) {
         <pf-empty-state
           title="No contacts yet"
-          message="Add the people you order from — one of them can be the primary contact. Use Add contact above."
+          message="Add the people you order from. One of them can be the primary contact. Use Add contact above."
         />
       } @else {
         <ul class="pf-list">
@@ -154,9 +154,9 @@
               @for (score of performances(); track score.id) {
                 <tr>
                   <td>{{ score.period }}</td>
-                  <td class="pf-num pf-data-mono">{{ score.onTimeRate ?? '—' }}</td>
-                  <td class="pf-num pf-data-mono">{{ score.qualityScore ?? '—' }}</td>
-                  <td>{{ score.notes || '—' }}</td>
+                  <td class="pf-num pf-data-mono">{{ score.onTimeRate ?? 'N/A' }}</td>
+                  <td class="pf-num pf-data-mono">{{ score.qualityScore ?? 'N/A' }}</td>
+                  <td>{{ score.notes || 'N/A' }}</td>
                 </tr>
               }
             </tbody>
