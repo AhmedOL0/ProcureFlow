@@ -22,11 +22,14 @@ Login/refresh throttles are never exercised by the loop by design.
 | Date | Mix | VUs / duration | p50 | p95 | p99 | Failed | Notes |
 |---|---|---|---|---|---|---|---|
 | 2026-10-14 | read-mix.js | 5 / 2m | 6.9 ms | 20.5 ms | — | 0 / 2322 | max 2.49 s single cold-start outlier; tiny seed data |
+| 2026-10-14 | read-mix.js (`TOKEN`, scale tenant) | 5 / 2m | 9.5 ms | 25.8 ms | — | 0 / 2300 | max 95 ms; 10k requests + 20k lines via `seed-scale.sql` |
 
 Aggregate only (per-endpoint tags deferred until a bottleneck shows).
-Seed data is small (demo-scale), so this is a floor ruler: it proves the
-read mix is healthy locally, not that all-time spend scales. The H-3
-residual (all-time grouping depth) is still the first suspect at scale.
+Scale seed (`seed-scale.sql`, pure SQL): 8k APPROVED (2 h leads) + 2k
+SUBMITTED spread over 365 days, 2 MAD lines each. Rows bypass the
+application (no audit rows/events) — fine for read-load measurement.
+p95 moved 20.5 → 25.8 ms for 1000x rows: the grouped aggregations hold
+flat. Dropped after the run (same order as below).
 
 ## Debris
 

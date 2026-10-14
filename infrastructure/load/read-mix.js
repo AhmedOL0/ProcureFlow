@@ -23,6 +23,10 @@ export const options = {
 };
 
 export function setup() {
+  // Scale runs pass TOKEN directly (see README) to hit a seeded tenant.
+  if (__ENV.TOKEN) {
+    return { token: __ENV.TOKEN };
+  }
   const stamp = Date.now();
   const slug = `load-${stamp}`;
   const email = `load@${slug}.test`;
