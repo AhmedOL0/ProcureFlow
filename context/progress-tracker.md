@@ -4,19 +4,33 @@ Live state of the project. Update after every meaningful change.
 
 ## Current phase
 
-**Phase 21 — French i18n (feature/french, this change).** Hand-rolled
-`LanguageService` (`pf-lang`, browser-seeded fr, `en.ts`/`fr.ts` typed
-parity 884 keys + placeholder-parity spec, `<html lang>` via
-APP_INITIALIZER); shell globe menu + persisted toggle; all 21 feature
-templates keyed (dashboard through copilot, incl. dialogs, charts with
-locale labels, route `breadcrumbKey`s, guard prompt); notices carry
-`{key, vars}`; error pipeline already locale-dynamic via module
-defaults; status/role codes + server-composed text stay English by
-design. Evidence 42/43. Gates: tsc 0, build 0, 73 Vitest, 42+42 e2e
-(new `language.spec.ts`: pre-paint lang, menu flip + persistence,
-axe-clean FR login + dashboard).
+**Dependency security gate (fix/npm-audit-high, this change).** Close
+the `npm-audit` job that has failed on schedule since 2026-11-02:
+Angular 21.2.26 to 21.2.30 and Vitest 4.1.12 clear the MCP SDK,
+body-parser and mocker advisories; pinned overrides move
+`@angular/build`'s vite 7.3.7 to 7.3.8 and undici 7.30.1 to 7.30.2. The
+CI gate now audits **runtime** dependencies only (`--omit=dev`): the
+frontend image is multi-stage, so dev tooling never reaches nginx. The
+full dev audit stays visible as a non-blocking step while picomatch has
+no patched release (GHSA-fc5q-39xc-vjpf, all 16 remaining highs trace
+to it). Also fixed the settings axe test's ambiguous `getByText`, which
+matched the admin note under load. Gates: `npm ci` 0, build 0, 73
+Vitest, 80 passed + 4 flaky on retry (CI mode), runtime audit 0.
 
 ## Completed
+
+### Phase 21: French i18n (merged PR #41)
+- Hand-rolled `LanguageService` (`pf-lang`, browser-seeded fr,
+  `en.ts`/`fr.ts` typed parity 884 keys + placeholder-parity spec,
+  `<html lang>` via APP_INITIALIZER); shell globe menu + persisted
+  toggle; all 21 feature templates keyed (dashboard through copilot,
+  incl. dialogs, charts with locale labels, route `breadcrumbKey`s,
+  guard prompt); notices carry `{key, vars}`; error pipeline already
+  locale-dynamic via module defaults; status/role codes +
+  server-composed text stay English by design. Evidence 42/43. Gates:
+  tsc 0, build 0, 73 Vitest, 42+42 e2e (new `language.spec.ts`:
+  pre-paint lang, menu flip + persistence, axe-clean FR login +
+  dashboard).
 
 ### Phase 20 — dark mode (merged PR #40)
 - Stored preference (OS-seeded first visit) applied pre-paint via

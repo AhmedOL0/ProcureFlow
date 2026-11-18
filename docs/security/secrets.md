@@ -11,8 +11,11 @@
    treat the incident as a security event.
 5. Database and broker passwords are generated per environment, never reused
    across prod and non-prod.
-6. `security.yml` runs Trivy filesystem scans and `npm audit` on every PR
-   as a tripwire; it complements, never replaces, careful handling.
+6. `security.yml` runs Trivy filesystem scans on every PR and gates
+   shipped npm dependencies at HIGH+ (`npm audit --omit=dev`). The full
+   dev-toolchain audit still runs, visible but non-blocking, because
+   dev packages never enter the nginx image. It complements, never
+   replaces, careful handling.
 
 ## Outbound mail (Brevo SMTP)
 
