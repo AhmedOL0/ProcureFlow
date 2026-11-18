@@ -22,11 +22,11 @@ public class ExtractionIndexes {
     public ExtractionIndexes(MongoTemplate mongo) {
         try {
             mongo.indexOps(ExtractionRecord.class)
-                    .ensureIndex(new Index()
+                    .createIndex(new Index()
                             .on("tenantSlug", Sort.Direction.ASC)
                             .on("createdAt", Sort.Direction.DESC));
             mongo.indexOps(ExtractionRecord.class)
-                    .ensureIndex(new Index()
+                    .createIndex(new Index()
                             .on("createdAt", Sort.Direction.ASC)
                             .expire(90, TimeUnit.DAYS));
             log.info("extraction history indexes ensured");
