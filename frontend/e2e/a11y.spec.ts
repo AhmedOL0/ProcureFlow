@@ -112,7 +112,7 @@ test.describe('accessibility', () => {
   test('settings has no axe violations', async ({ page }) => {
     await signIn(page);
     await page.goto('/settings');
-    await expect(page.getByText('Account settings')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Account settings' })).toBeVisible();
     await expectAxeClean(page);
   });
 
