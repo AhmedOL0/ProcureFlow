@@ -14,8 +14,11 @@ frontend image is multi-stage, so dev tooling never reaches nginx. The
 full dev audit stays visible as a non-blocking step while picomatch has
 no patched release (GHSA-fc5q-39xc-vjpf, all 16 remaining highs trace
 to it). Also fixed the settings axe test's ambiguous `getByText`, which
-matched the admin note under load. Gates: `npm ci` 0, build 0, 73
-Vitest, 80 passed + 4 flaky on retry (CI mode), runtime audit 0.
+matched the admin note under load. Follow-up: first-party actions moved
+off Node 20 (checkout v7, setup-node v7, setup-java v6 with
+`problem-matcher: true` kept on, upload-artifact v7). Gates: `npm ci` 0,
+build 0, 73 Vitest, 80 passed + 4 flaky on retry (CI mode), runtime
+audit 0.
 
 ## Completed
 
