@@ -12,6 +12,10 @@
   },
   "private": true,
   "packageManager": "npm@11.9.0",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
   "dependencies": {
     "@angular/animations": "^21.2.26",
     "@angular/cdk": "^21.2.14",

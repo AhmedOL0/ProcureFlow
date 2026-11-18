@@ -17,10 +17,12 @@ to it). Also fixed the settings axe test's ambiguous `getByText`, which
 matched the admin note under load. Follow-up: first-party actions moved
 off Node 20 (checkout v7, setup-node v7, setup-java v6 with
 `problem-matcher: true` kept on, upload-artifact v7), the dev audit now
-reports without leaving a failing annotation, and the deprecated Mongo
-`ensureIndex` (since 4.5) became `createIndex`. Gates: `npm ci` 0,
-build 0, 73 Vitest, 80 passed + 4 flaky on retry (CI mode), runtime
-audit 0.
+reports without leaving a failing annotation, the deprecated Mongo
+`ensureIndex` (since 4.5) became `createIndex`, and Node 24 now matches
+across the frontend production image (`node:24-alpine`), root `.nvmrc`
+and `engines` (Docker build unverified locally, Docker Desktop down).
+Gates: `npm ci` 0, build 0, 73 Vitest, 80 passed + 4 flaky on retry
+(CI mode), runtime audit 0.
 
 ## Completed
 
