@@ -35,9 +35,8 @@ jobs:
       # nginx, so Angular CLI, Vite and Vitest advisories cannot affect users.
       - name: Audit runtime dependencies (gate)
         run: npm audit --omit=dev --audit-level=high
-      # Keep dev-toolchain advisories visible without blocking every build:
-      # picomatch has no patched release (GHSA-fc5q-39xc-vjpf) and Angular
-      # pins it exactly, so this report cannot go green until upstream ships.
-      - name: Audit dev toolchain (non-blocking)
-        continue-on-error: true
-        run: npm audit --audit-level=high
+      # Keep dev-toolchain advisories visible in the log without leaving a
+      # failing-step annotation: picomatch has no patched release
+      # (GHSA-fc5q-39xc-vjpf) and Angular pins it exactly.
+      - name: Audit dev toolchain (report only)
+        run: npm audit --audit-level=high || true
